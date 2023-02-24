@@ -1,0 +1,12 @@
+repos:
+  - repo: https://github.com/Kotlin/kotlin-style-guide.git
+    rev: master
+    hooks:
+      - id: ktlint
+        args: [--android, --color, --relative]
+        exclude: ^.*\.md$
+  - repo: https://github.com/realm/SwiftLint.git
+    rev: master
+    hooks:
+      - id: swiftlint
+        files: \.(swift)$
