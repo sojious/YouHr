@@ -11,9 +11,9 @@ repos:
     hooks:
       - id: check-json
         exclude: (.vscode)
-      # - id: no-commit-to-branch
-      #   args:
-      #     ["--pattern", '^(?!((fix|feat|chore|build)\-[a-zA-Z0-9\-]+)$).*']
+      - id: no-commit-to-branch
+        args:
+         ["--pattern", '^(?!((fix|feat|chore|build)\-[a-zA-Z0-9\-]+)$).*']
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
