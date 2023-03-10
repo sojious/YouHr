@@ -1,12 +1,30 @@
 repos:
-  - repo: https://github.com/Kotlin/kotlin-style-guide.git
-    rev: master
+  - repo: https://github.com/jcchavezs/pre-commit-kotlin
+    rev: e4dc07468a29c1857804f9c0152c8c8a4124d28b
     hooks:
+      - id: mvn-verify # it does not accept arguments
       - id: ktlint
-        args: [--android, --color, --relative]
-        exclude: ^.*\.md$
-  - repo: https://github.com/realm/SwiftLint.git
-    rev: master
+        args:
+        - --color
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
     hooks:
-      - id: swiftlint
-        files: \.(swift)$
+      - id: check-json
+        exclude: (.vscode)
+      - id: no-commit-to-branch
+        args:
+         ["--pattern", '^(?!((fix|feat|chore|build)\-[a-zA-Z0-9\-]+)$).*']
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v2.1.1
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        name: check commit messages
+        description: Checks commit message for Conventional Commits formatting
+        args: [feat, fix, chore, test, build, docs] # fails if the entry is NOT matched
+        always_run: true
