@@ -4,8 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import co.youverify.youhr.presentation.CreatePassword
-import co.youverify.youhr.presentation.LoginWithEmail
+import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.Navigator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -37,13 +36,21 @@ class LoginWithPassWordViewModel @Inject constructor( private val navigator: Nav
 
     fun logUserIn() {
 
+        navigator.navigatePopToInclusive(
+            //toRoute = "${CreatePassword.route}?createPassword=true",
+
+            toRoute = CreateCode.route,
+            popToRoute = LoginWithPassword.route
+        )
     }
 
     fun onForgetPasswordClicked() {
 
-        navigator.navigatePopToInclusive(
-            toRoute = "${CreatePassword.route}?createPassword=true",
-            popToRoute = LoginWithEmail.route
+        navigator.navigatePopTo(
+            //toRoute = "${CreatePassword.route}?createPassword=true",
+
+            toRoute = ResetPassword.route,
+            popToRoute = LoginWithPassword.route
         )
     }
 

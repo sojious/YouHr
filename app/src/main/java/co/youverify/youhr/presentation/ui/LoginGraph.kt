@@ -2,15 +2,19 @@ package co.youverify.youhr.presentation.ui
 
 
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.expandIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.runtime.*
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.hilt.navigation.compose.hiltViewModel
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.login.*
-import co.youverify.youhr.presentation.ui.signup.FocusDirection
+import co.youverify.youhr.presentation.ui.signup.CreateCodeScreen
+import co.youverify.youhr.presentation.ui.signup.CreateCodeViewModel
 
 import com.google.accompanist.navigation.animation.composable
 
@@ -18,7 +22,9 @@ import com.google.accompanist.navigation.animation.composable
 fun NavGraphBuilder.loginGraph(
     loginWithCodeViewModel: LoginWithCodeViewModel,
     loginWithEmailViewModel: LoginWithEmailViewModel,
-    loginWithPassWordViewModel: LoginWithPassWordViewModel
+    loginWithPassWordViewModel: LoginWithPassWordViewModel,
+    resetWithPassWordViewModel: ResetPassWordViewModel,
+    createCodeViewModel: CreateCodeViewModel
 ){
     navigation(startDestination =LoginWithEmail.route , route =LoginGraph.route ){
 
@@ -42,7 +48,7 @@ fun NavGraphBuilder.loginGraph(
 
                 onNextButtonClicked = { loginWithEmailViewModel.onNextButtonClicked() },
 
-                onSignUpClicked = { loginWithEmailViewModel.onSignUpButtonClicked() }
+                onLoginWithCodeOptionClicked = { loginWithEmailViewModel.onLoginWithCodeButtonClicked() }
             )
 
 
@@ -74,26 +80,91 @@ fun NavGraphBuilder.loginGraph(
             val focusManager= LocalFocusManager.current
 
 
-            val focusDirection=if (loginWithCodeViewModel.focusDirection== FocusDirection.FORWARD) androidx.compose.ui.focus.FocusDirection.Next else androidx.compose.ui.focus.FocusDirection.Previous
-
-            LaunchedEffect(key1 = loginWithCodeViewModel.moveFocus){
-                if (loginWithCodeViewModel.moveFocus) focusManager.moveFocus(focusDirection)
-            }
-
             LoginWithCodeScreen(
                 codeValue1 = loginWithCodeViewModel.code1,
                 codeValue2 = loginWithCodeViewModel.code2,
                 codeValue3 = loginWithCodeViewModel.code3,
                 codeValue4 = loginWithCodeViewModel.code4,
-                codeValue5 = loginWithCodeViewModel.code5,
-                codeValue6 = loginWithCodeViewModel.code6,
+
                 onCodeValueChanged = {newValue, index->
                              loginWithCodeViewModel.updateCode(newValue,index)
+
+                    if (index<4){
+                        if (newValue.length==1) focusManager.moveFocus(FocusDirection.Next)
+                        if (newValue.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                    }
+
+                    if (index==4 && loginWithCodeViewModel.code4.isNotEmpty()) focusManager.clearFocus()
+                    if (index==4 && loginWithCodeViewModel.code4.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+
+
                 },
                 onPasswordLoginOptionClicked = { loginWithCodeViewModel.onPasswordLoginOptionClicked() },
                 onLoginButtonClicked = {loginWithCodeViewModel.logUserIn()},
-                onSignUpClicked = { loginWithCodeViewModel.onSignUpOptionClicked() }
+
             )
         }
+
+
+        //Create Code Screen
+        composable(
+            route=CreateCode.route,
+            enterTransition = { expandIn()}
+        ){
+
+            val focusManager= LocalFocusManager.current
+
+
+            CreateCodeScreen(
+                codeValue1 = createCodeViewModel.code1,
+                codeValue2 = createCodeViewModel.code2,
+                codeValue3 = createCodeViewModel.code3,
+                codeValue4 = createCodeViewModel.code4,
+
+                onSkipClicked = {createCodeViewModel.onSkipClicked()},
+                onCreateCodeButtonClicked = { createCodeViewModel.createCode() },
+                onCodeValueChanged = {newValue,codeIndex->
+
+                    createCodeViewModel.updateCode(newValue,codeIndex)
+
+                    if (codeIndex<4){
+                        if (newValue.length==1) focusManager.moveFocus(FocusDirection.Next)
+                        if (newValue.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                    }
+
+                    if (codeIndex==4 && createCodeViewModel.code4.isNotEmpty()) focusManager.clearFocus()
+                    if (codeIndex==4 && createCodeViewModel.code4.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+
+                }
+            )
+
+        }
+
+        composable(route = CodeCreationSuccess.route){
+
+            CodeCreationSuccessScreen(
+                onLoginRedirectButtonClicked = {createCodeViewModel.onLoginRedirectClicked()}
+            )
+        }
+        
+        
+        composable(route = ResetPassword.route){
+            
+            ResetPasswordScreen(
+                emailValue =resetWithPassWordViewModel.userEmail ,
+                onEmailValueChanged ={newValue->
+                    resetWithPassWordViewModel.updateUserEmail(newValue)
+                },
+                onResetPasswordButtonClicked ={resetWithPassWordViewModel.resetPassword()}
+            )
+        }
+    }
+    
+    
+    composable(route = RecoveryEmailSent.route){
+        RecoveryEmailSentScreen(
+            onContactSupportClicked = {},
+            onGotItButtonClicked = {resetWithPassWordViewModel.onGotItClicked()}
+        )
     }
 }

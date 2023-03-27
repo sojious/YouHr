@@ -17,6 +17,7 @@ import co.youverify.youhr.R
 import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.TitleText
 import co.youverify.youhr.presentation.ui.components.TitledTextField
+import co.youverify.youhr.presentation.ui.theme.textLight
 
 @Composable
 fun ResetPasswordScreen(
@@ -33,17 +34,19 @@ fun ResetPasswordScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TitleText(text = stringResource(id = R.string.reset_password_title))
+            TitleText(text = stringResource(id = R.string.reset_password_title),)
 
             Text(
                 text = stringResource(id = R.string.reset_password_message),
                 fontSize = 12.sp,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top=16.dp),
                 lineHeight = 16.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = textLight
             )
 
             TitledTextField(
-                modifier=Modifier.padding(top=64.dp, bottom = 10.dp),
+                modifier=Modifier.padding(start = 20.dp,end=20.dp, top=58.dp, bottom = 64.dp),
                 fieldTitle = stringResource(id = R.string.work_email),
                 fieldValue =emailValue ,
                 fieldPlaceHolder =stringResource(id = R.string.work_email_placeholder) ,
@@ -56,8 +59,8 @@ fun ResetPasswordScreen(
 
 
             ActionButton(
-                modifier=Modifier.padding(top = 24.dp),
-                text = stringResource(id = R.string.next),
+                modifier=Modifier.padding(horizontal = 20.dp),
+                text = stringResource(id = R.string.send_password_reset),
                 onButtonClicked = onResetPasswordButtonClicked
             )
 

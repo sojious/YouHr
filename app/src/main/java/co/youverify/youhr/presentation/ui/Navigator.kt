@@ -1,11 +1,11 @@
 package co.youverify.youhr.presentation.ui
 
 
+import co.youverify.youhr.presentation.Home
 import co.youverify.youhr.presentation.Splash
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 
 /**
  * Helper class that allow the viewmodels handle navigation with a navController.
@@ -51,7 +51,11 @@ class Navigator{
         _destinationRoute.value=toRoute
 
     }
-
+    fun navigatePopToForBottomNavItem(toRoute:String ){
+        this.popToRoute= Home.route
+        popBackStackType=PopBackStackType.POPTO
+        _destinationRoute.value=toRoute
+    }
     fun updateRouteIfOutdated(updatedRoute: String) {
         if (_destinationRoute.value!=updatedRoute) _destinationRoute.value=updatedRoute
     }

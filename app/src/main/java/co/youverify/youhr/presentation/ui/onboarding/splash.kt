@@ -10,10 +10,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import co.youverify.youhr.R
+import co.youverify.youhr.presentation.ui.theme.primaryColor
 import co.youverify.youhr.presentation.ui.theme.yvColor
 import co.youverify.youhr.presentation.ui.theme.yvColor1
 import kotlinx.coroutines.delay
@@ -33,13 +35,13 @@ fun SplashScreen(modifier: Modifier = Modifier, onSplashDisplayed: () -> Unit){
     Column(
         modifier= modifier
             .fillMaxSize()
-            .background(brush = Brush.verticalGradient(listOf(yvColor1, yvColor))),
+            .background(color = primaryColor),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Image(
             modifier= Modifier
-                .size(120.dp, 86.dp)
+                .size(120.dp, 68.64.dp)
                 .padding(bottom = 16.dp),
             painter = painterResource(id = R.drawable.youhr_logo),
             contentDescription ="YHLogo",
@@ -52,7 +54,7 @@ fun SplashScreen(modifier: Modifier = Modifier, onSplashDisplayed: () -> Unit){
 
 @Composable
 fun LoadingScreen(modifier: Modifier=Modifier){
-    Surface(modifier=modifier.fillMaxSize()) {}
+    Box(modifier=modifier.fillMaxSize().background(color = Color.White)) {}
 }
 
 @Preview

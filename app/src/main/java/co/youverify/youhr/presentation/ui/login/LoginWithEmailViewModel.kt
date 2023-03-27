@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import co.youverify.youhr.presentation.CreatePassword
+import co.youverify.youhr.presentation.LoginWithCode
 import co.youverify.youhr.presentation.LoginWithEmail
 import co.youverify.youhr.presentation.LoginWithPassword
 import co.youverify.youhr.presentation.ui.Navigator
@@ -28,7 +29,7 @@ class LoginWithEmailViewModel @Inject constructor( private val navigator: Naviga
         navigator.navigate(toRoute = LoginWithPassword.route)
     }
 
-    fun onSignUpButtonClicked() {
-        navigator.navigatePopToInclusive(toRoute = CreatePassword.route, popToRoute = LoginWithEmail.route)
+    fun onLoginWithCodeButtonClicked() {
+        navigator.navigatePopTo(toRoute = LoginWithCode.route, popToRoute = LoginWithEmail.route)
     }
 }

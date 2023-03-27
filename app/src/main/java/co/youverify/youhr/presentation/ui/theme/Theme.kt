@@ -23,12 +23,13 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = yvColor,
+    primary = primaryColor,
+    onPrimary=Color.White,
     secondary = yvColor1,
     tertiary = yvColor1,
-    surface = yvSurface,
+    surface = backGroundColor,
     onSurface = textLight,
-    background = Color.White
+    background = backGroundColor
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),

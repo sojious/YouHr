@@ -10,10 +10,7 @@ import androidx.navigation.NavGraphBuilder
 import com.google.accompanist.navigation.animation.composable
 import androidx.navigation.navigation
 import co.youverify.youhr.R
-import co.youverify.youhr.presentation.Blank
-import co.youverify.youhr.presentation.OnBoardingGraph
-import co.youverify.youhr.presentation.OnBoardingPager
-import co.youverify.youhr.presentation.SignUpGraph
+import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.onboarding.BlankScreen
 import co.youverify.youhr.presentation.ui.onboarding.OnboardingPagerScreen
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -59,7 +56,7 @@ fun NavGraphBuilder.onboardingGraph(navController: NavController, density: Densi
                 pagerState = pagerState,
                 actionButtonText = stringResource(id = R.string.login),
                 onLoginButtonClicked = {
-                    navController.navigate(SignUpGraph.route){
+                    navController.navigate(LoginGraph.route){
                         launchSingleTop=true
                         popUpTo(OnBoardingPager.route){inclusive=true}
                     }

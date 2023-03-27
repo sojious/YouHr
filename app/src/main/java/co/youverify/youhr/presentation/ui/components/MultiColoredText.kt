@@ -15,7 +15,7 @@ import co.youverify.youhr.presentation.ui.theme.textLight
 @Composable
 fun MultiColoredText(
     fontSize: TextUnit,
-    modifier: Modifier,
+    modifier: Modifier=Modifier,
     colorPosition: Int,
     secondColor: Color,
     neutralColor:Color,

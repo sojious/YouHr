@@ -2,14 +2,12 @@ package co.youverify.youhr.presentation.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.SaveableStateHolder
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -37,12 +35,12 @@ fun TitledTextField(
 
    Column(
        modifier= modifier
-           .padding(horizontal = 16.dp)
+           //.padding(horizontal = 16.dp)
            .fillMaxWidth(),
    ) {
 
-       Row(modifier=Modifier.padding(bottom = 8.dp)) {
-           Text(text = fieldTitle, style = MaterialTheme.typography.titleSmall.copy(fontSize = 12.sp), color = textDim)
+       Row(modifier=Modifier.padding(bottom = 10.dp)) {
+           Text(text = fieldTitle, fontSize = 12.sp, color = textFieldTitle, fontWeight = FontWeight.Normal)
            Text(text = "*", color = errorMessage, textAlign = TextAlign.Center,modifier=Modifier.padding(start = 2.dp), fontSize = 12.sp)
        }
 
@@ -50,13 +48,20 @@ fun TitledTextField(
            modifier=Modifier.fillMaxWidth(),
            value =fieldValue ,
            onValueChange =onFieldValueChanged,
-           placeholder = { Text(text = fieldPlaceHolder, fontSize = 10.sp, lineHeight = 13.sp, color = indicatorInactive)},
+           placeholder = {
+               Text(
+                   text = fieldPlaceHolder,
+                   fontSize = 10.sp,
+                   lineHeight = 13.sp,
+                   color = deactivatedColor,
+               )
+                         },
            isError = isErrorValue,
            visualTransformation = if(hideValue) PasswordVisualTransformation() else VisualTransformation.None,
            colors = TextFieldDefaults.outlinedTextFieldColors(
                placeholderColor = indicatorInactive,
-               focusedBorderColor = yvText,
-               unfocusedBorderColor = if (isPasswordConfirmationField && isErrorValue) errorMessage else  androidx.compose.material.MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.disabled)
+               focusedBorderColor = if (isPasswordConfirmationField && isErrorValue) errorMessage else yvText,
+               unfocusedBorderColor = if (isPasswordConfirmationField && isErrorValue) errorMessage else  inputFieldColor
            ),
            trailingIcon = {
                if (isPasswordField)
@@ -67,7 +72,8 @@ fun TitledTextField(
                        .size(18.dp)
                        .clickable(onClick = onTrailingIconClicked)
                    )
-           }
+           },
+           shape = RoundedCornerShape(4.dp)
        )
 
        if (isPasswordConfirmationField && isErrorValue)
