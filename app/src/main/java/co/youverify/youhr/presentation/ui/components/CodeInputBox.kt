@@ -12,9 +12,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -31,21 +34,18 @@ fun CodeInputBox(
     codeValue2: String,
     codeValue3: String,
     codeValue4: String,
-    codeValue5: String,
-    codeValue6: String,
     onValueChanged:(String,Int)->Unit) {
 
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
-        modifier = modifier.padding(bottom = 32.dp)
+        modifier = modifier
     ) {
         CodeInputField(codeValue1,1,onValueChanged)
         CodeInputField(codeValue2,2,onValueChanged)
         CodeInputField(codeValue3,3,onValueChanged)
         CodeInputField(codeValue4,4,onValueChanged)
-        CodeInputField(codeValue5,5,onValueChanged)
-        CodeInputField(codeValue6,6,onValueChanged)
+
 
     }
 
@@ -92,8 +92,6 @@ fun CodeInputBoxPreview(){
             codeValue2 = "2",
             codeValue3 = "3",
             codeValue4 = "4",
-            codeValue5 = "5",
-            codeValue6 = "6",
             onValueChanged = { _, _ ->}
         )
     }
@@ -104,17 +102,13 @@ data class CodeInputBoxUiState(
     val input2:String,
     val input3:String,
     val input4:String,
-    val input5:String,
-    val input6:String
     ){
 
     var text1 by mutableStateOf(input1)
     var text2 by mutableStateOf(input2)
     var text3 by mutableStateOf(input3)
     var text4 by mutableStateOf(input4)
-    var text5 by mutableStateOf(input5)
-    var text6 by mutableStateOf(input6)
-    val inputs= arrayOf(text1,text2,text3,text4,text5,text6)
+    val inputs= arrayOf(text1,text2,text3,text4)
 }
 
 data class CodeInputFieldState(val code:String,val borderColor:Color){

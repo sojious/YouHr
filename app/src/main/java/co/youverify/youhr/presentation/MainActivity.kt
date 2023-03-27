@@ -4,9 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.material.Surface
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import co.youverify.youhr.presentation.ui.Navigator
+import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.theme.YouHrTheme
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import dagger.hilt.android.AndroidEntryPoint
@@ -27,15 +30,20 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             val animatedNavController=rememberAnimatedNavController()
+
+            //A destination Listener to update the current destination in Navigator Class whenever
+            //the back button is pressed( backStack is popped)
             animatedNavController.addOnDestinationChangedListener { controller, destination, arguments ->
                 navigator.updateRouteIfOutdated(destination.route!!)
             }
 
             YouHrTheme {
-                YouHrApp(
-                    navController = animatedNavController,
-                    navigator=navigator
-                )
+                Surface {
+                    YouHrApp(
+                        navController = animatedNavController,
+                        navigator=navigator,
+                    )
+                }
             }
         }
     }

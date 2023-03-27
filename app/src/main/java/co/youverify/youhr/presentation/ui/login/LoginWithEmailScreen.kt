@@ -1,5 +1,6 @@
 package co.youverify.youhr.presentation.ui.login
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.youverify.youhr.R
 import co.youverify.youhr.presentation.ui.components.ActionButton
-import co.youverify.youhr.presentation.ui.components.ClickableMultiColoredText
 import co.youverify.youhr.presentation.ui.components.TitleText
 import co.youverify.youhr.presentation.ui.components.TitledTextField
 import co.youverify.youhr.presentation.ui.theme.yvColor2
@@ -25,7 +25,7 @@ fun LoginWithEmailScreen(
     emailValue: String,
     onEmailValueChanged: (String) -> Unit,
     onNextButtonClicked: () -> Unit,
-    onSignUpClicked: () -> Unit
+    onLoginWithCodeOptionClicked: () -> Unit
 ){
     Box(modifier = modifier.fillMaxSize()){
         Column(
@@ -35,10 +35,10 @@ fun LoginWithEmailScreen(
         ) {
             TitleText(text = stringResource(id = R.string.login_to_your_account))
 
-            Text(text = stringResource(id = R.string.sign_in_to_your_account))
+            //Text(text = stringResource(id = R.string.sign_in_to_your_account))
             
             TitledTextField(
-                modifier=Modifier.padding(top=64.dp, bottom = 20.dp),
+                modifier=Modifier.padding(top=60.dp, bottom = 36.dp, start = 20.dp, end = 20.dp),
                 fieldTitle = stringResource(id = R.string.work_email),
                 fieldValue =emailValue ,
                 fieldPlaceHolder =stringResource(id = R.string.work_email_placeholder) ,
@@ -48,15 +48,19 @@ fun LoginWithEmailScreen(
                 isPasswordField = false
             )
             
-            ActionButton(text = stringResource(id = R.string.next), onButtonClicked = onNextButtonClicked)
-            ClickableMultiColoredText(
-                modifier = Modifier.padding(top=8.dp),
-                colorPosition =1 ,
-                secondColor = yvColor2 ,
+            ActionButton(
+                text = stringResource(id = R.string.next),
+                onButtonClicked = onNextButtonClicked,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Text(
+                text="Log In With Code",
+                modifier = Modifier.padding(top=16.dp, start = 20.dp)
+                    .align(Alignment.Start)
+                    .clickable {  onLoginWithCodeOptionClicked()},
                 fontSize = 12.sp,
-                onColoredTextClicked = onSignUpClicked,
-                stringResource(id = R.string.dont_have_account),
-                stringResource(id = R.string.dont_have_account_colored)
+                lineHeight=16.3.sp,
+                color= yvColor2,
             )
             
         }
@@ -67,6 +71,6 @@ fun LoginWithEmailScreen(
 @Composable
 fun LoginScreen(){
     Surface {
-        LoginWithEmailScreen(emailValue ="", onEmailValueChanged ={}, onNextButtonClicked = {}, onSignUpClicked = {})
+        LoginWithEmailScreen(emailValue ="", onEmailValueChanged ={}, onNextButtonClicked = {}, onLoginWithCodeOptionClicked = {})
     }
 }

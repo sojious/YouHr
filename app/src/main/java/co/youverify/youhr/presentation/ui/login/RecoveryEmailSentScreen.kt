@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,6 +20,7 @@ import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.ClickableMultiColoredText
 import co.youverify.youhr.presentation.ui.components.TitleText
 import co.youverify.youhr.presentation.ui.theme.yvColor2
+import co.youverify.youhr.presentation.ui.theme.yvText
 
 @Composable
 fun RecoveryEmailSentScreen(
@@ -48,14 +50,19 @@ fun RecoveryEmailSentScreen(
             ClickableMultiColoredText(
                 modifier = Modifier.padding(top=16.dp, bottom = 64.dp),
                 colorPosition =1 ,
-                secondColor = yvColor2 ,
+                secondColor = yvText ,
                 fontSize = 12.sp,
                 onColoredTextClicked = onContactSupportClicked,
+                FontWeight.Bold,
                 stringResource(id = R.string.didnt_get_recovery_link),
                 stringResource(id = R.string.contact_support)
             )
 
-            ActionButton(text = stringResource(id = R.string.got_it), onButtonClicked = onGotItButtonClicked)
+            ActionButton(
+                text = stringResource(id = R.string.got_it),
+                onButtonClicked = onGotItButtonClicked,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
 
         }
     }

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -114,6 +115,7 @@ fun CreatePasswordScreen(
             secondColor = yvColor,
             fontSize=10.sp,
             onColoredTextClicked = onTermsAndConditionsClicked,
+            FontWeight.Normal,
             stringResource(id = R.string.by_creating_account),
             stringResource(id = R.string.terms)
         )

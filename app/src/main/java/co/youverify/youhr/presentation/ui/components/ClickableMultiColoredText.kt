@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import co.youverify.youhr.presentation.ui.theme.textLight
 import co.youverify.youhr.presentation.ui.theme.yvColor1
@@ -17,6 +18,7 @@ fun ClickableMultiColoredText(
     secondColor:Color,
     fontSize:TextUnit,
     onColoredTextClicked:() -> Unit,
+    coloredTextWeight:FontWeight,
     vararg parts:String
 ){
    Row(modifier = modifier) {
@@ -25,7 +27,8 @@ fun ClickableMultiColoredText(
                modifier=Modifier.clickable(onClick = onColoredTextClicked),
                text =parts[index],
                fontSize=fontSize,
-               color = if (index==colorPosition) secondColor else textLight
+               color = if (index==colorPosition) secondColor else textLight,
+               fontWeight = if (index==colorPosition) coloredTextWeight else FontWeight.Normal
            )
        }
    }

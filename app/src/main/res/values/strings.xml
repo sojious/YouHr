@@ -10,12 +10,12 @@
     <string name="by_creating_account">"By creating an account, you agree to "</string>
     <string name="terms">Terms and Conditions</string>
     <string name="you_got_mail">You\'ve Got Mail</string>
-    <string name="congratulations">Congratulations, your account has successfully been created. Please check your email for login credentials.</string>
+    <string name="congratulations">Congratulations, your account has successfully been created. Please check your email for your login credentials and next steps.</string>
     <string name="create_code_btn">Create Code</string>
     <string name="create_code">Create A Code</string>
     <string name="create_code_message">Create a code for swift login. You can skip this process as this option will be available in account settings</string>
     <string name="sign_in_to_your_account">Sign in to your YouHR account</string>
-    <string name="login_to_your_account">Login to your account</string>
+    <string name="login_to_your_account">Login To Your Account</string>
     <string name="work_email">Work Email</string>
     <string name="work_email_placeholder">Name@business.com</string>
     <string name="next">Next</string>
@@ -28,7 +28,7 @@
     <string name="recovery_email_sent_message">Check your email for a link to reset your password. If it doesn’t appear within a few minutes, please check your spam folder</string>
     <string name="didnt_get_recovery_link">"Didn’t get a link?, "</string>
     <string name="contact_support">contact support</string>
-    <string name="got_it">Okay, got it!</string>
+    <string name="got_it">Okay, Got It!</string>
     <string name="reset_password_title">Reset Password</string>
     <string name="reset_password_message">Enter a verified email address and we will send you a password reset link</string>
     <string name="password_reset_success">Congratulations, your account has successfully been created. Please check your email for your login credentials and next steps</string>
@@ -39,4 +39,5 @@
     <string name="work_tool_request">Work Tool\nRequest</string>
     <string name="document_upload">Document\nUpload</string>
     <string name="leave_request">Leave\nRequest</string>
+    <string name="send_password_reset">Send Password Reset Email</string>
 </resources>

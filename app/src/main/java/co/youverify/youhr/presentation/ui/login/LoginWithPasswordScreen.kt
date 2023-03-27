@@ -17,6 +17,7 @@ import co.youverify.youhr.R
 import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.TitleText
 import co.youverify.youhr.presentation.ui.components.TitledTextField
+import co.youverify.youhr.presentation.ui.theme.primaryColor
 import co.youverify.youhr.presentation.ui.theme.yvColor
 
 @Composable
@@ -40,10 +41,9 @@ fun LoginWithPasswordScreen(
         ) {
             TitleText(text = stringResource(id = R.string.login_to_your_account))
 
-            Text(text = stringResource(id = R.string.sign_in_to_your_account))
 
             TitledTextField(
-                modifier=Modifier.padding(top=64.dp, bottom = 10.dp),
+                modifier=Modifier.padding(top=60.dp, start = 20.dp, end = 20.dp),
                 fieldTitle = stringResource(id = R.string.password),
                 fieldValue =passwordValue ,
                 fieldPlaceHolder =stringResource(id = R.string.password_login_placeholder) ,
@@ -60,13 +60,13 @@ fun LoginWithPasswordScreen(
             Text(
                 text = stringResource(id = R.string.forgot_password),
                 fontSize = 12.sp,
-                modifier = Modifier.padding(end=16.dp).align(Alignment.End).clickable(onClick = onForgotPasswordClicked),
-                color = yvColor
+                modifier = Modifier.padding(end=20.dp, top = 16.dp, bottom = 36.dp).align(Alignment.End).clickable(onClick = onForgotPasswordClicked),
+                color = primaryColor
             )
 
             ActionButton(
-                modifier=Modifier.padding(top = 24.dp),
-                text = stringResource(id = R.string.next),
+                modifier=Modifier.padding(horizontal = 20.dp),
+                text = stringResource(id = R.string.login),
                 onButtonClicked = onLoginButtonClicked
             )
 

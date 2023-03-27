@@ -14,35 +14,39 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.youverify.youhr.R
+import co.youverify.youhr.presentation.CodeCreationSuccess
 import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.TitleText
+import co.youverify.youhr.presentation.ui.theme.textLight
 
 @Composable
-fun ResetPasswordSuccessScreen(modifier: Modifier=Modifier, onLoginRedirectButtonClicked:()->Unit){
+fun CodeCreationSuccessScreen(modifier: Modifier=Modifier, onLoginRedirectButtonClicked:()->Unit){
 
        Column(
            modifier=modifier
                .fillMaxSize()
-               .padding(horizontal = 8.dp)
+               //.padding(horizontal = 8.dp)
                .verticalScroll(rememberScrollState()),
            horizontalAlignment = Alignment.CenterHorizontally
        ) {
 
            TitleText(
-               modifier=Modifier.padding(top=150.dp),
+               modifier=Modifier.padding(top=157.dp),
                text = stringResource(id = R.string.you_got_mail)
            )
            Text(
-               modifier=Modifier.padding(start=8.dp,end=8.dp,bottom = 64.dp),
+               modifier=Modifier.padding(start=25.dp,end=15.dp,bottom = 124.dp),
                text = stringResource(id = R.string.password_reset_success),
                fontSize = 12.sp,
                lineHeight = 16.sp,
-               textAlign = TextAlign.Center
+               textAlign = TextAlign.Center,
+               color = textLight
            )
 
            ActionButton(
                text = stringResource(id = R.string.login_redirect),
-               onButtonClicked = onLoginRedirectButtonClicked
+               onButtonClicked = onLoginRedirectButtonClicked,
+               modifier = Modifier.padding(start = 25.dp,end=15.dp)
            )
        }
 
@@ -53,6 +57,6 @@ fun ResetPasswordSuccessScreen(modifier: Modifier=Modifier, onLoginRedirectButto
 fun ResetPassWordSuccessScreenReview(){
 
     Surface {
-        ResetPasswordSuccessScreen(onLoginRedirectButtonClicked = {})
+        CodeCreationSuccessScreen(onLoginRedirectButtonClicked = {})
     }
 }
