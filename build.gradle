@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        compose_version = '1.5.0-alpha01'
+        compose_version = '1.4.0'
         retrofitVersion = "2.9.0"
         gsonVersion = "2.10"
         okHttp3Version = "5.0.0-alpha.10"
@@ -13,5 +13,5 @@ buildscript {
 plugins {
     id 'com.android.application' version '7.4.2' apply false
     id 'com.android.library' version '7.4.2' apply false
-    id 'org.jetbrains.kotlin.android' version '1.8.0' apply false
+    id 'org.jetbrains.kotlin.android' version '1.8.10' apply false
 }

@@ -3,6 +3,7 @@ package co.youverify.youhr.presentation.ui.task
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -10,7 +11,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,11 +36,20 @@ fun TaskListScreen(
     dateDropDownExpanded:Boolean,
     onCategorySpinnerClicked:()->Unit,
     onDateSpinnerClicked:()->Unit,
+    categoryDropDownOnDismissCallBack:()->Unit,
+    dateDropDownOnDismissCallBack:()->Unit,
+    onTaskItemClicked:(Int)->Unit,
+    onPendingClicked: () -> Unit,
+    onCompletedClicked: () -> Unit
+
+
 ){
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(21.dp)
     ) {
+        //var task1 by remember{ mutableStateOf(pendingTasks) }
+
 
         TopSection(
             title = "My Tasks",
@@ -47,9 +57,13 @@ fun TaskListScreen(
             dateExpanded=dateDropDownExpanded,
             onCategorySpinnerClicked=onCategorySpinnerClicked,
             onDateSpinnerClicked=onDateSpinnerClicked,
+            dateDropDownOnDismissCallBack = dateDropDownOnDismissCallBack,
+            categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
+            onPendingClicked = onPendingClicked,
+            onCompletedClicked = onCompletedClicked
         )
         Divider(thickness = 1.dp, color = codeInputUnfocused, modifier = Modifier.fillMaxWidth())
-        TaskList(tasks = tasks,state=listState)
+        TaskList(tasks = tasks, state =listState, onTaskItemClicked =onTaskItemClicked)
     }
 }
 
@@ -62,7 +76,11 @@ fun TopSection(
     categoryExpanded: Boolean,
     dateExpanded: Boolean,
     onCategorySpinnerClicked: () -> Unit,
-    onDateSpinnerClicked: () -> Unit
+    onDateSpinnerClicked: () -> Unit,
+    dateDropDownOnDismissCallBack: () -> Unit,
+    categoryDropDownOnDismissCallBack: () -> Unit,
+    onPendingClicked: () -> Unit,
+    onCompletedClicked: () -> Unit
 ) {
     ConstraintLayout(modifier = modifier
         .padding(top = 36.dp)
@@ -85,7 +103,9 @@ fun TopSection(
             modifier= Modifier.constrainAs(dateSpinner){
                 top.linkTo(categorySpinner.top)
                 start.linkTo(categorySpinner.end,8.dp)
-            }
+            },
+            onDateSpinnerClicked=onDateSpinnerClicked,
+            dateDropDownOnDismissCallBack = dateDropDownOnDismissCallBack
         )
 
         CategorySpinner(
@@ -93,32 +113,61 @@ fun TopSection(
                 top.linkTo(titleText.bottom,24.dp)
                 bottom.linkTo(parent.bottom,16.dp)
                 start.linkTo(titleText.start)
-            }
+            },
+            onCategorySpinnerClicked=onCategorySpinnerClicked,
+            categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
+            onPendingClicked = onPendingClicked,
+            onCompletedClicked = onCompletedClicked,
         )
 
     }
 }
 
 @Composable
-fun TaskList(modifier: Modifier=Modifier, tasks:List<Task>, state:LazyListState) {
+fun TaskList(
+    modifier: Modifier = Modifier,
+    tasks: List<Task>,
+    state: LazyListState,
+    onTaskItemClicked: (Int) -> Unit
+) {
+
+    val listState= rememberLazyListState()
     LazyColumn(modifier = modifier
         .fillMaxSize(),
         //.background(color = Color.Yellow),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+        state = listState
     ){
         val isCompletedTask=tasks.first().isCompleted
 
 
         itemsIndexed(items = tasks){index,task->
 
-            if(isCompletedTask) CompletedTaskItem(modifier=Modifier.padding(horizontal = 20.dp),task = task,index=index)
-            else PendingTaskItem(modifier=Modifier.padding(horizontal = 20.dp),task = task,index=index)
+            if(isCompletedTask) CompletedTaskItem(
+                modifier =Modifier.padding(horizontal = 20.dp),
+                task = task,
+                index =index,
+                onTaskItemClicked =onTaskItemClicked)
+            else PendingTaskItem(
+                modifier =Modifier.padding(horizontal = 20.dp),
+                task = task,
+                index =index,
+                onTaskItemClicked =onTaskItemClicked)
         }
     }
 }
 
 @Composable
-fun CategorySpinner(modifier: Modifier=Modifier) {
+fun CategorySpinner(
+    modifier: Modifier=Modifier,
+    onCategorySpinnerClicked: () -> Unit,
+    categoryDropDownOnDismissCallBack: () -> Unit,
+    onPendingClicked:()->Unit,
+    onCompletedClicked:()->Unit
+) {
+
+    var categorySpinnerText by remember{mutableStateOf("Pending")}
+    var categorySpinnerDropDownExpanded by remember{ mutableStateOf(false) }
     Box(
         modifier = modifier
             .size(96.dp, 28.dp)
@@ -133,7 +182,7 @@ fun CategorySpinner(modifier: Modifier=Modifier) {
             )
         
         Text(
-            text = "Pending",
+            text = categorySpinnerText,
             fontSize = 10.sp,
             lineHeight = 20.sp,
             fontWeight = FontWeight.Medium,
@@ -143,7 +192,11 @@ fun CategorySpinner(modifier: Modifier=Modifier) {
         )
 
         IconButton(
-            onClick = {},
+            onClick = {
+
+                     if(categorySpinnerText!="Pending") categorySpinnerText="Completed"
+                onCategorySpinnerClicked()
+            },
             modifier= Modifier
                 .align(Alignment.CenterStart)
                 .padding(start = 70.67.dp)
@@ -151,16 +204,23 @@ fun CategorySpinner(modifier: Modifier=Modifier) {
             Icon(painter = painterResource(id = R.drawable.ic_spinner), contentDescription =null )
         }
 
-        DropdownMenu(expanded = false, onDismissRequest = { }) {
-            DropdownMenuItem(text = { Text(text = "Pending", fontSize = 12.sp, color = yvText)}, onClick = {})
-            DropdownMenuItem(text = { Text(text = "Completed", fontSize = 12.sp, color = yvText)}, onClick = {})
+        DropdownMenu(expanded = categorySpinnerDropDownExpanded, onDismissRequest = { categoryDropDownOnDismissCallBack()}) {
+            DropdownMenuItem(text = { Text(text = "Pending", fontSize = 12.sp, color = yvText)}, onClick = {
+                onPendingClicked()
+            })
+            DropdownMenuItem(text = { Text(text = "Completed", fontSize = 12.sp, color = yvText)}, onClick = {
+                onCompletedClicked()
+            })
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateSpinner(modifier: Modifier=Modifier) {
+fun DateSpinner(
+    modifier: Modifier=Modifier,
+    onDateSpinnerClicked: () -> Unit,
+    dateDropDownOnDismissCallBack: () -> Unit
+) {
 
     Box(
         modifier = modifier
@@ -181,7 +241,9 @@ fun DateSpinner(modifier: Modifier=Modifier) {
         )
 
         IconButton(
-            onClick = {},
+            onClick = {
+                      onDateSpinnerClicked()
+            },
             modifier= Modifier
                 .align(Alignment.CenterStart)
                 .padding(start = 115.67.dp)
@@ -189,8 +251,8 @@ fun DateSpinner(modifier: Modifier=Modifier) {
             Icon(painter = painterResource(id = R.drawable.ic_spinner), contentDescription =null )
         }
 
-        DropdownMenu(expanded = false, onDismissRequest = { }) {
-            DatePickerDialog(
+        DropdownMenu(expanded = false, onDismissRequest = {dateDropDownOnDismissCallBack() }) {
+            /*DatePickerDialog(
                 onDismissRequest = {},
                 confirmButton = {},
                 shape = RoundedCornerShape(10.dp),
@@ -201,7 +263,7 @@ fun DateSpinner(modifier: Modifier=Modifier) {
                     state = rememberDatePickerState() ,
 
                 )
-            }
+            }*/
         }
     }
 }
@@ -211,6 +273,7 @@ fun PendingTaskItem(
     modifier: Modifier = Modifier,
     task: Task,
     index: Int,
+    onTaskItemClicked: (Int) -> Unit,
 ){
 
 
@@ -222,6 +285,9 @@ fun PendingTaskItem(
             //.padding(horizontal = 20.dp)
             .fillMaxWidth()
             .height(72.dp)
+            .clickable {
+                onTaskItemClicked(index)
+            }
 
     ) {
         Box(
@@ -279,7 +345,8 @@ fun PendingTaskItem(
                         start.linkTo(clockIcon.start)
                         top.linkTo(dueDateText.bottom,8.dp)
                         bottom.linkTo(parent.bottom,8.dp)
-                        width= Dimension.value(287.dp)
+                        end.linkTo(checkBox.start,60.dp)
+                        width= Dimension.fillToConstraints
                     },
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
@@ -311,7 +378,12 @@ fun PendingTaskItem(
 
 
 @Composable
-fun CompletedTaskItem(modifier: Modifier = Modifier, task: Task,index: Int){
+fun CompletedTaskItem(
+    modifier: Modifier = Modifier,
+    task: Task,
+    index: Int,
+    onTaskItemClicked: (Int) -> Unit
+){
 
 
     Row(
@@ -319,6 +391,9 @@ fun CompletedTaskItem(modifier: Modifier = Modifier, task: Task,index: Int){
             //.padding(horizontal = 20.dp)
             .fillMaxWidth()
             .height(72.dp)
+            .clickable {
+                onTaskItemClicked(index)
+            }
 
     ) {
 
@@ -355,7 +430,8 @@ fun CompletedTaskItem(modifier: Modifier = Modifier, task: Task,index: Int){
                     modifier = Modifier.constrainAs(descriptionText){
                         start.linkTo(parent.start)
                         centerVerticallyTo(parent)
-                        width= Dimension.value(287.dp)
+                        end.linkTo(checkBox.start,60.dp)
+                        width= Dimension.fillToConstraints
 
                     },
                     fontSize = 14.sp,
@@ -400,7 +476,12 @@ fun TaskListScreenPreview(){
                 categoryDropDownExpanded = false,
                 dateDropDownExpanded = false,
                 onCategorySpinnerClicked = {},
-                onDateSpinnerClicked = {}
+                onDateSpinnerClicked = {},
+                onTaskItemClicked = {},
+                categoryDropDownOnDismissCallBack = {},
+                dateDropDownOnDismissCallBack = {},
+                onCompletedClicked = {},
+                onPendingClicked = {}
             )
         }
 
@@ -422,7 +503,7 @@ fun PendingTaskItemPreview(){
                     project = "Employee Onboarding"
                 ),
                 index = 0
-            )
+            ) {}
         }
 
     }
@@ -445,7 +526,7 @@ fun CompletedTaskItemPreview(){
                     project = "Employee Onboarding"
                 ),
                 index = 0
-            )
+            ) {}
         }
 
     }

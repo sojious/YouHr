@@ -1,6 +1,7 @@
 package co.youverify.youhr.di
 
 import co.youverify.youhr.BuildConfig
+import co.youverify.youhr.core.util.SERVER_URL
 import co.youverify.youhr.data.remote.YouHrService
 import dagger.Module
 import dagger.Provides
@@ -23,7 +24,7 @@ object NetworkModule {
     @Singleton
     fun provideYouHrService(okHttpClient: OkHttpClient): YouHrService =
         Retrofit.Builder()
-            .baseUrl(BuildConfig.SERVER_URL)
+            .baseUrl(SERVER_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

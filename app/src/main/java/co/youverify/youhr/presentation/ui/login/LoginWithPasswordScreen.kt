@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,9 +30,16 @@ fun LoginWithPasswordScreen(
     onPasswordValueChanged: (String) -> Unit,
     onLoginButtonClicked: () -> Unit,
     onHidePasswordIconClicked: () -> Unit,
-    onForgotPasswordClicked: () -> Unit
+    onForgotPasswordClicked: () -> Unit,
+    uiState: UiState,
 ){
+
     Box(modifier = modifier.fillMaxSize()){
+
+
+
+
+
         Column(
             modifier = Modifier
                 .padding(horizontal = 4.dp)
@@ -52,7 +60,7 @@ fun LoginWithPasswordScreen(
                 onFieldValueChanged =onPasswordValueChanged ,
                 isPasswordConfirmationField = true,
                 isPasswordField = true,
-                passWordErrorMessage = "Password Is Incorrect",
+                passWordErrorMessage =uiState.authenticationError,
                 onTrailingIconClicked = onHidePasswordIconClicked
             )
 
@@ -60,7 +68,10 @@ fun LoginWithPasswordScreen(
             Text(
                 text = stringResource(id = R.string.forgot_password),
                 fontSize = 12.sp,
-                modifier = Modifier.padding(end=20.dp, top = 16.dp, bottom = 36.dp).align(Alignment.End).clickable(onClick = onForgotPasswordClicked),
+                modifier = Modifier
+                    .padding(end = 20.dp, top = 16.dp, bottom = 36.dp)
+                    .align(Alignment.End)
+                    .clickable(onClick = onForgotPasswordClicked),
                 color = primaryColor
             )
 
@@ -71,6 +82,9 @@ fun LoginWithPasswordScreen(
             )
 
         }
+
+        if (uiState.loading)
+            CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
     }
 }
 
@@ -85,7 +99,8 @@ fun LoginPassWordScreenPreview(){
             onLoginButtonClicked = {},
             onHidePasswordIconClicked = {},
             onForgotPasswordClicked = {},
-            hidePassword = true
+            hidePassword = true,
+            uiState = UiState()
         )
     }
 }

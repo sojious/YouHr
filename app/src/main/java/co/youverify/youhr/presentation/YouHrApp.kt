@@ -3,6 +3,7 @@ package co.youverify.youhr.presentation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,6 +24,7 @@ import co.youverify.youhr.presentation.ui.theme.bottomNavBackgroundColor
 import co.youverify.youhr.presentation.ui.theme.bottomNavSelectedItemColor
 import co.youverify.youhr.presentation.ui.theme.bottomNavUnselectedItemColor
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YouHrApp(
     modifier: Modifier = Modifier,

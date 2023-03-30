@@ -41,9 +41,11 @@ fun TaskDetailScreen(
     modifier: Modifier = Modifier,
     //navController: NavHostController,
     //taskDetailViewModel: TaskDetailViewModel,
+    taskId:Int,
+    currentTaskList:List<Task>,
     taskMessage: String,
     onTaskMessageChanged:(String)->Unit,
-    onSendMessageButtonClicked:()->Unit
+    onSendMessageButtonClicked:()->Unit,
 ){
    // val taskId=taskDetailViewModel.taskId
     val task= pendingTasks[0]// should be gotten from the database using the id
@@ -54,18 +56,18 @@ fun TaskDetailScreen(
         YouHrTitleBar(
             title = "Interview With Candidate For Product Design Role",
             navController = rememberAnimatedNavController(),
-            modifier = Modifier.padding(top=36.dp)
+            modifier = Modifier.padding(top=36.dp, start = 21.dp,end=20.dp)
         )
         Divider(thickness = 0.2.dp, color = codeInputUnfocused, modifier = Modifier
             .fillMaxWidth()
             .padding( top = 16.dp, bottom = 22.dp))
-        AssigneeInfo(task=task, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=20.dp))
-        DateInfo(task=task, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=20.dp))
-        ProjectInfo(task=task, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=32.dp))
-        TaskDescription(task=task, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=10.dp))
+        AssigneeInfo(task=currentTaskList[taskId], modifier = Modifier.padding(start = 21.dp,end=34.dp,bottom=20.dp))
+        DateInfo(task=currentTaskList[taskId], modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=20.dp))
+        ProjectInfo(task=currentTaskList[taskId], modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=32.dp))
+        TaskDescription(task=currentTaskList[taskId], modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=10.dp))
         AttachmentsSection(task = pendingTasks.first(),modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=23.dp))
         TaskActivitiesSection()
-        Divider(thickness = 5.dp, color = taskActivitiesBackGroundColor, modifier = Modifier.fillMaxWidth())
+        Divider(thickness = 1.dp, color = taskActivitiesBackGroundColor, modifier = Modifier.fillMaxWidth())
         TaskMessageBox(
             textFieldValue =taskMessage,
             onTextFieldValueChanged =onTaskMessageChanged,
@@ -82,7 +84,7 @@ fun TaskDetailScreen(
 fun TaskActivitiesSection(modifier: Modifier=Modifier) {
     Column(
         modifier = modifier
-            .background(color = taskActivitiesBackGroundColor)
+            .background(color = taskActivitiesBackGroundColor2)
             .padding(start = 20.dp, top = 11.dp, bottom = 17.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -188,7 +190,7 @@ fun DateInfo(task: Task, modifier: Modifier=Modifier) {
                 }
                 .padding(4.dp),
             contentAlignment = Alignment.Center,
-            content = { Icon(painter= painterResource(id = R.drawable.material_symbols_calendar_today_rounded), contentDescription = null) }
+            content = { Image(painter= painterResource(id = R.drawable.material_symbols_calendar_today_rounded), contentDescription = null) }
         )
 
 
@@ -373,10 +375,11 @@ fun TaskDetailScreenPreview(){
            // navController = rememberAnimatedNavController(),
            // taskDetailViewModel = ,
             taskMessage ="" ,
-            onTaskMessageChanged ={}
-        ) {
-
-        }
+            onTaskMessageChanged ={},
+            onSendMessageButtonClicked = {},
+            taskId = 0,
+            currentTaskList = pendingTasks
+        )
     }
 }
 

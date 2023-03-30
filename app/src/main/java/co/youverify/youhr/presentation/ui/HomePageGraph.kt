@@ -2,6 +2,7 @@ package co.youverify.youhr.presentation.ui
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material3.DrawerState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
@@ -14,7 +15,9 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class,
+    ExperimentalMaterial3Api::class
+)
 fun NavGraphBuilder.HomePageGraph(
     homePageViewModel:HomeViewModel,
     pagerState: PagerState,

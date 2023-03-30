@@ -14,8 +14,8 @@ interface YouHrService {
     suspend fun loginWithCode( @Body loginWithCodeRequest: LoginWithCodeRequest): Response<AuthResponse>
 
     @POST("user/resetpassword")
-    suspend fun resetPassword( @Body resetPasswordRequest: ResetPasswordRequest): Response<AuthResponse>
+    suspend fun resetPassword( @Body resetPasswordRequest: ResetPasswordRequest): Response<GenericResponse>
 
     @POST("user/setpasscode")
-    suspend fun createCode(@Body createCodeRequest:CreateCodeRequest): Response<AuthResponse>
+    suspend fun createCode(@Body createCodeRequest:CreateCodeRequest): Response<GenericResponse>
 }

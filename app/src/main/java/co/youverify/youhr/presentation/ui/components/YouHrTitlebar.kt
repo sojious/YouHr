@@ -3,6 +3,7 @@ package co.youverify.youhr.presentation.ui.components
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -32,9 +33,12 @@ fun YouHrTitleBar(modifier: Modifier = Modifier, title: String,navController: Na
         IconButton(
             modifier= Modifier
                 //.fillMaxWidth()
+                .size(16.dp)
                 .constrainAs(backArrow) {
-                    start.linkTo(parent.start, 24.dp)
-                    centerVerticallyTo(parent)
+                    start.linkTo(parent.start, 4.42.dp)
+                    //centerVerticallyTo(parent)
+                    top.linkTo(parent.top, 4.4.dp)
+                    //width=Dimension.fillToConstraints
                 },
             onClick = {
                       navController.popBackStack()
@@ -55,7 +59,8 @@ fun YouHrTitleBar(modifier: Modifier = Modifier, title: String,navController: Na
             textAlign = TextAlign.Center,
             modifier=Modifier.constrainAs(titleText){
                 start.linkTo(backArrow.end,14.dp)
-                end.linkTo(parent.end,21.dp)
+                end.linkTo(parent.end)
+                top.linkTo(parent.top)
                width= Dimension.fillToConstraints
             },
 

@@ -4,10 +4,14 @@ package co.youverify.youhr.presentation.ui
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.material.Snackbar
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.hilt.navigation.compose.hiltViewModel
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
@@ -17,6 +21,7 @@ import co.youverify.youhr.presentation.ui.signup.CreateCodeScreen
 import co.youverify.youhr.presentation.ui.signup.CreateCodeViewModel
 
 import com.google.accompanist.navigation.animation.composable
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.loginGraph(
@@ -55,9 +60,23 @@ fun NavGraphBuilder.loginGraph(
         }
 
         //Create Code Screen
-        composable(route=LoginWithPassword.route){
+        composable(
+            route=LoginWithPassword.routWithArgs,
+            arguments = LoginWithPassword.args
+        ){
 
 
+
+            val uiState by loginWithPassWordViewModel.uIStatFlow.collectAsState()
+
+            val snackBarHostState=remember{ SnackbarHostState()}
+
+            LaunchedEffect(key1 = true){
+                loginWithPassWordViewModel.uiEventFlow.collectLatest {event->
+                    if (event is UiEvent.ShowSnackBar)
+                        snackBarHostState.showSnackbar(message =event.message, duration = SnackbarDuration.Long )
+                }
+            }
 
 
             LoginWithPasswordScreen(
@@ -69,7 +88,8 @@ fun NavGraphBuilder.loginGraph(
                 } ,
                 onLoginButtonClicked = {loginWithPassWordViewModel.logUserIn()},
                 onHidePasswordIconClicked = {loginWithPassWordViewModel.togglePasswordVisibility()},
-                onForgotPasswordClicked = { loginWithPassWordViewModel.onForgetPasswordClicked() }
+                onForgotPasswordClicked = { loginWithPassWordViewModel.onForgetPasswordClicked() },
+                uiState = uiState
             )
         }
         

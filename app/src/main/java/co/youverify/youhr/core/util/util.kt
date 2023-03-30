@@ -1,5 +1,9 @@
 package co.youverify.youhr.core.util
 
+import co.youverify.youhr.data.model.GenericResponse
+import retrofit2.HttpException
+import retrofit2.Response
+import java.io.IOException
 import java.util.*
 
 fun Date.toOrdinalDateString(includeOf:Boolean=true):String{
@@ -73,4 +77,31 @@ fun String.capitalizeWords():String =
         word.replaceFirstChar {character->
         character.uppercase()
     }
+}
+
+ suspend fun<T:Any> handleApi(callApi: suspend () -> Response<T>):NetworkResult<T>{
+
+
+   return try{
+        val response=callApi()
+        val body=response.body()
+
+       //for a response with a body
+        if (response.isSuccessful && body!=null)
+            NetworkResult.Success(data = body)
+        else
+            //for a response with error message
+            NetworkResult.Error(code=response.code(), message = response.message())
+
+
+       //for exceptions
+    }catch (exception:HttpException){
+        NetworkResult.Exception(e=exception, genericMessage = "Oops..Something went wrong")
+    }catch (exception: IOException){
+        NetworkResult.Exception(e=exception, genericMessage = "Could not reach Server, Check your Internet Connection")
+    }catch (exception:Throwable){
+        NetworkResult.Exception(e=exception, genericMessage = "Oops..An error occurred from the server")
+    }
+
+
 }

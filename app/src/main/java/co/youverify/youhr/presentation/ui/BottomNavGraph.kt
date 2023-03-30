@@ -1,6 +1,7 @@
 package co.youverify.youhr.presentation.ui
 
 import androidx.compose.material3.DrawerState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.navigation
@@ -12,7 +13,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 
 
-@OptIn( ExperimentalPagerApi::class)
+@OptIn( ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.BottomNavGraph(
     navController: NavHostController,
     homeViewModel: HomeViewModel,

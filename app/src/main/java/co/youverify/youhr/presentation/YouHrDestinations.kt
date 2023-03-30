@@ -81,7 +81,15 @@ object LoginWithEmail:YouHrDestination{
 
 object LoginWithPassword:YouHrDestination{
     override val route="loginWithPassword"
+     const val userEmailArg="userEmail"
+    val routWithArgs="${route}/{$userEmailArg}"
+    val args = listOf(
+        navArgument(name = userEmailArg){
+            type= NavType.StringType
+        }
+    )
 }
+
 
 object RecoveryEmailSent:YouHrDestination{
     override val route="recoveryEmailSent"
@@ -102,7 +110,7 @@ object TaskList:YouHrDestination{
 object TaskDetail:YouHrDestination{
     override val route="taskDetail"
     val taskIdArg="taskId"
-    val routWithArgs="$route/$taskIdArg"
+    val routWithArgs="$route/{$taskIdArg}"
     val args = listOf(
         navArgument(name = taskIdArg){
             type= NavType.IntType

@@ -46,7 +46,7 @@ import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
 import java.util.*
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomePageScreen(
     //modifier: Modifier = Modifier,
@@ -77,7 +77,7 @@ fun HomePageScreen(
         content = {
             ScreenContent(
                 modifier =Modifier.fillMaxSize(),
-                userName = userName,
+                userName = "Edith",
                 notificationCount =notificationCount,
                 profilePhotoResId =profilePhotoResId,
                 onNotificationClicked = onNotificationIconClicked,
@@ -595,7 +595,7 @@ fun ProfileSection(
                 .constrainAs(profileImage, constrainBlock = {
                     start.linkTo(parent.start, 0.dp)
                 }),
-            painter = painterResource(id = profilePhotoResId) ,
+            painter = painterResource(id =R.drawable.profile_photo_edith) ,
             contentDescription =""
         )
 
@@ -615,7 +615,7 @@ fun ProfileSection(
             )
 
             Text(
-                text = userName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
+                text ="Edith", //userName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
                 modifier= Modifier
                     .padding(top = 2.dp)
                     .constrainAs(profileName, constrainBlock = {
@@ -769,7 +769,7 @@ fun QuickAccessItem(modifier: Modifier = Modifier, imageResId: Int, index: Int, 
 }
 
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun HomePageScreenPreview(){
@@ -945,27 +945,31 @@ val dummyAnnouncement=Announcement(
 
 val announcements= listOf(
     dummyAnnouncement,
-    dummyAnnouncement.copy(announcer = "Tehila Smith"),
-    dummyAnnouncement.copy(announcer = "Ann Baker"),
-    dummyAnnouncement.copy(announcer = "Ann Baker"),
-    dummyAnnouncement.copy(announcer = "Favour Ceasar"),
-)
+    dummyAnnouncement.copy(announcer = "Tehila Smith", message = "Today is Tehila’s birthday, say happy birthday to her!!!"),
+    dummyAnnouncement.copy(announcer = "Ann Baker", message = "Getting Married soon, Congratulations!!!!!"),
+    dummyAnnouncement.copy(announcer = "Yetunde Banjo", message = "Yetunde just lost her mum, Please pay her a condolence visit"),
+    dummyAnnouncement.copy(announcer = "Favour Ceasar", message = "Favor just put to birth, say Congratulations!!!"),
+    dummyAnnouncement.copy(announcer = "Isreal Davochi", message = "Wishing Everyone a great day ahead"),
+
+    )
 
 val dummyEmployee=EmployeeOnLeave(
     R.drawable.profile_photo2,
-    "sharon chigorom",
-    "product designer",
-    "Abidat akinyele",
+    "Edna Ibeh",
+    "Product Designer",
+    "Yusuf Babatunde",
     getDate(),
     Date()
 )
 
 val employeesOnLeave= listOf(
     dummyEmployee,
-    dummyEmployee.copy(photoResId = R.drawable.profile_photo, name = "Yemisi Balogun", designation = "Product Manager", reliever = "Dunsi Falayi"),
-    dummyEmployee.copy(photoResId = R.drawable.profile_photo, name = "Yemisi Balogun", designation = "Product Manager", reliever = "Dunsi Falayi"),
-    dummyEmployee.copy(photoResId = R.drawable.profile_photo3, name = "Tochi Onah", designation = "Human Resource Manager", reliever = "Anita Duru"),
-    dummyEmployee.copy(photoResId = R.drawable.profile_photo4, name = "Kene Nsofor", designation = "Devops Engineer", reliever = "Seth Samuel")
+    dummyEmployee.copy(photoResId = R.drawable.profile_photo_israel_ajadi, name = "Isreal Ajadi", designation = "Frontend Engineer", reliever = "Fortune Goodluck"),
+    dummyEmployee.copy(photoResId = R.drawable.friend_profile, name = "Timothy John", designation = "Product Manager", reliever = "Bolanle Fadehinde"),
+    dummyEmployee.copy(photoResId = R.drawable.profile_photo_donald_njaoguani, name = "Donald Njaoguani", designation = "Human Resource Manager", reliever = "Jacob Olumide"),
+    dummyEmployee.copy(photoResId = R.drawable.profile_photo_tracy_mark, name = "Tracy Mark", designation = "Human Resource Manager", reliever = "Joseph Daniel"),
+    dummyEmployee.copy(photoResId = R.drawable.profile_photo4, name = "Kene Nsofor", designation = "Devops Engineer", reliever = "Omolade Cynthia")
+
 
 
 

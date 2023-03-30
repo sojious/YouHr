@@ -2,6 +2,8 @@ package co.youverify.youhr.presentation.ui
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,7 +31,9 @@ import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class,
+    ExperimentalMaterial3Api::class
+)
 @Composable
 fun YouHrNavHost(
     modifier: Modifier,
@@ -48,7 +52,7 @@ fun YouHrNavHost(
 
     val density= LocalDensity.current
     val pagerState = rememberPagerState()
-    val drawerState= androidx.compose.material3.rememberDrawerState(initialValue = DrawerValue.Closed)
+    val drawerState= rememberDrawerState(initialValue = DrawerValue.Closed)
 
 
 
