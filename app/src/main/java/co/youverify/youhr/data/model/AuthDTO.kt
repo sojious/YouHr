@@ -1,10 +1,16 @@
 package co.youverify.youhr.data.model
 
 
-
-data class AuthResponse(
+data class GenericResponse(
     val `data`: Data,
-    val links: List<String>,
+    val links: List<Any>,
+    val message: String,
+    val statusCode: Int,
+    val success: Boolean
+)
+data class AuthResponse(
+    val `data`: TokenData,
+    val links: List<Any>,
     val message: String,
     val statusCode: Int,
     val success: Boolean
@@ -28,8 +34,9 @@ data class CreateCodeRequest(
     val passcode: Int
 )
 
-data class Data(
-    val response: String
+data class TokenData(
+    val token: String
 )
+class Data
 
 

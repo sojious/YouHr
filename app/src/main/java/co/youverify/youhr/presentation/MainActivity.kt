@@ -5,11 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.Surface
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination
+import co.youverify.youhr.domain.repository.AuthRepository
+import co.youverify.youhr.domain.repository.PreferencesRepository
 import co.youverify.youhr.presentation.ui.Navigator
-import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.theme.YouHrTheme
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,10 +18,13 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject lateinit var navigator:Navigator
+    @Inject lateinit var preferencesRepository: PreferencesRepository
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-       // val loginViewModel: LoginViewModel by viewModel()
+
+
+
 
 
 
@@ -38,10 +39,13 @@ class MainActivity : ComponentActivity() {
             }
 
             YouHrTheme {
+
+
                 Surface {
                     YouHrApp(
                         navController = animatedNavController,
                         navigator=navigator,
+                        prefRepo = preferencesRepository
                     )
                 }
             }

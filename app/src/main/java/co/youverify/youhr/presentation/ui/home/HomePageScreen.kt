@@ -20,6 +20,8 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -29,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -58,35 +61,45 @@ fun HomePageScreen(
     pagerState: PagerState,
     onTabItemClicked: (Int) -> Unit,
     onSideNavItemClicked: (Int) -> Unit,
+    //onBackArrowClicked:()->Unit,
     activeSideNavItemIndex: Int,
     homeDrawerState:DrawerState
 
     ){
 
 
-    ModalNavigationDrawer(
-       // modifier = modifier.fillMaxSize(),
-        drawerState = homeDrawerState,
-        gesturesEnabled = true,
-        drawerContent = {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl ){
+        ModalNavigationDrawer(
+            // modifier = modifier.fillMaxSize(),
+            drawerState = homeDrawerState,
+            gesturesEnabled = true,
+            drawerContent = {
+
                 SideNav(
                     onItemClicked = onSideNavItemClicked,
                     activeIndex = activeSideNavItemIndex
                 )
-        },
-        content = {
-            ScreenContent(
-                modifier =Modifier.fillMaxSize(),
-                userName = "Edith",
-                notificationCount =notificationCount,
-                profilePhotoResId =profilePhotoResId,
-                onNotificationClicked = onNotificationIconClicked,
-                onHamburgerClicked = onHamburgerClicked,
-                pagerState = pagerState,
-                onTabClicked =onTabItemClicked
-            )
-        }
-    )
+            },
+            content = {
+
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr ){
+                    ScreenContent(
+                        modifier =Modifier.fillMaxSize(),
+                        userName = "Edith",
+                        notificationCount =notificationCount,
+                        profilePhotoResId =profilePhotoResId,
+                        onNotificationClicked = onNotificationIconClicked,
+                        onHamburgerClicked = onHamburgerClicked,
+                        pagerState = pagerState,
+                        onTabClicked =onTabItemClicked
+                    )
+                }
+
+            }
+        )
+    }
+
+
 
 }
 
@@ -97,6 +110,8 @@ fun SideNav(
     activeIndex:Int
 
 ) {
+
+
     Column(
         modifier = modifier
             .width(266.dp)
@@ -108,39 +123,41 @@ fun SideNav(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(63.dp)
-                .background(
-                    brush = Brush.horizontalGradient(listOf(yvColor, yvColor1)),
-                    shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
-                )
+                .background(brush = Brush.horizontalGradient(listOf(yvColor, yvColor1)),
+                    shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(
-                    color = primaryColor,
-                    shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
-                ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr ){
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .background(
+                        color = primaryColor,
+                        shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
+                    ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
 
-        ) {
-            
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .height(61.5.dp)
-                .background(color = primaryColor))
-            repeat(sideNavItems.size){index->
-                val item= sideNavItems[index]
-                SideNavItem(
-                    imageResId = item.imageResId,
-                    text = item.text,
-                    onClick = onItemClicked,
-                    position=index,
-                    active = index==activeIndex
-                )
+            ) {
+
+                Spacer(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(61.5.dp)
+                    .background(color = primaryColor))
+                repeat(sideNavItems.size){index->
+                    val item= sideNavItems[index]
+                    SideNavItem(
+                        imageResId = item.imageResId,
+                        text = item.text,
+                        onClick = onItemClicked,
+                        position=index,
+                        active = index==activeIndex
+                    )
+                }
             }
         }
+
+
     }
 }
 
@@ -423,7 +440,8 @@ fun EmployeeOnLeaveItem(employeeOnLeave: EmployeeOnLeave){
                     top.linkTo(parent.top)
                 }),
             painter = painterResource(id = employeeOnLeave.photoResId) ,
-            contentDescription =null
+            contentDescription =null,
+            contentScale = ContentScale.Crop
         )
 
         Text(
@@ -596,7 +614,8 @@ fun ProfileSection(
                     start.linkTo(parent.start, 0.dp)
                 }),
             painter = painterResource(id =R.drawable.profile_photo_edith) ,
-            contentDescription =""
+            contentDescription ="",
+            contentScale = ContentScale.Crop
         )
 
 
@@ -784,7 +803,7 @@ fun HomePageScreenPreview(){
             HomePageScreen(
                 userName = "Edith",
                 notificationCount = "5",
-                profilePhotoResId = R.drawable.profile_photo,
+                profilePhotoResId = R.drawable.profile_photo_edith,
                 homeDrawerState = drawerState,
                 onNotificationIconClicked = { },
                 onHamburgerClicked = {
@@ -860,7 +879,7 @@ fun EmployeeOnLeaveItemPreview(){
         Surface {
             EmployeeOnLeaveItem(
                 employeeOnLeave = EmployeeOnLeave(
-                    R.drawable.profile_photo,
+                    R.drawable.profile_photo_edith,
                     "sharon chigorom",
                     "product designer",
                     "Abidat akinyele",
@@ -954,7 +973,7 @@ val announcements= listOf(
     )
 
 val dummyEmployee=EmployeeOnLeave(
-    R.drawable.profile_photo2,
+    R.drawable.profile_photo_edna_ibeh,
     "Edna Ibeh",
     "Product Designer",
     "Yusuf Babatunde",
@@ -965,10 +984,10 @@ val dummyEmployee=EmployeeOnLeave(
 val employeesOnLeave= listOf(
     dummyEmployee,
     dummyEmployee.copy(photoResId = R.drawable.profile_photo_israel_ajadi, name = "Isreal Ajadi", designation = "Frontend Engineer", reliever = "Fortune Goodluck"),
-    dummyEmployee.copy(photoResId = R.drawable.friend_profile, name = "Timothy John", designation = "Product Manager", reliever = "Bolanle Fadehinde"),
+    dummyEmployee.copy(photoResId = R.drawable.profile_photo_timothy_john, name = "Timothy John", designation = "Product Manager", reliever = "Bolanle Fadehinde"),
     dummyEmployee.copy(photoResId = R.drawable.profile_photo_donald_njaoguani, name = "Donald Njaoguani", designation = "Human Resource Manager", reliever = "Jacob Olumide"),
     dummyEmployee.copy(photoResId = R.drawable.profile_photo_tracy_mark, name = "Tracy Mark", designation = "Human Resource Manager", reliever = "Joseph Daniel"),
-    dummyEmployee.copy(photoResId = R.drawable.profile_photo4, name = "Kene Nsofor", designation = "Devops Engineer", reliever = "Omolade Cynthia")
+    dummyEmployee.copy(photoResId = R.drawable.profile_photo_kene_nsofor, name = "Kene Nsofor", designation = "Devops Engineer", reliever = "Omolade Cynthia")
 
 
 

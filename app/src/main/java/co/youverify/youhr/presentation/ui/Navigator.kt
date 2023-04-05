@@ -3,6 +3,7 @@ package co.youverify.youhr.presentation.ui
 
 import co.youverify.youhr.presentation.Home
 import co.youverify.youhr.presentation.Splash
+import co.youverify.youhr.presentation.TaskDetail
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,8 +15,11 @@ import kotlinx.coroutines.flow.asStateFlow
  *
  */
 
+const val CHECK_FOR_DESTINATION_ON_BACK_STACK=""
 class Navigator{
 
+     val NAVIGATE_UP="NAVIGATE_UP"
+    var userPasswordReset=false
     private val _destinationRoute: MutableStateFlow<String> = MutableStateFlow(Splash.route)
     val destinationRoute: StateFlow<String> = _destinationRoute.asStateFlow()
 
@@ -24,6 +28,9 @@ class Navigator{
 
     var popToRoute: String=Splash.route
         private set
+
+    var destinationIsOnBackStack=false
+    var routeToCheckFor=""
 
 
 
@@ -57,12 +64,25 @@ class Navigator{
         _destinationRoute.value=toRoute
     }
     fun updateRouteIfOutdated(updatedRoute: String) {
-        if (_destinationRoute.value!=updatedRoute) _destinationRoute.value=updatedRoute
+        if (_destinationRoute.value!=updatedRoute){
+            if(updatedRoute==TaskDetail.routWithArgs)
+                return
+            _destinationRoute.value=updatedRoute
+        }
+
     }
+    fun navigateBack(){
+        _destinationRoute.value=NAVIGATE_UP
+    }
+
+    fun checkForDestinationOnBackStack(){
+        _destinationRoute.value=CHECK_FOR_DESTINATION_ON_BACK_STACK
+    }
+
 }
 
 enum class PopBackStackType{
     POPTO,
     POPTOINCLUSIVE,
-    NONE
+    NONE,
 }

@@ -15,27 +15,10 @@ class TaskDetailViewModel @Inject constructor(private val stateHandle: SavedStat
 
 
 
-    var taskId: Int? =stateHandle[TaskDetail.taskIdArg]
-        private set
-    var dateDropDownExpanded by mutableStateOf(false)
-        private set
+    var taskMessage by mutableStateOf("")
 
-    var categoryDropDownExpanded by mutableStateOf(false)
-        private set
-
-
-    fun onBottomNavItemClicked(route: String) {
-
-        navigator.navigatePopToForBottomNavItem(toRoute =route )
-        //navigatePopToInclusive(toRoute = CreatePassword.route, popToRoute = LoginWithCode.route)
-    }
-
-    fun updateCategoryDropDownState() {
-        categoryDropDownExpanded=!categoryDropDownExpanded
-    }
-
-    fun updateDateDropDownState() {
-        dateDropDownExpanded=!dateDropDownExpanded
+    fun updateTaskMessage(newValue:String){
+        taskMessage=newValue
     }
 
 

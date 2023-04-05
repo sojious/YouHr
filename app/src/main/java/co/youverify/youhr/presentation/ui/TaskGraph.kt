@@ -3,19 +3,15 @@ package co.youverify.youhr.presentation.ui
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
 import androidx.navigation.navigation
 import co.youverify.youhr.presentation.TaskDetail
 import co.youverify.youhr.presentation.TaskGraph
 import co.youverify.youhr.presentation.TaskList
-import co.youverify.youhr.presentation.ui.task.TaskDetailScreen
-import co.youverify.youhr.presentation.ui.task.TaskListScreen
-import co.youverify.youhr.presentation.ui.task.TaskViewModel
-import co.youverify.youhr.presentation.ui.task.pendingTasks
+import co.youverify.youhr.presentation.ui.task.*
 import com.google.accompanist.navigation.animation.composable
 
 @OptIn(ExperimentalAnimationApi::class)
-fun NavGraphBuilder.TaskGraph(navHostController: NavHostController,taskViewModel: TaskViewModel){
+fun NavGraphBuilder.TaskGraph(taskViewModel: TaskViewModel,taskDetailViewModel: TaskDetailViewModel){
 
     navigation(startDestination =TaskList.route , route =TaskGraph.route ){
 
@@ -28,13 +24,15 @@ fun NavGraphBuilder.TaskGraph(navHostController: NavHostController,taskViewModel
                dateDropDownExpanded = taskViewModel.dateDropDownExpanded,
                onCategorySpinnerClicked = { taskViewModel.updateCategoryDropDownState() },
                onDateSpinnerClicked = { taskViewModel.updateDateDropDownState() },
+               categoryDropDownOnDismissCallBack = {taskViewModel.categoryDropDownOnDismissCallBack()},
+               dateDropDownOnDismissCallBack = {taskViewModel.dateDropDownOnDismissCallBack()},
                onTaskItemClicked = {
                    taskViewModel.showTaskDetail(it)
                },
-               categoryDropDownOnDismissCallBack = {taskViewModel.categoryDropDownOnDismissCallBack()},
-               dateDropDownOnDismissCallBack = {taskViewModel.dateDropDownOnDismissCallBack()},
                onPendingClicked = {taskViewModel.onPendingClicked()},
-               onCompletedClicked = {taskViewModel.onCompletedClicked()}
+               onCompletedClicked = {taskViewModel.onCompletedClicked()},
+               categorySpinnerText = taskViewModel.categorySpinnerText,
+               dateSpinnerText = taskViewModel.dateSpinnerText,
            )
         }
 
@@ -44,11 +42,12 @@ fun NavGraphBuilder.TaskGraph(navHostController: NavHostController,taskViewModel
         ){navBackStackEntry->
 
             TaskDetailScreen(
-                taskMessage = "",
-                onTaskMessageChanged = {},
+                taskMessage =taskDetailViewModel.taskMessage,
+                onTaskMessageChanged = {taskDetailViewModel.updateTaskMessage(it)},
                 taskId = navBackStackEntry.arguments?.getInt(TaskDetail.taskIdArg)!!,
                 onSendMessageButtonClicked = {},
-                currentTaskList = taskViewModel.currentTaskList
+                currentTaskList = taskViewModel.currentTaskList,
+                onBackArrowClicked = {taskViewModel.navigateBack()}
             )
 
         }

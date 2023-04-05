@@ -16,6 +16,8 @@ fun navigateSingleTopPopToInclusive(navController: NavHostController, destinatio
 }
 
 fun navigateSingleTopPopTo(navController: NavHostController, destinationRoute:String, popToRoute:String){
+
+
     navController.navigate(route=destinationRoute){
         launchSingleTop=true
         popUpTo(route = popToRoute){

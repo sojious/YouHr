@@ -1,6 +1,5 @@
 package co.youverify.youhr.presentation
 
-import androidx.navigation.NavArgs
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
@@ -75,19 +74,12 @@ object CreateCode:YouHrDestination{
     override val route="createCode"
 }
 
-object LoginWithEmail:YouHrDestination{
-    override val route="loginWithEmail"
+object InputEmail:YouHrDestination{
+    override val route="inputEmail"
 }
 
 object LoginWithPassword:YouHrDestination{
     override val route="loginWithPassword"
-     const val userEmailArg="userEmail"
-    val routWithArgs="${route}/{$userEmailArg}"
-    val args = listOf(
-        navArgument(name = userEmailArg){
-            type= NavType.StringType
-        }
-    )
 }
 
 

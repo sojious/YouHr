@@ -13,4 +13,6 @@ interface AuthRepository {
    suspend fun resetPassword(resetPasswordRequest: ResetPasswordRequest): Flow<NetworkResult<GenericResponse>>
 
     suspend fun createCode(createCodeRequest: CreateCodeRequest): Flow<NetworkResult<GenericResponse>>
+
+
 }

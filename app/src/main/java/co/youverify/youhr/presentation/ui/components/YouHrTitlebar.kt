@@ -24,7 +24,7 @@ import co.youverify.youhr.presentation.ui.theme.yvText
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 
 @Composable
-fun YouHrTitleBar(modifier: Modifier = Modifier, title: String,navController: NavHostController){
+fun YouHrTitleBar(modifier: Modifier = Modifier, title: String,onBackArrowClicked:()->Unit){
     ConstraintLayout(
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -41,7 +41,7 @@ fun YouHrTitleBar(modifier: Modifier = Modifier, title: String,navController: Na
                     //width=Dimension.fillToConstraints
                 },
             onClick = {
-                      navController.popBackStack()
+                      onBackArrowClicked()
             },
             content = {
                 Icon(
@@ -75,7 +75,7 @@ fun YouHrTitleBarPreview(){
     Surface {
         YouHrTitleBar(
             title = "Interview With Candidate For Product Design Role",
-            navController = rememberAnimatedNavController()
+            onBackArrowClicked = {}
         )
     }
 }

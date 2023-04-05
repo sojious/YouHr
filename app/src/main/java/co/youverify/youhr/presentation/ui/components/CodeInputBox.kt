@@ -2,22 +2,17 @@ package co.youverify.youhr.presentation.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -29,24 +24,44 @@ import co.youverify.youhr.presentation.ui.theme.yvColor
 
 @Composable
 fun CodeInputBox(
-    modifier:Modifier=Modifier,
+    modifier: Modifier = Modifier,
     codeValue1: String,
     codeValue2: String,
     codeValue3: String,
     codeValue4: String,
-    onValueChanged:(String,Int)->Unit) {
+    codeValue5: String,
+    codeValue6: String,
+    errorMessage: String,
+    isError:Boolean,
+    onValueChanged: (String, Int) -> Unit,
 
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-        modifier = modifier
     ) {
-        CodeInputField(codeValue1,1,onValueChanged)
-        CodeInputField(codeValue2,2,onValueChanged)
-        CodeInputField(codeValue3,3,onValueChanged)
-        CodeInputField(codeValue4,4,onValueChanged)
 
 
+    Column {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = modifier
+        ) {
+            CodeInputField(codeValue1,1,onValueChanged)
+            CodeInputField(codeValue2,2,onValueChanged)
+            CodeInputField(codeValue3,3,onValueChanged)
+            CodeInputField(codeValue4,4,onValueChanged)
+            CodeInputField(codeValue5,5,onValueChanged)
+            CodeInputField(codeValue6,6,onValueChanged)
+
+
+        }
+
+
+        if (isError)
+            Text(
+            text = errorMessage,
+            color = co.youverify.youhr.presentation.ui.theme.errorMessage,
+            modifier = Modifier.padding(top=8.dp),
+            fontSize = 12.sp
+        )
     }
 
 }
@@ -63,7 +78,7 @@ fun CodeInputField(value: String, index: Int, onValueChanged: (String,Int) -> Un
                onValueChanged(it,index)
         },
         maxLines=1,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         textStyle = TextStyle.Default.copy(fontSize = 30.sp, textAlign = TextAlign.Center),
         modifier = Modifier
             .size(36.dp, 42.dp)
@@ -77,6 +92,7 @@ fun CodeInputField(value: String, index: Int, onValueChanged: (String,Int) -> Un
             .onFocusChanged { focusState ->
                 borderColor = if (focusState.isFocused) yvColor else codeInputUnfocused
             }
+
 
     )
 
@@ -92,7 +108,11 @@ fun CodeInputBoxPreview(){
             codeValue2 = "2",
             codeValue3 = "3",
             codeValue4 = "4",
-            onValueChanged = { _, _ ->}
+            codeValue5 = "5",
+            codeValue6 = "6",
+            onValueChanged = { _, _ ->},
+            errorMessage = "You entered the wrong passcode, try again!!",
+            isError = true
         )
     }
 }

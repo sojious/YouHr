@@ -4,7 +4,6 @@ package co.youverify.youhr.presentation.ui.onboarding
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -15,7 +14,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -169,7 +167,7 @@ fun PagerItem(modifier: Modifier=Modifier,imageResId:Int,messageResId:Int){
 
 val pagerItems= listOf(
     PagerItemData(R.drawable.meeting, R.string.better_work_place),
-    PagerItemData(R.drawable.interview, R.string.better_work_place),
+    PagerItemData(R.drawable.interview, R.string.empowering_workforce),
     PagerItemData(R.drawable.meeting, R.string.better_work_place),
 )
 data class PagerItemData(val ImageResId:Int, val messageResId: Int)

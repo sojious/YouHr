@@ -16,22 +16,23 @@ import javax.inject.Inject
 class TaskViewModel @Inject constructor( private val navigator: Navigator) : ViewModel(){
 
 
+
     var  currentTaskList by mutableStateOf(pendingTasks)
     private set
     var categoryDropDownExpanded by mutableStateOf(false)
         private set
     var dateDropDownExpanded by mutableStateOf(false)
         private set
+    var dateSpinnerText by mutableStateOf("Pending")
+        private set
+    var categorySpinnerText by mutableStateOf("Pending")
+        private set
 
 
-    fun onBottomNavItemClicked(route: String) {
 
-        navigator.navigatePopToForBottomNavItem(toRoute =route )
-        //navigatePopToInclusive(toRoute = CreatePassword.route, popToRoute = LoginWithCode.route)
-    }
 
     fun updateCategoryDropDownState() {
-        categoryDropDownExpanded=!categoryDropDownExpanded
+        categoryDropDownExpanded = !categoryDropDownExpanded
         //currentTaskList = if (currentTaskList[0].isCompleted) pendingTasks else completedTasks
     }
 
@@ -40,24 +41,30 @@ class TaskViewModel @Inject constructor( private val navigator: Navigator) : Vie
     }
 
     fun showTaskDetail(taskId: Int) {
-        navigator.navigatePopTo("${TaskDetail.route}/$taskId", popToRoute = Home.route)
+        navigator.navigate("${TaskDetail.route}/$taskId")
     }
 
     fun categoryDropDownOnDismissCallBack() {
-        categoryDropDownExpanded=!categoryDropDownExpanded
+        categoryDropDownExpanded=false
     }
 
     fun dateDropDownOnDismissCallBack() {
-        dateDropDownExpanded=!dateDropDownExpanded
+        dateDropDownExpanded=false
     }
 
     fun onPendingClicked() {
         currentTaskList= pendingTasks
+        categoryDropDownExpanded=false
+        categorySpinnerText="Pending"
     }
 
     fun onCompletedClicked() {
         currentTaskList= completedTasks
+        categoryDropDownExpanded=false
+        categorySpinnerText="Completed"
     }
+
+    fun navigateBack() =navigator.navigateBack()
 
 
 }

@@ -5,11 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavHostController
-import co.youverify.youhr.core.util.*
-import co.youverify.youhr.data.model.LoginWithCodeRequest
+import co.youverify.youhr.core.util.EMPTY_PASSCODE_VALUE
+import co.youverify.youhr.core.util.INPUT_ERROR_CODE
+import co.youverify.youhr.core.util.NetworkResult
+import co.youverify.youhr.data.model.CreateCodeRequest
 import co.youverify.youhr.domain.repository.PreferencesRepository
-import co.youverify.youhr.domain.use_case.LoginWithCodeUseCase
+import co.youverify.youhr.domain.use_case.CreateCodeUseCase
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
@@ -17,19 +18,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginWithCodeViewModel @Inject constructor(
+class CreateCodeViewModel @Inject constructor(
     private val navigator: Navigator,
-    val loginWithCodeUseCase: LoginWithCodeUseCase,
-    val preferencesRepository: PreferencesRepository,
-    ) : ViewModel(){
-
-
-
+    private val createCodeUseCase: CreateCodeUseCase,
+    private val preferencesRepository: PreferencesRepository
+    ) :ViewModel(){
 
     //initialize codeinputField variables
     var code1 by mutableStateOf("")
@@ -44,7 +43,11 @@ class LoginWithCodeViewModel @Inject constructor(
         private set
     var code6 by mutableStateOf("")
         private set
+
     var isErrorCode by mutableStateOf(false)
+        private set
+
+    var showSuccessDialog by mutableStateOf(false)
         private set
 
 
@@ -57,11 +60,8 @@ class LoginWithCodeViewModel @Inject constructor(
 
 
 
-
-
     fun updateCode(newValue:String, index:Int){
-
-        if (isErrorCode) isErrorCode=false
+        isErrorCode=false
 
         if(newValue.length==1 || newValue.isEmpty()){
             when(index){
@@ -74,27 +74,24 @@ class LoginWithCodeViewModel @Inject constructor(
 
             }
         }
+
     }
 
 
-
-    fun onSignUpOptionClicked() {
-        navigator.navigatePopToInclusive(toRoute = CreatePassword.route, popToRoute = LoginWithCode.route)
+    fun onSkipClicked() {
+        navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginGraph.route)
     }
 
-     fun onPasswordLoginOptionClicked() {
-
-
-        navigator.navigate(toRoute = LoginWithPassword.route)
-    }
-
-    fun logUserIn() {
-
-        //navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginWithEmail.route)
-
-        _uIStateFlow.value=_uIStateFlow.value.copy(loading = true)
+    fun createCode() {
+        //navigator.navigatePopToInclusive(toRoute = CodeCreationSuccess.route, popToRoute = CreateCode.route)
 
         viewModelScope.launch {
+
+            _uIStateFlow.value=_uIStateFlow.value.copy(loading = true)
+
+            //val sb=StringBuilder().append(code1,code2,code3,code4,code5,code6)
+            //val passcode=sb.toString().toInt()
+
             var passcode= EMPTY_PASSCODE_VALUE
 
             try { passcode="$code1$code2$code3$code4$code5$code6".toInt() }
@@ -102,32 +99,23 @@ class LoginWithCodeViewModel @Inject constructor(
                 exception.printStackTrace()
             }
 
+            val createCodeRequest= CreateCodeRequest(passcode = passcode)
 
-            val loginRequest= LoginWithCodeRequest(passcode = passcode, email = "")
-
-            loginWithCodeUseCase(loginRequest).collect{networkResult->
+            createCodeUseCase(createCodeRequest).collect{networkResult->
                 when(networkResult){
 
                     is NetworkResult.Success->{
+
+                       preferencesRepository.setUserPasscodeCreationStatus(passcodeCreated = true)
+
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
-                        _uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
-
-                        //check if LoginWithEmail Screen is presently on the BackStack pop up to it
-                        //if (destinationOnBackStack(LoginWithEmail.route))
-                            navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginWithCode.route)
-
-
+                        showSuccessDialog=true
                     }
                     is NetworkResult.Error->{
-                        val authError:String = when(networkResult.code){
-                            INPUT_ERROR_CODE->networkResult.message.toString()
-                            RESOURCE_NOT_FOUND_ERROR_CODE-> "Invalid Email!"
-                            BAD_REQUEST_ERROR_CODE->"Wrong Passcode!"
-                            else-> "oop!,Something went wrong, try again"
-                        }
-                        _uIStateFlow.value=_uIStateFlow.value.copy(loading = false, authenticationError =authError )
-                        isErrorCode=true
 
+                        val authError=if (networkResult.code== INPUT_ERROR_CODE) networkResult.message.toString() else "An unexpected error occurred! try again! "
+                        isErrorCode=true
+                        _uIStateFlow.value=_uIStateFlow.value.copy(loading = false, authenticationError =authError )
                     }
                     is NetworkResult.Exception->{
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false)
@@ -140,8 +128,22 @@ class LoginWithCodeViewModel @Inject constructor(
 
     }
 
+    fun onLoginRedirectClicked(){
 
-    //function checks wether a given destination is present on the BackStack
+        navigator.navigatePopToInclusive(toRoute = LoginWithCode.route, popToRoute = CodeCreationSuccess.route)
 
+    }
 
+    fun onProceedButtonClicked() {
+
+        navigator.navigatePopToInclusive(
+            toRoute = BottomNavGraph.route, popToRoute = CreateCode.route)
+
+    }
 }
+
+
+
+
+
+

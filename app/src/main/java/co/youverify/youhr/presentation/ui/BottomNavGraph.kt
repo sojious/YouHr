@@ -8,6 +8,7 @@ import androidx.navigation.navigation
 import co.youverify.youhr.presentation.HomePageGraph
 import co.youverify.youhr.presentation.BottomNavGraph
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
+import co.youverify.youhr.presentation.ui.task.TaskDetailViewModel
 import co.youverify.youhr.presentation.ui.task.TaskViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
@@ -18,13 +19,14 @@ fun NavGraphBuilder.BottomNavGraph(
     navController: NavHostController,
     homeViewModel: HomeViewModel,
     taskViewModel: TaskViewModel,
+    taskDetailViewModel: TaskDetailViewModel,
     pagerState: PagerState,
     drawerState: DrawerState
 ){
 
    navigation(startDestination = HomePageGraph.route,route=BottomNavGraph.route){
        HomePageGraph(homeViewModel, pagerState = pagerState,drawerState=drawerState)
-       TaskGraph(navController,taskViewModel)
+       TaskGraph(taskViewModel=taskViewModel, taskDetailViewModel = taskDetailViewModel)
        SettingsGraph(navController)
    }
 }

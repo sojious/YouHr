@@ -2,6 +2,7 @@ package co.youverify.youhr.di
 
 import co.youverify.youhr.BuildConfig
 import co.youverify.youhr.core.util.SERVER_URL
+import co.youverify.youhr.data.remote.TokenInterceptor
 import co.youverify.youhr.data.remote.YouHrService
 import dagger.Module
 import dagger.Provides
@@ -32,9 +33,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient =
+    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor, tokenInterceptor: TokenInterceptor): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(tokenInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
@@ -49,4 +51,8 @@ object NetworkModule {
 
         return logging
     }
+
+    @Provides
+    @Singleton
+    fun provideTokenInterceptor():TokenInterceptor=TokenInterceptor()
 }

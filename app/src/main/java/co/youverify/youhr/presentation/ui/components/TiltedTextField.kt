@@ -23,15 +23,14 @@ fun TitledTextField(
     fieldTitle: String,
     fieldValue: String,
     fieldPlaceHolder: String,
-    isErrorValue: Boolean = false,
+    isErrorValue: Boolean ,
     hideValue: Boolean,
     isPasswordField:Boolean=true,
     onFieldValueChanged: (String) -> Unit,
     onTrailingIconClicked: () -> Unit={},
-    isPasswordConfirmationField: Boolean ,
-    passWordErrorMessage: String="Password does not match",
+    errorMessage: String
 
-){
+    ){
 
    Column(
        modifier= modifier
@@ -41,13 +40,14 @@ fun TitledTextField(
 
        Row(modifier=Modifier.padding(bottom = 10.dp)) {
            Text(text = fieldTitle, fontSize = 12.sp, color = textFieldTitle, fontWeight = FontWeight.Normal)
-           Text(text = "*", color = errorMessage, textAlign = TextAlign.Center,modifier=Modifier.padding(start = 2.dp), fontSize = 12.sp)
+           Text(text = "*", color = co.youverify.youhr.presentation.ui.theme.errorMessage, textAlign = TextAlign.Center,modifier=Modifier.padding(start = 2.dp), fontSize = 12.sp)
        }
 
        OutlinedTextField(
            modifier=Modifier.fillMaxWidth(),
            value =fieldValue ,
            onValueChange =onFieldValueChanged,
+           singleLine = true,
            placeholder = {
                Text(
                    text = fieldPlaceHolder,
@@ -60,8 +60,8 @@ fun TitledTextField(
            visualTransformation = if(hideValue) PasswordVisualTransformation() else VisualTransformation.None,
            colors = TextFieldDefaults.outlinedTextFieldColors(
                placeholderColor = indicatorInactive,
-               focusedBorderColor = if (isPasswordConfirmationField && isErrorValue) errorMessage else yvText,
-               unfocusedBorderColor = if (isPasswordConfirmationField && isErrorValue) errorMessage else  inputFieldColor
+               focusedBorderColor =  yvText,
+               unfocusedBorderColor = inputFieldColor
            ),
            trailingIcon = {
                if (isPasswordField)
@@ -76,10 +76,10 @@ fun TitledTextField(
            shape = RoundedCornerShape(4.dp)
        )
 
-       if (isPasswordConfirmationField && isErrorValue)
+       if (isErrorValue)
            Text(
-               text = passWordErrorMessage,
-               color = errorMessage,
+               text = errorMessage,
+               color = co.youverify.youhr.presentation.ui.theme.errorMessage,
                modifier = Modifier.padding(top=8.dp),
                fontSize = 12.sp
            )
@@ -105,7 +105,8 @@ fun TitledTextFieldPreview(){
             hideValue = hide,
             onFieldValueChanged = { value=it },
             onTrailingIconClicked = { hide=!hide },
-            isPasswordConfirmationField = true
+            isErrorValue = false,
+            errorMessage = ""
         )
     }
 

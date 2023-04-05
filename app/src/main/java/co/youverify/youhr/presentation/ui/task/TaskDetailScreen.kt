@@ -1,6 +1,5 @@
 package co.youverify.youhr.presentation.ui.task
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -16,15 +15,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import co.youverify.youhr.R
 import co.youverify.youhr.core.util.capitalizeWords
 import co.youverify.youhr.core.util.toOrdinalDateString
@@ -33,55 +30,52 @@ import co.youverify.youhr.presentation.ui.components.TextAvatar
 import co.youverify.youhr.presentation.ui.components.YouHrTitleBar
 import co.youverify.youhr.presentation.ui.home.announcementItemAvatarColors
 import co.youverify.youhr.presentation.ui.theme.*
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun TaskDetailScreen(
     modifier: Modifier = Modifier,
-    //navController: NavHostController,
-    //taskDetailViewModel: TaskDetailViewModel,
     taskId:Int,
     currentTaskList:List<Task>,
     taskMessage: String,
     onTaskMessageChanged:(String)->Unit,
     onSendMessageButtonClicked:()->Unit,
+    onBackArrowClicked:()->Unit
 ){
    // val taskId=taskDetailViewModel.taskId
-    val task= pendingTasks[0]// should be gotten from the database using the id
+    //val task= pendingTasks[0]// should be gotten from the database using the id
+
+    val currentTask=currentTaskList[taskId]
     val scrollState= rememberScrollState()
     Column(modifier= modifier
         .fillMaxSize()
         .verticalScroll(scrollState)) {
         YouHrTitleBar(
-            title = "Interview With Candidate For Product Design Role",
-            navController = rememberAnimatedNavController(),
-            modifier = Modifier.padding(top=36.dp, start = 21.dp,end=20.dp)
+            title = currentTask.title,
+            modifier = Modifier.padding(top=36.dp, start = 21.dp,end=20.dp),
+            onBackArrowClicked = onBackArrowClicked
         )
         Divider(thickness = 0.2.dp, color = codeInputUnfocused, modifier = Modifier
             .fillMaxWidth()
             .padding( top = 16.dp, bottom = 22.dp))
-        AssigneeInfo(task=currentTaskList[taskId], modifier = Modifier.padding(start = 21.dp,end=34.dp,bottom=20.dp))
-        DateInfo(task=currentTaskList[taskId], modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=20.dp))
-        ProjectInfo(task=currentTaskList[taskId], modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=32.dp))
-        TaskDescription(task=currentTaskList[taskId], modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=10.dp))
-        AttachmentsSection(task = pendingTasks.first(),modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=23.dp))
-        TaskActivitiesSection()
+        AssigneeInfo(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=34.dp,bottom=20.dp))
+        DateInfo(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=20.dp))
+        ProjectInfo(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=32.dp))
+        TaskDescription(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=10.dp))
+        AttachmentsSection(task = currentTask,modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=23.dp))
+        TaskActivitiesSection(task=currentTask)
         Divider(thickness = 1.dp, color = taskActivitiesBackGroundColor, modifier = Modifier.fillMaxWidth())
         TaskMessageBox(
             textFieldValue =taskMessage,
             onTextFieldValueChanged =onTaskMessageChanged,
             onSendMessageButtonClicked =onSendMessageButtonClicked
         )
-
-
     }
 }
 
 
 
 @Composable
-fun TaskActivitiesSection(modifier: Modifier=Modifier) {
+fun TaskActivitiesSection(modifier: Modifier = Modifier, task: Task) {
     Column(
         modifier = modifier
             .background(color = taskActivitiesBackGroundColor2)
@@ -97,16 +91,16 @@ fun TaskActivitiesSection(modifier: Modifier=Modifier) {
                 secondColor = yvColor,
                 neutralColor = bodyTextColor,
                 parts = arrayOf(
-                    "Seth Samuel added to project ",
-                    "Employee Onboarding"
+                    "${task.assigner} added to ",
+                    task.project
                 )
             )
             
             Text(text = " 57 mins ago", fontSize = 8.sp, color = bodyTextColor, modifier=Modifier.padding(top=2.dp))
         }
 
-        Text(text = "Seth Samuel assigned this task to you", fontSize = 10.sp, color = bodyTextColor)
-        Text(text = "Seth Samuel changed due date to Wednesday", fontSize = 10.sp, color = bodyTextColor)
+        Text(text = "${task.assigner} assigned this task to you", fontSize = 10.sp, color = bodyTextColor)
+        Text(text = "${task.assigner} changed due date to Wednesday", fontSize = 10.sp, color = bodyTextColor)
     }
 }
 
@@ -302,8 +296,9 @@ fun TaskCreatorSection(task: Task){
                     start.linkTo(parent.start)
                     top.linkTo(parent.top)
                 }),
-            painter = painterResource(R.drawable.friend_profile) ,
-            contentDescription =null
+            painter = painterResource(R.drawable.profile_photo_timothy_john) ,
+            contentDescription =null,
+            contentScale = ContentScale.Crop
         )
 
         Text(
@@ -378,7 +373,8 @@ fun TaskDetailScreenPreview(){
             onTaskMessageChanged ={},
             onSendMessageButtonClicked = {},
             taskId = 0,
-            currentTaskList = pendingTasks
+            currentTaskList = pendingTasks,
+            onBackArrowClicked = {}
         )
     }
 }
@@ -436,7 +432,7 @@ fun TaskCreatorSectionPreview(){
 @Composable
 fun TaskActivitiesSectionPreview(){
     Surface {
-        TaskActivitiesSection()
+        TaskActivitiesSection(task = pendingTasks.first())
     }
 }
 

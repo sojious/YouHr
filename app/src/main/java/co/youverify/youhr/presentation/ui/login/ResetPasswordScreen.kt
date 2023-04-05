@@ -3,11 +3,11 @@ package co.youverify.youhr.presentation.ui.login
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,8 +25,19 @@ fun ResetPasswordScreen(
     emailValue: String,
     onEmailValueChanged: (String) -> Unit,
     onResetPasswordButtonClicked: () -> Unit,
-){
+    onBackArrowClicked: () -> Unit,
+    isErrorValue: Boolean,
+    uiState: UiState,
+
+    ){
     Box(modifier = modifier.fillMaxSize()){
+
+        IconButton(onClick = onBackArrowClicked, modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(top = 52.dp, start = 23.42.dp)) {
+            Icon(painter = painterResource(id = R.drawable.ic_back_arrow), contentDescription =null )
+        }
+
         Column(
             modifier = Modifier
                 .padding(horizontal = 4.dp)
@@ -52,8 +63,9 @@ fun ResetPasswordScreen(
                 fieldPlaceHolder =stringResource(id = R.string.work_email_placeholder) ,
                 hideValue =false ,
                 onFieldValueChanged =onEmailValueChanged ,
-                isPasswordConfirmationField = false,
                 isPasswordField = false,
+                isErrorValue = isErrorValue,
+                errorMessage = uiState.authenticationError
             )
 
 
@@ -65,6 +77,9 @@ fun ResetPasswordScreen(
             )
 
         }
+
+        if(uiState.loading)
+            CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
     }
 }
 
@@ -76,6 +91,9 @@ fun ResetPassWordScreenPreview(){
             emailValue = "",
             onEmailValueChanged = {},
             onResetPasswordButtonClicked = {},
+            onBackArrowClicked = {},
+            isErrorValue = true,
+            uiState = UiState(authenticationError = "The email is wrong!!")
         )
     }
 }

@@ -95,4 +95,8 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:$okHttp3Version"
     implementation "com.squareup.okhttp3:logging-interceptor:$okHttp3Version"
 
+
+    //Jetpack Datastore
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
+
 }

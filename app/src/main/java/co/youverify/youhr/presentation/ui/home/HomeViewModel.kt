@@ -26,9 +26,9 @@ class HomeViewModel @Inject constructor( private val navigator: Navigator) : Vie
 
 
 
-    var userName ="Oluwayemisi"
+    var userName ="Edith"
     private set
-    var profilePhotoResId = R.drawable.profile_photo
+    var profilePhotoResId = R.drawable.profile_photo_edith
     private set
     var activeSideNavItem by mutableStateOf(1)
     private set

@@ -1,9 +1,11 @@
 package co.youverify.youhr.presentation.ui.login
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,71 +27,75 @@ fun LoginWithCodeScreen(
     codeValue2:String,
     codeValue3:String,
     codeValue4:String,
+    codeValue5:String,
+    codeValue6:String,
+    isErrorCode:Boolean,
+    uiState: UiState,
     onCodeValueChanged:(String, Int)->Unit,
     onPasswordLoginOptionClicked: () -> Unit,
     onLoginButtonClicked: () -> Unit,
     //onSignUpClicked: () -> Unit
 ){
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+   Box(modifier = modifier.fillMaxSize()) {
 
-        TitleText(
-            modifier=Modifier.padding(top=60.dp, bottom = 55.dp),
-            text = stringResource(id = R.string.login_to_your_account)
-        )
+       Column(
+           modifier = Modifier.align(Alignment.Center),
+           horizontalAlignment = Alignment.CenterHorizontally
+       ) {
+
+           TitleText(
+               modifier=Modifier.padding( bottom = 55.dp),
+               text = stringResource(id = R.string.login_to_your_account)
+           )
 
 
 
-        Text(
-            modifier=Modifier.padding(bottom = 16.dp),
-            text = "Enter Code",
-            fontSize =16.sp ,
-            lineHeight = 20.8.sp,
-            fontWeight = FontWeight.Medium,
-            color = bodyTextColor
+           Text(
+               modifier=Modifier.padding(bottom = 16.dp),
+               text = "Enter Code",
+               fontSize =16.sp ,
+               lineHeight = 20.8.sp,
+               fontWeight = FontWeight.Medium,
+               color = bodyTextColor
 
-        )
+           )
 
-        CodeInputBox(
-           // modifier=Modifier.padding(start = 16.dp).align(Alignment.Start),
-            codeValue1=codeValue1,
-            codeValue2=codeValue2,
-            codeValue3=codeValue3,
-            codeValue4=codeValue4,
-            onValueChanged =onCodeValueChanged
-        )
+           CodeInputBox(
+               // modifier=Modifier.padding(start = 16.dp).align(Alignment.Start),
+               codeValue1=codeValue1,
+               codeValue2=codeValue2,
+               codeValue3=codeValue3,
+               codeValue4=codeValue4,
+               codeValue5=codeValue5,
+               codeValue6=codeValue6,
+               onValueChanged =onCodeValueChanged,
+               errorMessage = uiState.authenticationError,
+               isError = isErrorCode
+           )
 
-        Text(
-            text = stringResource(id = R.string.login_with_password_option),
-            fontSize = 12.sp,
-            modifier = Modifier
-                .padding(vertical = 48.dp)
-               // .align(Alignment.Start)
-                .clickable(onClick = onPasswordLoginOptionClicked),
-            color = primaryColor,
-            fontWeight = FontWeight.Medium
-        )
+           Text(
+               text = stringResource(id = R.string.login_with_password_option),
+               fontSize = 12.sp,
+               modifier = Modifier
+                   .padding(vertical = 48.dp)
+                   // .align(Alignment.Start)
+                   .clickable(onClick = onPasswordLoginOptionClicked),
+               color = primaryColor,
+               fontWeight = FontWeight.Medium
+           )
 
-        ActionButton(
-            modifier=Modifier.padding(horizontal = 28.dp),
-            text = stringResource(id = R.string.next),
-            onButtonClicked = onLoginButtonClicked
-        )
-        
-        /*ClickableMultiColoredText(
-            modifier = modifier
-                .padding(vertical = 4.dp, horizontal = 16.dp)
-                .align(Alignment.Start),
-            colorPosition = 1,
-            secondColor = yvColor,
-            fontSize = 12.sp,
-            onColoredTextClicked = onSignUpClicked,
-            stringResource(id = R.string.dont_have_account),
-            stringResource(id = R.string.sign_up)
-        )*/
-    }
+           ActionButton(
+               modifier=Modifier.padding(horizontal = 28.dp),
+               text = stringResource(id = R.string.login),
+               onButtonClicked = onLoginButtonClicked
+           )
+
+       }
+
+       if (uiState.loading)
+           CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
+
+   }
 }
 
 @Preview
@@ -104,7 +110,11 @@ fun LoginWithCodePreview(){
            codeValue2="2",
            codeValue3="3",
            codeValue4="4" ,
-           onCodeValueChanged = {_,_->}
+           codeValue5 = "5",
+           codeValue6 = "6",
+           onCodeValueChanged = {_,_->},
+           isErrorCode = true,
+           uiState = UiState(authenticationError = "You entered the wrong passcode, try again!!",)
        )
    }
 }

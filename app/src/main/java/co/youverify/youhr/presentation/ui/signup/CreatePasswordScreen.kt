@@ -81,7 +81,8 @@ fun CreatePasswordScreen(
             hideValue =hideTextFieldValue ,
             onFieldValueChanged =onPasswordValueChanged ,
             onTrailingIconClicked = onPasswordVisibilityIconClicked,
-            isPasswordConfirmationField = false
+            errorMessage = "",
+            isErrorValue = false
         )
 
 
@@ -93,7 +94,8 @@ fun CreatePasswordScreen(
             hideValue =hideTextFieldValue ,
             onFieldValueChanged =onConfirmPasswordValueChanged ,
             onTrailingIconClicked = onPasswordVisibilityIconClicked,
-            isPasswordConfirmationField = true
+            errorMessage = "",
+            isErrorValue = false
         )
 
         Text(

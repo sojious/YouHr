@@ -13,7 +13,7 @@
     <string name="congratulations">Congratulations, your account has successfully been created. Please check your email for your login credentials and next steps.</string>
     <string name="create_code_btn">Create Code</string>
     <string name="create_code">Create A Code</string>
-    <string name="create_code_message">Create a code for swift login. You can skip this process as this option will be available in account settings</string>
+    <string name="create_code_message">Please enter a 6-digit code you can remember easily for swift login.</string>
     <string name="sign_in_to_your_account">Sign in to your YouHR account</string>
     <string name="login_to_your_account">Login To Your Account</string>
     <string name="work_email">Work Email</string>
@@ -40,4 +40,5 @@
     <string name="document_upload">Document\nUpload</string>
     <string name="leave_request">Leave\nRequest</string>
     <string name="send_password_reset">Send Password Reset Email</string>
+    <string name="empowering_workforce">Empowering workforce,\nenhancing company culture</string>
 </resources>
