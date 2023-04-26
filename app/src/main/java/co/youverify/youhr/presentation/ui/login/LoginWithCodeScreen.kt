@@ -33,8 +33,7 @@ fun LoginWithCodeScreen(
     uiState: UiState,
     onCodeValueChanged:(String, Int)->Unit,
     onPasswordLoginOptionClicked: () -> Unit,
-    onLoginButtonClicked: () -> Unit,
-    //onSignUpClicked: () -> Unit
+    //onLoginButtonClicked: () -> Unit,
 ){
    Box(modifier = modifier.fillMaxSize()) {
 
@@ -84,16 +83,17 @@ fun LoginWithCodeScreen(
                fontWeight = FontWeight.Medium
            )
 
-           ActionButton(
+           /*ActionButton(
                modifier=Modifier.padding(horizontal = 28.dp),
                text = stringResource(id = R.string.login),
                onButtonClicked = onLoginButtonClicked
-           )
+           )*/
 
        }
 
        if (uiState.loading)
-           CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
+           //CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
+           LoadingDialog(message = "Authenticating...")
 
    }
 }
@@ -104,7 +104,7 @@ fun LoginWithCodePreview(){
    Surface {
        LoginWithCodeScreen(
            onPasswordLoginOptionClicked = {},
-           onLoginButtonClicked = {},
+           //onLoginButtonClicked = {},
            //onSignUpClicked = {},
            codeValue1="1",
            codeValue2="2",

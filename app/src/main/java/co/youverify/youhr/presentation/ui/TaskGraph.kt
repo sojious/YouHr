@@ -21,18 +21,16 @@ fun NavGraphBuilder.TaskGraph(taskViewModel: TaskViewModel,taskDetailViewModel: 
                tasks = taskViewModel.currentTaskList,
                listState = rememberLazyListState(),
                categoryDropDownExpanded = taskViewModel.categoryDropDownExpanded,
-               dateDropDownExpanded = taskViewModel.dateDropDownExpanded,
+               showDatePicker = taskViewModel.showDatePicker,
                onCategorySpinnerClicked = { taskViewModel.updateCategoryDropDownState() },
-               onDateSpinnerClicked = { taskViewModel.updateDateDropDownState() },
+               onDateSpinnerClicked = { taskViewModel.updateDatePickerExpandedState() },
                categoryDropDownOnDismissCallBack = {taskViewModel.categoryDropDownOnDismissCallBack()},
-               dateDropDownOnDismissCallBack = {taskViewModel.dateDropDownOnDismissCallBack()},
                onTaskItemClicked = {
                    taskViewModel.showTaskDetail(it)
                },
                onPendingClicked = {taskViewModel.onPendingClicked()},
                onCompletedClicked = {taskViewModel.onCompletedClicked()},
                categorySpinnerText = taskViewModel.categorySpinnerText,
-               dateSpinnerText = taskViewModel.dateSpinnerText,
            )
         }
 

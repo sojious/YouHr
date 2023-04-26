@@ -1,5 +1,6 @@
 package co.youverify.youhr.presentation.ui.login
 
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
@@ -27,7 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun CreateCodeScreen(
+fun ConfirmCodeScreen(
     modifier: Modifier=Modifier,
     codeValue1:String,
     codeValue2:String,
@@ -37,7 +38,9 @@ fun CreateCodeScreen(
     codeValue6:String,
     uiState: UiState,
     isErrorCode:Boolean,
-    onNextButtonClicked:()->Unit,
+    showSuccessDialog:Boolean,
+    onCreateCodeButtonClicked:()->Unit,
+    onProceedButtonClicked:()->Unit,
     onCodeValueChanged: (String,Int) -> Unit
 ){
     Box(
@@ -53,7 +56,7 @@ fun CreateCodeScreen(
 
 
             Text(
-                text = stringResource(id = R.string.create_code),
+                text = stringResource(id = R.string.confirm_code),
                 fontSize = 20.sp,
                 color = yvText,
                 lineHeight = 26.sp,
@@ -63,7 +66,7 @@ fun CreateCodeScreen(
 
 
             Text(
-                text = stringResource(id = R.string.create_code_message),
+                text = stringResource(id = R.string.confirm_code_message),
                 textAlign = TextAlign.Center,
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
@@ -85,29 +88,100 @@ fun CreateCodeScreen(
             )
 
             ActionButton(
-                text = stringResource(id = R.string.next),
-                onButtonClicked = onNextButtonClicked
+                text ="Create Code",
+                onButtonClicked = onCreateCodeButtonClicked
             )
 
         }
 
         if (uiState.loading)
-            CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
-            //LoadingDialog(message = "Creating passcode...")
+        //CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
+            LoadingDialog(message = "Creating passcode...")
 
 
-
+        if (showSuccessDialog)
+            SuccessDialog(onButtonClicked = onProceedButtonClicked)
 
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun SuccessDialog(
+    modifier: Modifier = Modifier,
+    onButtonClicked: () -> Unit,
+) {
+
+    var animateTrigger by remember { mutableStateOf(false) }
+    LaunchedEffect(key1 = Unit) {
+        launch {
+            delay(200)
+            animateTrigger = true
+        }
+    }
+
+
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false, usePlatformDefaultWidth = false)
+    ) {
+
+        Box {
+
+            AnimatedVisibility(
+                visible = animateTrigger,
+                enter = scaleIn(animationSpec = tween(1000), initialScale = 0.5f)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = modifier
+                        .width(305.dp)
+                        .background(color = backGroundColor, shape = RoundedCornerShape(12.dp))
+                ) {
+
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_success_2),
+                        contentDescription =null,
+                        modifier = Modifier
+                            .padding(top = 44.dp, bottom = 24.dp)
+                    )
+
+                    Text(
+                        text = "Great, all set!",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = yvText,
+                        modifier = Modifier.padding(bottom=8.dp)
+                    )
+
+
+                    Text(
+                        text = "You have successfully created a new login code for the next time you want to login.",
+                        fontSize = 12.sp,
+                        color = bodyTextColor,
+                        modifier = Modifier.padding(start = 28.dp,end=28.dp, bottom=24.dp),
+                        lineHeight = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+
+                    ActionButton(text= stringResource(id = R.string.next),
+                        onButtonClicked = onButtonClicked,
+                        modifier = Modifier.padding(start = 69.dp,end=69.dp, bottom = 39.dp)
+                    )
+                }
+            }
+        }
+    }
+
+
+}
 
 @Preview
 @Composable
-fun CodeScreenPreview(){
+fun ConfirmCodeScreenPreview(){
     Surface {
-        CreateCodeScreen(
-            onNextButtonClicked = {},
+        ConfirmCodeScreen(
+            onCreateCodeButtonClicked = {},
             codeValue1 ="1",
             codeValue2="2",
             codeValue3="3",
@@ -115,6 +189,8 @@ fun CodeScreenPreview(){
             codeValue5 = "5",
             codeValue6 = "6",
             onCodeValueChanged ={_,_ ->},
+            showSuccessDialog = true,
+            onProceedButtonClicked = {},
             isErrorCode = false,
             uiState = UiState()
         )
@@ -123,7 +199,7 @@ fun CodeScreenPreview(){
 
 @Preview
 @Composable
-fun CodeInputBoxPreview(){
+fun CodeBoxPreview(){
     CodeInputBox(
         codeValue1 ="1",
         codeValue2="2",
@@ -137,4 +213,10 @@ fun CodeInputBoxPreview(){
     )
 }
 
-
+@Preview
+@Composable
+fun SuccessDialogPreview(){
+    Surface {
+        SuccessDialog(onButtonClicked = {})
+    }
+}

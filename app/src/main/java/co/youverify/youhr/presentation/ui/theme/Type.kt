@@ -11,38 +11,8 @@ import co.youverify.youhr.R
 
 // Set of Material typography styles to start with
 
-val sPProTextFont= FontFamily(
-    Font(R.font.sf_pro_text_regular, weight = FontWeight.Normal),
-    Font(R.font.sf_pro_text_medium, weight = FontWeight.Medium),
-    Font(R.font.sf_pro_text_semibold, weight = FontWeight.SemiBold)
-)
 
-
-val sPProRoundedFont= FontFamily(
-    Font(R.font.sf_pro_rounded_regular, weight = FontWeight.Normal),
-    Font(R.font.sf_pro_rounded_bold, weight = FontWeight.Bold),
-    Font(R.font.sf_pro_rounded_semibold, weight = FontWeight.SemiBold),
-    Font(R.font.sf_pro_rounded_heavy, weight = FontWeight.ExtraBold)
-)
-
-val brSonomaFont= FontFamily(
-
-    //Font(R.font.br_sonoma_light_italic,FontWeight.Light, FontStyle.Italic),
-    //Font(R.font.br_sonoma_bold,FontWeight.Bold),
-    //Font(R.font.br_sonoma_bold_italic,FontWeight.Bold, FontStyle.Italic),
-    //Font(R.font.br_sonoma_extra_light,FontWeight.ExtraLight),
-    //Font(R.font.br_sonoma_extra_light_italic,FontWeight.ExtraLight, FontStyle.Italic),
-    //Font(R.font.br_sonoma_light,FontWeight.Light),
-    //Font(R.font.br_sonoma_light_italic,FontWeight.Light, FontStyle.Italic),
-    //Font(R.font.br_sonoma_medium,FontWeight.Medium),
-    //Font(R.font.br_sonoma_medium_italic,FontWeight.Medium, FontStyle.Italic),
-    Font(R.font.br_sonoma_regular,FontWeight.Normal),
-    //Font(R.font.br_sonoma_regular_italic,FontWeight.Normal, FontStyle.Italic),
-    //Font(R.font.br_sonoma_semi_bold,FontWeight.SemiBold),
-    //Font(R.font.br_sonoma_semi_bold_italic,FontWeight.SemiBold, FontStyle.Italic),
-    //Font(R.font.br_sonoma_thin,FontWeight.Thin),
-    //Font(R.font.br_sonoma_thin_italic,FontWeight.Thin, FontStyle.Italic),
-)
+val brSonomaFont= FontFamily(Font(R.font.br_sonoma_regular,FontWeight.Normal))
 
 
 val Typography = Typography(

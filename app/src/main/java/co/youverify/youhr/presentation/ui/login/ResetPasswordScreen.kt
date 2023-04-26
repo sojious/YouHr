@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.youverify.youhr.R
 import co.youverify.youhr.presentation.ui.components.ActionButton
+import co.youverify.youhr.presentation.ui.components.LoadingDialog
 import co.youverify.youhr.presentation.ui.components.TitleText
 import co.youverify.youhr.presentation.ui.components.TitledTextField
 import co.youverify.youhr.presentation.ui.theme.textLight
@@ -79,7 +80,8 @@ fun ResetPasswordScreen(
         }
 
         if(uiState.loading)
-            CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
+            //CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
+            LoadingDialog(message = "Please wait...")
     }
 }
 

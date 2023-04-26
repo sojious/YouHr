@@ -17,7 +17,10 @@ class CreateCodeUseCase @Inject constructor(
     private val preferencesRepository: PreferencesRepository
     ) {
 
-     suspend operator fun invoke(createCodeRequest: CreateCodeRequest): Flow<NetworkResult<GenericResponse>> {
+     suspend operator fun invoke(
+         createCodeRequest: co.youverify.youhr.data.model.CreateCodeRequest,
+         passcode1: Int
+     ): Flow<NetworkResult<GenericResponse>> {
 
          if (createCodeRequest.passcode== EMPTY_PASSCODE_VALUE)
              return flow {
@@ -27,6 +30,11 @@ class CreateCodeUseCase @Inject constructor(
          if (createCodeRequest.passcode.toString().length!=6)
              return flow {
                  emit(NetworkResult.Error(code = INPUT_ERROR_CODE, message = "Passcode  cannot be less than 6 digits!") )
+             }
+
+         if (createCodeRequest.passcode!=passcode1)
+             return flow {
+                 emit(NetworkResult.Error(code = INPUT_ERROR_CODE, message = "Passcodes  do not match! Try again") )
              }
 
 

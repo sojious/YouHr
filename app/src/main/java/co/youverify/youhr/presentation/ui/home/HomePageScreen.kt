@@ -1,5 +1,7 @@
 package co.youverify.youhr.presentation.ui.home
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -38,7 +40,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
 import co.youverify.youhr.core.util.capitalizeWords
-import co.youverify.youhr.core.util.getLeavePeriod
+import co.youverify.youhr.core.util.getDateRange
 import co.youverify.youhr.core.util.toOrdinalDateString
 import co.youverify.youhr.presentation.ui.components.TextAvatar
 import co.youverify.youhr.presentation.ui.theme.*
@@ -47,6 +49,10 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.Month
+import java.time.ZoneOffset
 import java.util.*
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
@@ -68,7 +74,7 @@ fun HomePageScreen(
     ){
 
 
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl ){
+
         ModalNavigationDrawer(
             // modifier = modifier.fillMaxSize(),
             drawerState = homeDrawerState,
@@ -82,7 +88,7 @@ fun HomePageScreen(
             },
             content = {
 
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr ){
+
                     ScreenContent(
                         modifier =Modifier.fillMaxSize(),
                         userName = "Edith",
@@ -95,9 +101,9 @@ fun HomePageScreen(
                     )
                 }
 
-            }
+
         )
-    }
+
 
 
 
@@ -497,7 +503,7 @@ fun EmployeeOnLeaveItem(employeeOnLeave: EmployeeOnLeave){
 
 
         Text(
-            text = getLeavePeriod(employeeOnLeave.leaveStartDate,employeeOnLeave.leaveEndDate),
+            text = getDateRange(employeeOnLeave.leaveStartDate,employeeOnLeave.leaveEndDate),
             fontSize=10.sp,
             fontWeight=FontWeight.Normal,
             lineHeight=13.sp,
@@ -578,15 +584,6 @@ fun TopSection(
 
 
 
-/*@Composable
-fun Announcements(modifier: Modifier=Modifier) {
-
-}*/
-
-/*@Composable
-fun EmployeesOnLeave(modifier: Modifier=Modifier) {
-}*/
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileSection(
@@ -601,21 +598,20 @@ fun ProfileSection(
 
     ConstraintLayout(modifier= modifier
         .fillMaxWidth()
-        //.padding(top = 5.dp)
-        .height(48.dp)
+        //.padding(top = 15.dp)
+        //.height(48.dp)
     ) {
 
         val (profileImage,greetingText,profileName,badgedNotificationIcon,hamburgerIcon) = createRefs()
-        Image(
-            modifier= Modifier
-                .size(48.dp)
-                .clip(shape = CircleShape)
-                .constrainAs(profileImage, constrainBlock = {
-                    start.linkTo(parent.start, 0.dp)
-                }),
-            painter = painterResource(id =R.drawable.profile_photo_edith) ,
-            contentDescription ="",
-            contentScale = ContentScale.Crop
+
+
+        IconButton(
+            onClick = { onHamburgerIconClicked() },
+            modifier = Modifier.constrainAs(hamburgerIcon, constrainBlock = {
+                start.linkTo(parent.start,0.dp)
+                top.linkTo(parent.top,0.dp)
+            }),
+            content = { Icon(painter = painterResource(id = R.drawable.ic_hamburger) , contentDescription ="" , tint = yvColor1, modifier = Modifier.size(18.dp,12.dp)) }
         )
 
 
@@ -624,8 +620,8 @@ fun ProfileSection(
                 modifier= Modifier
                     .padding(top = 3.dp)
                     .constrainAs(greetingText, constrainBlock = {
-                        top.linkTo(parent.top, 4.dp)
-                        start.linkTo(profileImage.end, 2.dp)
+                        top.linkTo(hamburgerIcon.bottom, 18.dp)
+                        start.linkTo(hamburgerIcon.start, 0.dp)
                     }),
                 fontSize = 12.sp,
                 color = yvText,
@@ -638,8 +634,8 @@ fun ProfileSection(
                 modifier= Modifier
                     .padding(top = 2.dp)
                     .constrainAs(profileName, constrainBlock = {
-                        top.linkTo(greetingText.bottom, 0.dp)
-                        start.linkTo(profileImage.end, 2.dp)
+                        top.linkTo(greetingText.bottom, 4.dp)
+                        start.linkTo(greetingText.start, 0.dp)
                     }),
                 fontSize = 16.sp,
                 color = yvText,
@@ -651,8 +647,9 @@ fun ProfileSection(
         BadgedBox(
             modifier = Modifier
                 .constrainAs(badgedNotificationIcon, constrainBlock = {
-                    end.linkTo(hamburgerIcon.start, 20.dp)
-                    centerVerticallyTo(parent)
+                    end.linkTo(profileImage.start, 20.dp)
+                    centerVerticallyTo(profileImage)
+
                 })
                 .clickable { onNotificationIconClicked(badgeText) },
             badge = {
@@ -670,14 +667,21 @@ fun ProfileSection(
         )
 
 
-        IconButton(
-            onClick = { onHamburgerIconClicked() },
-            modifier = Modifier.constrainAs(hamburgerIcon, constrainBlock = {
-                end.linkTo(parent.end,0.dp)
-                centerVerticallyTo(parent)
-            }),
-            content = { Icon(painter = painterResource(id = R.drawable.ic_hamburger) , contentDescription ="" , tint = yvColor1, modifier = Modifier.size(18.dp,12.dp)) }
-        ) 
+
+        Image(
+            modifier= Modifier
+                .size(32.dp)
+                .clip(shape = CircleShape)
+                .constrainAs(profileImage, constrainBlock = {
+                    end.linkTo(parent.end, 0.dp)
+                }),
+            painter = painterResource(id =R.drawable.profile_photo_edith) ,
+            contentDescription ="",
+            contentScale = ContentScale.Crop
+        )
+
+
+
 
 
     }
@@ -788,7 +792,7 @@ fun QuickAccessItem(modifier: Modifier = Modifier, imageResId: Int, index: Int, 
 }
 
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalPagerApi::class)
 @Preview
 @Composable
 fun HomePageScreenPreview(){
@@ -854,6 +858,7 @@ fun QuickAccessItemPreview(){
     }
 }
 
+
 @Preview
 @Composable
 fun AnnouncementItemPreview(){
@@ -884,7 +889,7 @@ fun EmployeeOnLeaveItemPreview(){
                     "product designer",
                     "Abidat akinyele",
                     getDate(),
-                    Date()
+                    Instant.now().toEpochMilli()
                 )
             )
         }
@@ -934,9 +939,9 @@ fun SideNavPreview(){
     }
 }
 
-data class Announcement(val announcer:String, val message:String, val addressee:String, val date:Date)
+data class Announcement(val announcer:String, val message:String, val addressee:String, val date: Long)
 
-data class EmployeeOnLeave(val photoResId:Int, val name:String, val designation:String, val reliever:String, val leaveStartDate:Date, val leaveEndDate:Date)
+data class EmployeeOnLeave(val photoResId:Int, val name:String, val designation:String, val reliever:String, val leaveStartDate:Long, val leaveEndDate:Long)
 data class SideNavItem(val imageResId:Int, val text:String)
 
 
@@ -949,7 +954,7 @@ val announcementItemAvatarColors= listOf(
 
 val sideNavItems= listOf(
     SideNavItem(R.drawable.material_symbols_line_start_square_rounded,"Get Started"),
-    SideNavItem(R.drawable.ic_baseline_home,"Homepage"),
+   // SideNavItem(R.drawable.ic_baseline_home,"Homepage"),
     SideNavItem(R.drawable.fluent_task_list_square_settings_20_filled,"Resources"),
     SideNavItem(R.drawable.clarity_administrator_solid,"Leave Management")
 )
@@ -978,7 +983,7 @@ val dummyEmployee=EmployeeOnLeave(
     "Product Designer",
     "Yusuf Babatunde",
     getDate(),
-    Date()
+    Instant.now().toEpochMilli()
 )
 
 val employeesOnLeave= listOf(
@@ -994,10 +999,10 @@ val employeesOnLeave= listOf(
 
 )
 
-fun getDate(): Date {
-    val cal=Calendar.getInstance()
-    cal.set(2023,2,22)
-    return cal.time
+
+fun getDate(): Long {
+    val localDate= LocalDate.of(2023,Month.FEBRUARY,20)
+    return localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
 }
 
 

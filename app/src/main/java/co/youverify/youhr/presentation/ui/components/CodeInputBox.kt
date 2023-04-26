@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -91,7 +92,8 @@ fun CodeInputField(value: String, index: Int, onValueChanged: (String,Int) -> Un
 
             .onFocusChanged { focusState ->
                 borderColor = if (focusState.isFocused) yvColor else codeInputUnfocused
-            }
+            },
+        visualTransformation = PasswordVisualTransformation(mask = '.')
 
 
     )

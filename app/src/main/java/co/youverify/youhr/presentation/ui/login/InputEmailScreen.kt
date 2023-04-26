@@ -29,7 +29,6 @@ fun InputEmailScreen(
     onEmailValueChanged: (String) -> Unit,
     onNextButtonClicked: () -> Unit,
     onBackArrowClicked: ()->Unit,
-    onLoginWithCodeOptionClicked: () -> Unit,
     isErrorValue: Boolean,
     errorMessage: String
 ){
@@ -67,16 +66,7 @@ fun InputEmailScreen(
                 onButtonClicked = onNextButtonClicked,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
-            Text(
-                text="Log In With Code",
-                modifier = Modifier
-                    .padding(top = 16.dp, start = 20.dp)
-                    .align(Alignment.Start)
-                    .clickable { onLoginWithCodeOptionClicked() },
-                fontSize = 12.sp,
-                lineHeight=16.3.sp,
-                color= yvColor2,
-            )
+
             
         }
     }
@@ -90,7 +80,6 @@ fun LoginScreen(){
             emailValue ="",
             onEmailValueChanged ={},
             onNextButtonClicked = {},
-            onLoginWithCodeOptionClicked = {},
             isErrorValue = false,
             errorMessage = "",
             onBackArrowClicked = {}

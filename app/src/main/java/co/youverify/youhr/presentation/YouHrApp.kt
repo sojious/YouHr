@@ -90,7 +90,7 @@ fun createLaunchEffects(
 
     LaunchedEffect(key1 = true){
 
-        createCodeViewModel.uiEventFlow.collect {event->
+        createCodeViewModel.uiEventFlow.collect { event->
             handleEvent(event,snackBarHostState,context)
         }
     }

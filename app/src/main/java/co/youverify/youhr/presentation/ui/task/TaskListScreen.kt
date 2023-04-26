@@ -23,52 +23,89 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
+import co.youverify.youhr.core.util.getDateRange
 import co.youverify.youhr.core.util.toOrdinalDateString
 import co.youverify.youhr.presentation.ui.theme.*
+import java.time.Instant
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(
     modifier: Modifier = Modifier,
     tasks: List<Task>,
     listState: LazyListState,
     categoryDropDownExpanded: Boolean,
-    dateDropDownExpanded: Boolean,
+    showDatePicker: Boolean,
     onCategorySpinnerClicked: () -> Unit,
     onDateSpinnerClicked: () -> Unit,
     categoryDropDownOnDismissCallBack: () -> Unit,
-    dateDropDownOnDismissCallBack: () -> Unit,
     onTaskItemClicked: (Int) -> Unit,
     onPendingClicked: () -> Unit,
     onCompletedClicked: () -> Unit,
     categorySpinnerText: String,
-    dateSpinnerText: String
 
 
-){
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(21.dp)
-    ) {
-        //var task1 by remember{ mutableStateOf(pendingTasks) }
+    ){
+
+    val dateRangePickerState = rememberDateRangePickerState(
+        initialSelectedEndDateMillis = Instant.now().toEpochMilli(),
+        initialSelectedStartDateMillis = Instant.now().toEpochMilli()-(3600*24*7*1000),
+        yearRange = IntRange(start = 2023, endInclusive = 2023)
+    )
 
 
-        TopSection(
-            title = "My Tasks",
-            categoryExpanded=categoryDropDownExpanded,
-            dateExpanded=dateDropDownExpanded,
-            onCategorySpinnerClicked=onCategorySpinnerClicked,
-            onDateSpinnerClicked=onDateSpinnerClicked,
-            dateDropDownOnDismissCallBack = dateDropDownOnDismissCallBack,
-            categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
-            onPendingClicked = onPendingClicked,
-            onCompletedClicked = onCompletedClicked,
-            categorySpinnerText = categorySpinnerText,
-            dateSpinnerText = dateSpinnerText
-        )
-        Divider(thickness = 1.dp, color = codeInputUnfocused, modifier = Modifier.fillMaxWidth())
-        TaskList(tasks = tasks, state =listState, onTaskItemClicked =onTaskItemClicked)
-    }
+    Box(
+        modifier=modifier.fillMaxSize(),
+        content = {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(21.dp)
+            ) {
+                //var task1 by remember{ mutableStateOf(pendingTasks) }
+
+
+                TopSection(
+                    title = "My Tasks",
+                    categoryExpanded=categoryDropDownExpanded,
+                    onCategorySpinnerClicked=onCategorySpinnerClicked,
+                    onDateSpinnerClicked=onDateSpinnerClicked,
+                    categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
+                    onPendingClicked = onPendingClicked,
+                    onCompletedClicked = onCompletedClicked,
+                    categorySpinnerText = categorySpinnerText,
+                    startDateMillis = dateRangePickerState.selectedStartDateMillis!!,
+                    endDateMillis = dateRangePickerState.selectedEndDateMillis?:System.currentTimeMillis()
+
+                )
+                Divider(thickness = 1.dp, color = codeInputUnfocused, modifier = Modifier.fillMaxWidth())
+                TaskList(tasks = tasks, state =listState, onTaskItemClicked =onTaskItemClicked)
+            }
+
+            if (showDatePicker)
+                DateRangePicker(
+                state =dateRangePickerState,
+                //dateValidator = {
+                   // it<=Calendar.getInstance().timeInMillis
+                //},
+                colors = DatePickerDefaults.colors(
+                    //containerColor = Color.Black,
+                    yearContentColor = Color(0xff293050),
+                    selectedDayContainerColor = primaryColor,
+                    selectedDayContentColor = Color.White,
+                    dayInSelectionRangeContainerColor = yvColor,
+                    weekdayContentColor = Color(0xff293050),
+                    disabledDayContentColor = Color(0x52181E30),
+
+                    ),
+                    modifier = Modifier.padding(top=131.dp, end = 20.dp, start = 20.dp)
+                        //.width(316.dp)
+                        //.height(416.dp)
+                        .background(shape = RoundedCornerShape(12.dp), color = Color.White),
+                    title = {Text("")},
+            )
+        }
+    )
 }
 
 
@@ -78,15 +115,14 @@ fun TopSection(
     modifier: Modifier = Modifier,
     title: String,
     categoryExpanded: Boolean,
-    dateExpanded: Boolean,
     onCategorySpinnerClicked: () -> Unit,
     onDateSpinnerClicked: () -> Unit,
-    dateDropDownOnDismissCallBack: () -> Unit,
     categoryDropDownOnDismissCallBack: () -> Unit,
     onPendingClicked: () -> Unit,
     onCompletedClicked: () -> Unit,
     categorySpinnerText: String,
-    dateSpinnerText: String
+    endDateMillis: Long,
+    startDateMillis: Long,
 ) {
     ConstraintLayout(modifier = modifier
         .padding(top = 36.dp)
@@ -111,9 +147,8 @@ fun TopSection(
                 start.linkTo(categorySpinner.end,8.dp)
             },
             onDateSpinnerClicked=onDateSpinnerClicked,
-            dateDropDownOnDismissCallBack = dateDropDownOnDismissCallBack,
-            dropDownExpanded=dateExpanded,
-            spinnerText = dateSpinnerText
+            selectedEndDateMillis = endDateMillis,
+            selectedStartDateMillis = startDateMillis
         )
 
         CategorySpinner(
@@ -179,16 +214,16 @@ fun CategorySpinner(
 ) {
 
 
-    Box(
+    Row(
         modifier = modifier
-            .size(96.dp, 28.dp)
+            .height(28.dp)
             .background(color = Color.White, shape = RoundedCornerShape(8.dp))
             .border(width = 1.dp, color = dividerColor, shape = RoundedCornerShape(8.dp))
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_drop_down_indicator), contentDescription =null ,
             modifier = Modifier
-                .align(Alignment.CenterStart)
+                .align(Alignment.CenterVertically)
                 .padding(start = 10.dp)
             )
         
@@ -198,73 +233,87 @@ fun CategorySpinner(
             lineHeight = 20.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 28.dp)
+                .align(Alignment.CenterVertically)
+                .padding(start = 6.dp)
         )
 
-        IconButton(
-            onClick = {
 
-                onCategorySpinnerClicked()
-            },
-            modifier= Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 70.67.dp)
+
+
+            Icon(
+                painter = painterResource(id = R.drawable.ic_spinner),
+                contentDescription =null,
+                modifier= Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 8.67.dp, end = 11.74.dp)
+                    .clickable {
+                        onCategorySpinnerClicked()
+                    }
+            )
+
+
+        DropdownMenu(
+            expanded = dropDownExpanded,
+            onDismissRequest = { categoryDropDownOnDismissCallBack()},
+            modifier =Modifier.background(color= Color.White, shape = RoundedCornerShape(4.dp))
         ) {
-            Icon(painter = painterResource(id = R.drawable.ic_spinner), contentDescription =null )
-        }
-
-        DropdownMenu(expanded = dropDownExpanded, onDismissRequest = { categoryDropDownOnDismissCallBack()}) {
             DropdownMenuItem(text = { Text(text = "Pending", fontSize = 12.sp, color = yvText)}, onClick = {
                 onPendingClicked()
             })
-            DropdownMenuItem(text = { Text(text = "Completed", fontSize = 12.sp, color = yvText)}, onClick = {
+            DropdownMenuItem(text = { Text(text = "Failed", fontSize = 12.sp, color = yvText)}, onClick = {
+
+            })
+
+            DropdownMenuItem(text = { Text(text = "Executed", fontSize = 12.sp, color = yvText)}, onClick = {
                 onCompletedClicked()
+            })
+            DropdownMenuItem(text = { Text(text = "In Progress", fontSize = 12.sp, color = yvText)}, onClick = {
             })
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateSpinner(
     modifier: Modifier = Modifier,
     onDateSpinnerClicked: () -> Unit,
-    dateDropDownOnDismissCallBack: () -> Unit,
-    dropDownExpanded: Boolean,
-    spinnerText: String
+    selectedStartDateMillis:Long,
+    selectedEndDateMillis: Long
 ) {
 
-    Box(
+
+
+
+    Row(
         modifier = modifier
-            .size(139.dp, 28.dp)
+            .height(28.dp)
             .background(color = Color.White, shape = RoundedCornerShape(8.dp))
             .border(width = 1.dp, color = dividerColor, shape = RoundedCornerShape(8.dp))
     ) {
 
-
         Text(
-            text = "9th-16 March 2023",
+            text = getDateRange(selectedStartDateMillis,selectedEndDateMillis),
             fontSize = 10.sp,
             lineHeight = 20.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier
-                .align(Alignment.CenterStart)
+                .align(Alignment.CenterVertically)
                 .padding(start = 8.dp)
         )
 
-        IconButton(
-            onClick = {
-                      onDateSpinnerClicked()
-            },
-            modifier= Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 115.67.dp)
-        ) {
-            Icon(painter = painterResource(id = R.drawable.ic_spinner), contentDescription =null )
-        }
 
-        DropdownMenu(expanded = dropDownExpanded, onDismissRequest = {dateDropDownOnDismissCallBack() }) {
-        }
+            Icon(
+                painter = painterResource(id = R.drawable.ic_spinner),
+                contentDescription =null ,
+                modifier= Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 8.67.dp, end = 11.74.dp)
+                    .clickable {
+                        onDateSpinnerClicked()
+                    }
+            )
+
     }
 }
 
@@ -474,16 +523,14 @@ fun TaskListScreenPreview(){
                 tasks = completedTasks,
                 listState = rememberLazyListState(),
                 categoryDropDownExpanded = false,
-                dateDropDownExpanded = false,
+                showDatePicker = true,
                 onCategorySpinnerClicked = {},
                 onDateSpinnerClicked = {},
                 categoryDropDownOnDismissCallBack = {},
-                dateDropDownOnDismissCallBack = {},
                 onTaskItemClicked = {},
                 onPendingClicked = {},
                 onCompletedClicked = {},
                 categorySpinnerText = "Pending",
-                dateSpinnerText = ""
             )
         }
 
@@ -497,11 +544,11 @@ fun PendingTaskItemPreview(){
         Surface {
             PendingTaskItem(
                 task = Task(
-                    Date(),
+                    Instant.now().toEpochMilli(),
                     "Interview with candidates for product design role",
                     isCompleted = true,
                     assignee = "Edet", assigner = "Seth Samuel", creator = "Timothy John"
-                    ,assigneeEmail = "Edna@youverify.co", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster",
+                    , assigneeEmail = "Edna@youverify.co", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster",
                     project = "Employee Onboarding"
                 ),
                 index = 0
@@ -519,7 +566,7 @@ fun CompletedTaskItemPreview(){
         Surface {
             CompletedTaskItem(
                 task = Task(
-                    Date(),
+                    Instant.now().toEpochMilli(),
                     "Interview with candidates for product design role",
                     isCompleted = true,
                     assignee = "Edet", assigner = "Seth Samuel", creator = "Timothy John",
@@ -534,30 +581,103 @@ fun CompletedTaskItemPreview(){
     }
 }
 
+
+
+@Composable
+@Preview
+fun DateSpinnerPreview(){
+    YouHrTheme {
+        Surface {
+            DateSpinner(
+                onDateSpinnerClicked = {},
+                selectedEndDateMillis = System.currentTimeMillis(),
+                selectedStartDateMillis = System.currentTimeMillis()-(3600*24*7*1000)
+            )
+        }
+
+    }
+}
+
 data class Task(
-    val dueDate: Date, val title:String, val assignee:String, val assigneeEmail: String, val isCompleted:Boolean, val assigner:String, val creator:String, val project:String, val description:String)
+    val dueDate: Long, val title:String, val assignee:String, val assigneeEmail: String, val isCompleted:Boolean, val assigner:String, val creator:String, val project:String, val description:String)
 val pendingTasks= listOf(
-    Task(Date(), "Interview with candidates for product design role", isCompleted = false, assignee = "Edet",assigner = "Seth Samuel", creator = "Timothy John", assigneeEmail = "Edna@youverify.co", project = "Employee Onboarding", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster" ),
-    Task(Date(), "Meeting with the head of each department", isCompleted = false, assignee = "Bolaji", assigner = "Kene Nsofor", creator = "Adewusi Teni",assigneeEmail = "bolaji@youverify.co",project = "Client Meeting",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Meeting with the head of each department", isCompleted = false, assignee = "Yusuf",assigner = "Tracy Mark", creator = "Keneth Brown",assigneeEmail = "yusuf@youverify.co",project = "Product Exhibition",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Create new email address for new employees", isCompleted = false, assignee = "Paul",assigner = "Donald Njaoguani", creator = "Richard Fish",assigneeEmail = "paul@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Create new email address for new employees", isCompleted = false, assignee = "Nkechi",assigner = "Chioma Terena", creator = "Edna Ibeh",assigneeEmail = "nkechi@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Draft intern documents", isCompleted = false, assignee = "Abidemi",assigner = "Joseph Samuel", creator = "Danladi Abubakar",assigneeEmail = "abidemi@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Draft intern documents", isCompleted = false, assignee = "Zahra",assigner = "Praise Chima", creator = "Eniola Temidire",assigneeEmail = "zahra@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Prepare Appraisals", isCompleted = false, assignee = "Tina",assigner = "Bassey Kiriku", creator = "John Micheal",assigneeEmail = "tina@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster")
+    Task(Instant.now().toEpochMilli(), "Interview with candidates for product design role", isCompleted = false, assignee = "Edet",
+        assigner = "Seth Samuel", creator = "Timothy John", assigneeEmail = "Edna@youverify.co", project = "Employee Onboarding", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster" ),
+    Task(Instant.now().toEpochMilli(), "Meeting with the head of each department", isCompleted = false, assignee = "Bolaji", assigner = "Kene Nsofor", creator = "Adewusi Teni",
+        assigneeEmail = "bolaji@youverify.co",
+        project = "Client Meeting",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Meeting with the head of each department", isCompleted = false, assignee = "Yusuf",
+        assigner = "Tracy Mark", creator = "Keneth Brown",
+        assigneeEmail = "yusuf@youverify.co",
+        project = "Product Exhibition",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Create new email address for new employees", isCompleted = false, assignee = "Paul",
+        assigner = "Donald Njaoguani", creator = "Richard Fish",
+        assigneeEmail = "paul@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Create new email address for new employees", isCompleted = false, assignee = "Nkechi",
+        assigner = "Chioma Terena", creator = "Edna Ibeh",
+        assigneeEmail = "nkechi@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Draft intern documents", isCompleted = false, assignee = "Abidemi",
+        assigner = "Joseph Samuel", creator = "Danladi Abubakar",
+        assigneeEmail = "abidemi@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Draft intern documents", isCompleted = false, assignee = "Zahra",
+        assigner = "Praise Chima", creator = "Eniola Temidire",
+        assigneeEmail = "zahra@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Prepare Appraisals", isCompleted = false, assignee = "Tina",
+        assigner = "Bassey Kiriku", creator = "John Micheal",
+        assigneeEmail = "tina@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster")
 )
 
 
 
 val completedTasks= listOf(
-    Task(Date(), "Interview with candidates for product design role", isCompleted = true, assignee = "Edet",assigner = "Seth Samuel", creator = "Timothy John", assigneeEmail = "Edna@youverify.co", project = "Employee Onboarding", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster" ),
-    Task(Date(), "Meeting with the head of each department", isCompleted = true, assignee = "Bolaji", assigner = "Kene Nsofor", creator = "Adewusi Teni",assigneeEmail = "bolaji@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Meeting with the head of each department", isCompleted = true, assignee = "Yusuf",assigner = "Tracy Mark", creator = "Keneth Brown",assigneeEmail = "yusuf@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Create new email address for new employees", isCompleted = true, assignee = "Paul",assigner = "Donald Njaoguani", creator = "Richard Fish",assigneeEmail = "paul@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Create new email address for new employees", isCompleted = true, assignee = "Nkechi",assigner = "Chioma Terena", creator = "Edna Ibeh",assigneeEmail = "nkechi@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Draft intern documents", isCompleted = true, assignee = "Abidemi",assigner = "Joseph Samuel", creator = "Danladi Abubakar",assigneeEmail = "abidemi@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Draft intern documents", isCompleted = true, assignee = "Zahra",assigner = "Praise Chima", creator = "Eniola Temidire",assigneeEmail = "zahra@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Date(), "Prepare Appraisals", isCompleted = true, assignee = "Tina",assigner = "Bassey Kiriku", creator = "John Micheal",assigneeEmail = "tina@youverify.co",project = "Employee Onboarding",description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster")
+    Task(Instant.now().toEpochMilli(), "Interview with candidates for product design role", isCompleted = true, assignee = "Edet",
+        assigner = "Seth Samuel", creator = "Timothy John", assigneeEmail = "Edna@youverify.co", project = "Employee Onboarding", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster" ),
+    Task(Instant.now().toEpochMilli(), "Meeting with the head of each department", isCompleted = true, assignee = "Bolaji", assigner = "Kene Nsofor", creator = "Adewusi Teni",
+        assigneeEmail = "bolaji@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Meeting with the head of each department", isCompleted = true, assignee = "Yusuf",
+        assigner = "Tracy Mark", creator = "Keneth Brown",
+        assigneeEmail = "yusuf@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Create new email address for new employees", isCompleted = true, assignee = "Paul",
+        assigner = "Donald Njaoguani", creator = "Richard Fish",
+        assigneeEmail = "paul@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Create new email address for new employees", isCompleted = true, assignee = "Nkechi",
+        assigner = "Chioma Terena", creator = "Edna Ibeh",
+        assigneeEmail = "nkechi@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Draft intern documents", isCompleted = true, assignee = "Abidemi",
+        assigner = "Joseph Samuel", creator = "Danladi Abubakar",
+        assigneeEmail = "abidemi@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Draft intern documents", isCompleted = true, assignee = "Zahra",
+        assigner = "Praise Chima", creator = "Eniola Temidire",
+        assigneeEmail = "zahra@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
+    Task(Instant.now().toEpochMilli(), "Prepare Appraisals", isCompleted = true, assignee = "Tina",
+        assigner = "Bassey Kiriku", creator = "John Micheal",
+        assigneeEmail = "tina@youverify.co",
+        project = "Employee Onboarding",
+        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster")
 )
 
 val taskItemSpacerColors= listOf(

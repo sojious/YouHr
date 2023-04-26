@@ -16,7 +16,6 @@ import co.youverify.youhr.presentation.ui.login.CreateCodeScreen
 import co.youverify.youhr.presentation.ui.login.CreateCodeViewModel
 
 import com.google.accompanist.navigation.animation.composable
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.loginGraph(
@@ -24,7 +23,8 @@ fun NavGraphBuilder.loginGraph(
     inputEmailViewModel: InputEmailViewModel,
     loginWithPassWordViewModel: LoginWithPassWordViewModel,
     resetPassWordViewModel: ResetPassWordViewModel,
-    createCodeViewModel: CreateCodeViewModel
+    createCodeViewModel: CreateCodeViewModel,
+    confirmCodeViewModel: ConfirmCodeViewModel
 ){
     navigation(startDestination =InputEmail.route , route =LoginGraph.route ){
 
@@ -48,7 +48,6 @@ fun NavGraphBuilder.loginGraph(
 
                 onNextButtonClicked = { inputEmailViewModel.onNextButtonClicked() },
 
-                onLoginWithCodeOptionClicked = { inputEmailViewModel.onLoginWithCodeButtonClicked() },
                 isErrorValue = inputEmailViewModel.isErrorValue,
                 errorMessage = inputEmailViewModel.errorMessage,
                 onBackArrowClicked ={inputEmailViewModel.navigateBack()}
@@ -103,18 +102,24 @@ fun NavGraphBuilder.loginGraph(
                 onCodeValueChanged = {newValue, index->
                              loginWithCodeViewModel.updateCode(newValue,index)
 
-                    if (index<6){
+                    if (index in 2..5){
                         if (newValue.length==1) focusManager.moveFocus(FocusDirection.Next)
                         if (newValue.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
                     }
 
-                    if (index==6 && loginWithCodeViewModel.code6.isNotEmpty()) focusManager.clearFocus()
+                    if(index==1 && newValue.isEmpty()) return@LoginWithCodeScreen
+                    if(index==1 && newValue.isNotEmpty()) focusManager.moveFocus(FocusDirection.Next)
+
+                    if (index==6 && loginWithCodeViewModel.code6.isNotEmpty()){
+                        focusManager.clearFocus()
+                        loginWithCodeViewModel.logUserIn()
+                    }
                     if (index==6 && loginWithCodeViewModel.code6.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
 
 
                 },
                 onPasswordLoginOptionClicked = { loginWithCodeViewModel.onPasswordLoginOptionClicked() },
-                onLoginButtonClicked = {loginWithCodeViewModel.logUserIn()},
+                //onLoginButtonClicked = {loginWithCodeViewModel.logUserIn()},
                 isErrorCode = loginWithCodeViewModel.isErrorCode,
                 uiState = uiState
 
@@ -142,22 +147,68 @@ fun NavGraphBuilder.loginGraph(
                 isErrorCode = createCodeViewModel.isErrorCode,
                 uiState =uiState,
 
-                onCreateCodeButtonClicked = { createCodeViewModel.createCode() },
+                onNextButtonClicked = { createCodeViewModel.goToConfirmCodeScreen() },
                 onCodeValueChanged = {newValue,codeIndex->
 
                     createCodeViewModel.updateCode(newValue,codeIndex)
 
-                    if (codeIndex<6){
+                    if (codeIndex in 2..5){
                         if (newValue.length==1) focusManager.moveFocus(FocusDirection.Next)
                         if (newValue.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
                     }
 
-                    if (codeIndex==6 && createCodeViewModel.code4.isNotEmpty()) focusManager.clearFocus()
-                    if (codeIndex==6 && createCodeViewModel.code4.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                    if(codeIndex==1 && newValue.isEmpty()) return@CreateCodeScreen
+                    if(codeIndex==1 && newValue.isNotEmpty()) focusManager.moveFocus(FocusDirection.Next)
+
+                    if (codeIndex==6 && createCodeViewModel.code6.isNotEmpty()) focusManager.clearFocus()
+                    if (codeIndex==6 && createCodeViewModel.code6.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
 
                 },
-                showSuccessDialog = createCodeViewModel.showSuccessDialog,
-                onProceedButtonClicked = {createCodeViewModel.onProceedButtonClicked()}
+            )
+
+        }
+
+
+        //Create Code Screen
+        composable(
+            route=ConfirmCode.route,
+            enterTransition = { expandIn()}
+        ){
+
+            val focusManager= LocalFocusManager.current
+            val uiState by createCodeViewModel.uIStatFlow.collectAsState()
+
+
+            ConfirmCodeScreen(
+                codeValue1 = confirmCodeViewModel.code1,
+                codeValue2 = confirmCodeViewModel.code2,
+                codeValue3 = confirmCodeViewModel.code3,
+                codeValue4 = confirmCodeViewModel.code4,
+                codeValue5 = confirmCodeViewModel.code5,
+                codeValue6 = confirmCodeViewModel.code6,
+                isErrorCode =confirmCodeViewModel.isErrorCode,
+                uiState =uiState,
+
+                onCreateCodeButtonClicked = { confirmCodeViewModel.createCode(createCodeViewModel) },
+                onCodeValueChanged = {newValue,codeIndex->
+
+                    confirmCodeViewModel.updateCode(newValue,codeIndex)
+
+                    if (codeIndex in 2..5){
+                        if (newValue.length==1) focusManager.moveFocus(FocusDirection.Next)
+                        if (newValue.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                    }
+
+                    if(codeIndex==1 && newValue.isEmpty()) return@ConfirmCodeScreen
+                    if(codeIndex==1 && newValue.isNotEmpty()) focusManager.moveFocus(FocusDirection.Next)
+
+                    if (codeIndex==6 && confirmCodeViewModel.code6.isNotEmpty()) focusManager.clearFocus()
+                    if (codeIndex==6 && confirmCodeViewModel.code6.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+
+
+                },
+                showSuccessDialog = confirmCodeViewModel.showSuccessDialog,
+                onProceedButtonClicked = {confirmCodeViewModel.onProceedButtonClicked()}
             )
 
         }
@@ -165,7 +216,7 @@ fun NavGraphBuilder.loginGraph(
         composable(route = CodeCreationSuccess.route){
 
             CodeCreationSuccessScreen(
-                onLoginRedirectButtonClicked = {createCodeViewModel.onLoginRedirectClicked()}
+                onLoginRedirectButtonClicked = {confirmCodeViewModel.onLoginRedirectClicked()}
             )
         }
         

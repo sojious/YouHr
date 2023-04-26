@@ -1,20 +1,30 @@
 package co.youverify.youhr.core.util
 
-import co.youverify.youhr.data.model.GenericResponse
+import android.os.Build
+import androidx.annotation.RequiresApi
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
 
-fun Date.toOrdinalDateString(includeOf:Boolean=true):String{
 
-    val calendar=Calendar.getInstance()
-    calendar.time=this
+ @RequiresApi(Build.VERSION_CODES.O)
+ val zoneId= ZoneId.of("Africa/Lagos")
+@RequiresApi(Build.VERSION_CODES.O)
+fun Long.toOrdinalDateString(includeOf:Boolean=true):String{
 
-    val month= calendar[Calendar.MONTH]
-    val year= calendar[Calendar.YEAR]
 
-    val formattedDay=when(val day=calendar[Calendar.DAY_OF_MONTH]){
+
+    val instant=Instant.ofEpochMilli(this)
+    val zoneDateTime=ZonedDateTime.ofInstant(instant,zoneId)
+
+    val month= zoneDateTime.month.value
+    val year= zoneDateTime.year
+
+    val formattedDay=when(val day=zoneDateTime.dayOfMonth){
 
         1,21 -> "${day}st"
         2,22 -> "${day}nd"
@@ -49,21 +59,24 @@ private fun getFormattedMonth(month: Int)= when (month) {
         else -> "dec"
     }
 
-fun getLeavePeriod(startDate:Date,endDate:Date):String{
+@RequiresApi(Build.VERSION_CODES.O)
+fun getDateRange(startDateMillis:Long, endDateMillis:Long):String{
 
-    val calendar1=Calendar.getInstance()
-    val calendar2=Calendar.getInstance()
-    calendar1.time=startDate
-    calendar2.time=endDate
 
-    val startYear=calendar1[Calendar.YEAR]
-    val endYear=calendar2[Calendar.YEAR]
+    //using New  Java date/time Api
+    val instant1=Instant.ofEpochMilli(startDateMillis)
+    val zoneDateTime1=ZonedDateTime.ofInstant(instant1,zoneId)
+    val instant2=Instant.ofEpochMilli(endDateMillis)
+    val zoneDateTime2=ZonedDateTime.ofInstant(instant2,zoneId)
 
-    val startMonth=calendar1[Calendar.MONTH]
-    val endMonth=calendar2[Calendar.MONTH]
+    val startYear=zoneDateTime1.year
+    val endYear=zoneDateTime2.year
 
-    val startDay=calendar1[Calendar.DAY_OF_MONTH]
-    val endDay=calendar2[Calendar.DAY_OF_MONTH]
+    val startMonth=zoneDateTime1.month.value
+    val endMonth=zoneDateTime2.month.value
+
+    val startDay=zoneDateTime1.dayOfMonth
+    val endDay=zoneDateTime2.dayOfMonth
 
     return if (startYear==endYear)
         "${getFormattedMonth(startMonth)} $startDay - ${getFormattedMonth(endMonth)} $endDay,$startYear"

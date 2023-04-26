@@ -118,5 +118,9 @@ object Home:YouHrDestination{
     override val route="home"
 }
 
+object ConfirmCode:YouHrDestination{
+    override val route="confirmCode"
+}
+
 
 

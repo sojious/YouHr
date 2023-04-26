@@ -30,7 +30,7 @@ class HomeViewModel @Inject constructor( private val navigator: Navigator) : Vie
     private set
     var profilePhotoResId = R.drawable.profile_photo_edith
     private set
-    var activeSideNavItem by mutableStateOf(1)
+    var activeSideNavItem by mutableStateOf(0)
     private set
     @OptIn(ExperimentalPagerApi::class)
     val pagerState = PagerState(currentPage = 0)

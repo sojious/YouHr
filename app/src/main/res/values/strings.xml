@@ -41,4 +41,6 @@
     <string name="leave_request">Leave\nRequest</string>
     <string name="send_password_reset">Send Password Reset Email</string>
     <string name="empowering_workforce">Empowering workforce,\nenhancing company culture</string>
+    <string name="confirm_code">Code Confirmation</string>
+    <string name="confirm_code_message">Please re-enter you 6-digit code below</string>
 </resources>

@@ -4,13 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.EMPTY_PASSCODE_VALUE
-import co.youverify.youhr.core.util.INPUT_ERROR_CODE
-import co.youverify.youhr.core.util.NetworkResult
 import co.youverify.youhr.data.model.CreateCodeRequest
-import co.youverify.youhr.domain.repository.PreferencesRepository
-import co.youverify.youhr.domain.use_case.CreateCodeUseCase
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
@@ -18,17 +13,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class CreateCodeViewModel @Inject constructor(
-    private val navigator: Navigator,
-    private val createCodeUseCase: CreateCodeUseCase,
-    private val preferencesRepository: PreferencesRepository
-    ) :ViewModel(){
+class CreateCodeViewModel @Inject constructor(private val navigator: Navigator, ) :ViewModel(){
 
     //initialize codeinputField variables
     var code1 by mutableStateOf("")
@@ -47,8 +36,6 @@ class CreateCodeViewModel @Inject constructor(
     var isErrorCode by mutableStateOf(false)
         private set
 
-    var showSuccessDialog by mutableStateOf(false)
-        private set
 
 
     private val _uIStateFlow= MutableStateFlow(UiState())
@@ -61,7 +48,9 @@ class CreateCodeViewModel @Inject constructor(
 
 
     fun updateCode(newValue:String, index:Int){
-        isErrorCode=false
+
+        if (isErrorCode)
+            isErrorCode=false
 
         if(newValue.length==1 || newValue.isEmpty()){
             when(index){
@@ -78,68 +67,42 @@ class CreateCodeViewModel @Inject constructor(
     }
 
 
-    fun onSkipClicked() {
-        navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginGraph.route)
-    }
 
-    fun createCode() {
-        //navigator.navigatePopToInclusive(toRoute = CodeCreationSuccess.route, popToRoute = CreateCode.route)
 
-        viewModelScope.launch {
+    fun goToConfirmCodeScreen() {
 
-            _uIStateFlow.value=_uIStateFlow.value.copy(loading = true)
+        _uIStateFlow.value=_uIStateFlow.value.copy(loading = true)
 
-            //val sb=StringBuilder().append(code1,code2,code3,code4,code5,code6)
-            //val passcode=sb.toString().toInt()
+        var passcode= EMPTY_PASSCODE_VALUE
 
-            var passcode= EMPTY_PASSCODE_VALUE
-
-            try { passcode="$code1$code2$code3$code4$code5$code6".toInt() }
-            catch (exception:NumberFormatException){
-                exception.printStackTrace()
-            }
-
-            val createCodeRequest= CreateCodeRequest(passcode = passcode)
-
-            createCodeUseCase(createCodeRequest).collect{networkResult->
-                when(networkResult){
-
-                    is NetworkResult.Success->{
-
-                       preferencesRepository.setUserPasscodeCreationStatus(passcodeCreated = true)
-
-                        _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
-                        showSuccessDialog=true
-                    }
-                    is NetworkResult.Error->{
-
-                        val authError=if (networkResult.code== INPUT_ERROR_CODE) networkResult.message.toString() else "An unexpected error occurred! try again! "
-                        isErrorCode=true
-                        _uIStateFlow.value=_uIStateFlow.value.copy(loading = false, authenticationError =authError )
-                    }
-                    is NetworkResult.Exception->{
-                        _uIStateFlow.value=_uIStateFlow.value.copy(loading = false)
-                        isErrorCode=false
-                        _uIEventFlow.send(UiEvent.ShowSnackBar(message = networkResult.genericMessage))
-                    }
-                }
-            }
+        try { passcode="$code1$code2$code3$code4$code5$code6".toInt() }
+        catch (exception:NumberFormatException){
+            exception.printStackTrace()
         }
 
+        val createCodeRequest= CreateCodeRequest(passcode = passcode)
+
+
+        if (createCodeRequest.passcode== EMPTY_PASSCODE_VALUE){
+            isErrorCode=true
+            _uIStateFlow.value=_uIStateFlow.value.copy(loading = false, authenticationError ="Passcode  cannot be empty!" )
+
+        }
+
+        else if (createCodeRequest.passcode.toString().length!=6) {
+            isErrorCode=true
+            _uIStateFlow.value=_uIStateFlow.value.copy(loading = false, authenticationError ="Passcode  cannot be less than 6 digits!" )
+
+        }
+
+
+       else{
+            _uIStateFlow.value=_uIStateFlow.value.copy(loading = false)
+            navigator.navigate(toRoute = ConfirmCode.route)
+       }
     }
 
-    fun onLoginRedirectClicked(){
 
-        navigator.navigatePopToInclusive(toRoute = LoginWithCode.route, popToRoute = CodeCreationSuccess.route)
-
-    }
-
-    fun onProceedButtonClicked() {
-
-        navigator.navigatePopToInclusive(
-            toRoute = BottomNavGraph.route, popToRoute = CreateCode.route)
-
-    }
 }
 
 

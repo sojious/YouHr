@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
 import co.youverify.youhr.core.util.capitalizeWords
 import co.youverify.youhr.core.util.toOrdinalDateString
@@ -57,7 +58,7 @@ fun TaskDetailScreen(
         Divider(thickness = 0.2.dp, color = codeInputUnfocused, modifier = Modifier
             .fillMaxWidth()
             .padding( top = 16.dp, bottom = 22.dp))
-        AssigneeInfo(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=34.dp,bottom=20.dp))
+        AssigneeInfo(task=currentTask, modifier = Modifier.padding(start = 21.dp,bottom=20.dp))
         DateInfo(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=20.dp))
         ProjectInfo(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=32.dp))
         TaskDescription(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=10.dp))
@@ -151,17 +152,31 @@ fun AssigneeInfo(modifier: Modifier=Modifier, task: Task) {
             modifier = Modifier
                 .size(72.dp, 24.dp)
                 .constrainAs(reassignButton) {
-                    end.linkTo(parent.end)
+                    end.linkTo(parent.end,34.dp)
                     centerVerticallyTo(parent)
+                   // width= Dimension.fillToConstraints
+                    //height= Dimension.wrapContent
 
                 }
         ) {
             Row(
-                horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.padding(start = 6.83.dp),
-                verticalAlignment = Alignment.CenterVertically
+                //horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxSize().padding(start = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(painter = painterResource(id = R.drawable.ic_reassign_task), contentDescription =null )
-                Text(text = "Reassign", fontSize = 10.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium, color = yvColor1,modifier=Modifier.padding(end=2.dp))
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_reassign_task),
+                    contentDescription =null,
+                //modifier=Modifier.padding(start = 3.dp)
+                )
+
+                Text(
+                    text = "Reassign",
+                    fontSize = 10.sp, lineHeight = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = yvColor1,
+                    modifier=Modifier.padding( end=2.dp)
+                )
             }
         }
     }

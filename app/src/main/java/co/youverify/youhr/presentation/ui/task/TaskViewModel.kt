@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import co.youverify.youhr.presentation.Home
 import co.youverify.youhr.presentation.TaskDetail
 import co.youverify.youhr.presentation.ui.Navigator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,15 +15,13 @@ import javax.inject.Inject
 class TaskViewModel @Inject constructor( private val navigator: Navigator) : ViewModel(){
 
 
-
     var  currentTaskList by mutableStateOf(pendingTasks)
     private set
     var categoryDropDownExpanded by mutableStateOf(false)
         private set
-    var dateDropDownExpanded by mutableStateOf(false)
+    var showDatePicker by mutableStateOf(false)
         private set
-    var dateSpinnerText by mutableStateOf("Pending")
-        private set
+
     var categorySpinnerText by mutableStateOf("Pending")
         private set
 
@@ -36,8 +33,8 @@ class TaskViewModel @Inject constructor( private val navigator: Navigator) : Vie
         //currentTaskList = if (currentTaskList[0].isCompleted) pendingTasks else completedTasks
     }
 
-    fun updateDateDropDownState() {
-        dateDropDownExpanded=!dateDropDownExpanded
+    fun updateDatePickerExpandedState() {
+        showDatePicker=!showDatePicker
     }
 
     fun showTaskDetail(taskId: Int) {
@@ -48,9 +45,6 @@ class TaskViewModel @Inject constructor( private val navigator: Navigator) : Vie
         categoryDropDownExpanded=false
     }
 
-    fun dateDropDownOnDismissCallBack() {
-        dateDropDownExpanded=false
-    }
 
     fun onPendingClicked() {
         currentTaskList= pendingTasks

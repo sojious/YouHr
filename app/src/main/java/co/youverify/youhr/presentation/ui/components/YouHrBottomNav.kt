@@ -45,7 +45,7 @@ fun YouHrBottomNav(
 
             destinations.forEachIndexed { index, destination ->
                 val labelText=when(index){
-                    0 ->"Homepage"
+                    0 ->"Home"
                     1 ->"My Tasks"
                     else->"Settings"
                 }

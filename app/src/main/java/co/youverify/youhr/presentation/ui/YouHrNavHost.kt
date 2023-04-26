@@ -15,6 +15,7 @@ import co.youverify.youhr.core.util.navigateSingleTopPopToInclusive
 import co.youverify.youhr.domain.repository.PreferencesRepository
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
+import co.youverify.youhr.presentation.ui.login.ConfirmCodeViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithCodeViewModel
 import co.youverify.youhr.presentation.ui.login.InputEmailViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithPassWordViewModel
@@ -54,6 +55,7 @@ fun YouHrNavHost(
     val homeViewModel: HomeViewModel = hiltViewModel()
     val taskViewModel:TaskViewModel = hiltViewModel()
     val taskDetailViewModel:TaskDetailViewModel= hiltViewModel()
+    val confirmCodeViewModel:ConfirmCodeViewModel= hiltViewModel()
 
     val density= LocalDensity.current
     val pagerState = rememberPagerState()
@@ -106,7 +108,8 @@ fun YouHrNavHost(
             inputEmailViewModel,
             loginWithPasswordViewModel,
             resetPasswordViewModel,
-            createCodeViewModel
+            createCodeViewModel,
+            confirmCodeViewModel
         )
         BottomNavGraph(
             navController =navController,

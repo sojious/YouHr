@@ -39,10 +39,6 @@ class InputEmailViewModel @Inject constructor(private val navigator: Navigator):
             navigator.navigate(toRoute = LoginWithPassword.route)
     }
 
-    fun onLoginWithCodeButtonClicked() {
-
-            navigator.navigatePopTo(toRoute = LoginWithCode.route, popToRoute = InputEmail.route)
-    }
 
     fun navigateBack() =navigator.navigateBack()
 }
