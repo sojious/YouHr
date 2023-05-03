@@ -10,13 +10,17 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,8 +28,13 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
 import co.youverify.youhr.core.util.getDateRange
+import co.youverify.youhr.core.util.toFormattedDateString
 import co.youverify.youhr.core.util.toOrdinalDateString
+import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.theme.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.*
 
@@ -33,97 +42,277 @@ import java.util.*
 @Composable
 fun TaskListScreen(
     modifier: Modifier = Modifier,
-    tasks: List<Task>,
+    uiState: State<TaskViewModel.UiState>,
     listState: LazyListState,
     categoryDropDownExpanded: Boolean,
     showDatePicker: Boolean,
-    onCategorySpinnerClicked: () -> Unit,
-    onDateSpinnerClicked: () -> Unit,
+    onDatePickerOkClicked: (DatePickerState, Int) -> Unit,
+    onCategoryFilterClicked: () -> Unit,
     categoryDropDownOnDismissCallBack: () -> Unit,
     onTaskItemClicked: (Int) -> Unit,
-    onPendingClicked: () -> Unit,
-    onCompletedClicked: () -> Unit,
     categorySpinnerText: String,
+    isEmptyState: Boolean,
+    dateRange: DateRange,
+    onDateInputFieldClicked: (Int) -> Unit,
+    onTaskProgressDropDownItemClicked: (Int) -> Unit,
+    currentEditableDateInputField: Int,
+    onDatePickerCancelClicked: () -> Unit
 
 
-    ){
+){
 
-    val dateRangePickerState = rememberDateRangePickerState(
-        initialSelectedEndDateMillis = Instant.now().toEpochMilli(),
-        initialSelectedStartDateMillis = Instant.now().toEpochMilli()-(3600*24*7*1000),
+    /*val dateRangePickerState = rememberDateRangePickerState(
+        //initialSelectedEndDateMillis = Instant.now().toEpochMilli(),
+        //initialSelectedStartDateMillis = Instant.now().toEpochMilli()-(3600*24*7*1000),
         yearRange = IntRange(start = 2023, endInclusive = 2023)
-    )
+    )*/
 
-
-    Box(
-        modifier=modifier.fillMaxSize(),
-        content = {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(21.dp)
-            ) {
-                //var task1 by remember{ mutableStateOf(pendingTasks) }
-
-
+    val myDatePickerState= rememberDatePickerState()
+    val  bottomSheetState= rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val coroutineScope= rememberCoroutineScope()
+    Box(modifier = modifier) {
+        Column(
+            modifier=Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(21.dp),
+            content = {
                 TopSection(
                     title = "My Tasks",
-                    categoryExpanded=categoryDropDownExpanded,
-                    onCategorySpinnerClicked=onCategorySpinnerClicked,
-                    onDateSpinnerClicked=onDateSpinnerClicked,
+                    categoryExpanded =categoryDropDownExpanded,
+                    onCategoryFilterClicked =onCategoryFilterClicked,
                     categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
-                    onPendingClicked = onPendingClicked,
-                    onCompletedClicked = onCompletedClicked,
                     categorySpinnerText = categorySpinnerText,
-                    startDateMillis = dateRangePickerState.selectedStartDateMillis!!,
-                    endDateMillis = dateRangePickerState.selectedEndDateMillis?:System.currentTimeMillis()
-
+                    filteringDisabled =isEmptyState,
+                    dateRange =dateRange,
+                    onTaskProgressDropDownItemClicked = onTaskProgressDropDownItemClicked,
+                    bottomSheetState =bottomSheetState
                 )
-                Divider(thickness = 1.dp, color = codeInputUnfocused, modifier = Modifier.fillMaxWidth())
-                TaskList(tasks = tasks, state =listState, onTaskItemClicked =onTaskItemClicked)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color(0X3DCECECE)),
+                    content = {
+                        if (isEmptyState) EmptyStateContent(modifier=Modifier.align(Alignment.Center))
+                        else TaskList(tasks = uiState.value.tasks, state =listState, onTaskItemClicked =onTaskItemClicked)
+                    }
+                )
             }
+        )
 
-            if (showDatePicker)
-                DateRangePicker(
-                state =dateRangePickerState,
-                //dateValidator = {
-                   // it<=Calendar.getInstance().timeInMillis
-                //},
-                colors = DatePickerDefaults.colors(
-                    //containerColor = Color.Black,
-                    yearContentColor = Color(0xff293050),
-                    selectedDayContainerColor = primaryColor,
-                    selectedDayContentColor = Color.White,
-                    dayInSelectionRangeContainerColor = yvColor,
-                    weekdayContentColor = Color(0xff293050),
-                    disabledDayContentColor = Color(0x52181E30),
-
-                    ),
-                    modifier = Modifier.padding(top=131.dp, end = 20.dp, start = 20.dp)
-                        //.width(316.dp)
-                        //.height(416.dp)
-                        .background(shape = RoundedCornerShape(12.dp), color = Color.White),
-                    title = {Text("")},
+        if (showDatePicker)
+            BottomSheetDatePicker(
+                state =myDatePickerState,
+                onOkButtonClicked = onDatePickerOkClicked,
+                onCancelButtonClicked = onDatePickerCancelClicked,
+                currentIndex=currentEditableDateInputField,
+                bottomSheetState=bottomSheetState,
+                coroutineScope = coroutineScope,
+                modifier = Modifier.align(Alignment.Center)
             )
+
+        if (uiState.value.loading)
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+
+        if(bottomSheetState.isVisible)
+            ModalBottomSheet(
+                onDismissRequest = {},
+                dragHandle = {},
+                shape = RoundedCornerShape(8.dp),
+                containerColor = Color.White,
+                content = {
+                    DateRangeInputBottomSheetContent(
+                        sheetState =bottomSheetState ,
+                        dateRange =dateRange ,
+                        onInputFieldClicked =onDateInputFieldClicked ,
+                        coroutineScope =coroutineScope
+                    )
+                          },
+                sheetState = bottomSheetState
+            )
+    }
+
+
+
+
+}
+
+@Composable
+fun EmptyStateContent(modifier: Modifier=Modifier) {
+
+    Column(
+        modifier=modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Image(
+            painter = painterResource(id = R.drawable.task_list_empty_state),
+            contentDescription =null ,
+            modifier=Modifier.padding(bottom=24.dp)
+        )
+        
+        Text(
+            text = "No Tasks",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color= bodyTextDeepColor,
+            modifier=Modifier.padding(bottom =8.dp ),
+        )
+
+        Text(
+            text = "You haven’t been assigned any tasks yet",
+            fontSize = 12.sp,
+            color= bodyTextLightColor,
+            modifier=Modifier.padding(bottom =8.dp ),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@Composable
+fun DateRangeInputBottomSheetContent(
+    modifier: Modifier = Modifier,
+    sheetState: SheetState,
+    dateRange: DateRange,
+    onInputFieldClicked: (Int) -> Unit,
+    coroutineScope:CoroutineScope
+) {
+
+
+
+        val inputFieldValue1=dateRange.startDateMillis?.toFormattedDateString(pattern="dd - MM - yyyy")?:""
+        val inputFieldValue2=dateRange.endDateMillis?.toFormattedDateString(pattern="dd - MM - yyyy")?:""
+
+        Column(
+            modifier = modifier
+
+        ) {
+
+            Box(
+                modifier= Modifier
+                    .padding(start = 20.dp, top = 24.dp)
+                    .fillMaxWidth(),
+                content = {
+                    Text(
+                        text = "Select Range",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp,
+                        color= bodyTextDeepColor,
+                        modifier=Modifier.align(Alignment.CenterStart)
+                    )
+
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_close),
+                        contentDescription = null,
+                        modifier= Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 23.dp)
+                            .clickable {
+                                coroutineScope.launch {
+                                    sheetState.hide()
+                                }
+                            }
+                    )
+                }
+            )
+
+            Divider(
+                modifier= Modifier
+                    .padding(top = 19.dp)
+                    .fillMaxWidth(),
+                thickness = 1.dp,
+                color = deactivatedColorLight
+            )
+
+            DateInputField(
+                fieldValue = inputFieldValue1,
+                title="Start Date",
+                modifier=Modifier.padding(top=21.dp, start = 20.dp, end = 20.dp),
+                onClick = onInputFieldClicked,
+                index = 1,
+                sheetState=sheetState
+            )
+
+            DateInputField(
+                inputFieldValue2,
+                modifier=Modifier.padding(top=12.dp, start = 20.dp, end = 20.dp),
+                index = 2,
+                onClick = onInputFieldClicked,
+                title="End Date",
+                sheetState=sheetState,
+            )
+
+            ActionButton(
+                text = "Confirm",
+                modifier = Modifier
+                    .padding(top = 28.dp, start = 20.dp, end = 20.dp, bottom = 30.dp)
+                    .fillMaxWidth(),
+                onButtonClicked = {}
+            )
+
         }
-    )
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DateInputField(
+    fieldValue: String,
+    modifier: Modifier,
+    index: Int,
+    onClick: (Int) -> Unit,
+    title: String,
+    sheetState: SheetState,
+) {
+    val focusManager= LocalFocusManager.current
+    val coroutineScope= rememberCoroutineScope()
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(text = title, fontSize = 12.sp, color= bodyTextDeepColor)
+        OutlinedTextField(
+            value = fieldValue, onValueChange = {},
+            modifier= Modifier
+                .requiredHeight(47.dp)
+                .onFocusChanged { focusState ->
+                    if (focusState.hasFocus) {
+                        //coroutineScope.launch { sheetState.hide() }
+                        focusManager.clearFocus()
+                        coroutineScope.launch { sheetState.hide() }
+                        onClick(index)
+                    }
+
+                },
+            trailingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_calendar_2),
+                    contentDescription =null,
+                    tint = bodyTextDeepColor
+                )
+            },
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = deactivatedColorDeep)
+        )
+    }
 }
 
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopSection(
     modifier: Modifier = Modifier,
     title: String,
     categoryExpanded: Boolean,
-    onCategorySpinnerClicked: () -> Unit,
-    onDateSpinnerClicked: () -> Unit,
     categoryDropDownOnDismissCallBack: () -> Unit,
-    onPendingClicked: () -> Unit,
-    onCompletedClicked: () -> Unit,
     categorySpinnerText: String,
-    endDateMillis: Long,
-    startDateMillis: Long,
+    filteringDisabled: Boolean,
+    dateRange: DateRange,
+    onTaskProgressDropDownItemClicked: (Int) -> Unit,
+    bottomSheetState: SheetState,
+    onCategoryFilterClicked: () -> Unit,
 ) {
+
+    val coroutineScpoe= rememberCoroutineScope()
     ConstraintLayout(modifier = modifier
         .padding(top = 36.dp)
         .fillMaxWidth()) {
@@ -141,28 +330,29 @@ fun TopSection(
         )
 
 
-        DateSpinner(
-            modifier= Modifier.constrainAs(dateSpinner){
+        DateFilter(
+            modifier = Modifier.constrainAs(dateSpinner){
                 top.linkTo(categorySpinner.top)
                 start.linkTo(categorySpinner.end,8.dp)
+                bottom.linkTo(parent.bottom,16.dp)
             },
-            onDateSpinnerClicked=onDateSpinnerClicked,
-            selectedEndDateMillis = endDateMillis,
-            selectedStartDateMillis = startDateMillis
+            dateRange=dateRange,
+            dateFilterDisabled =filteringDisabled,
+            bottomSheetState=bottomSheetState,
         )
 
-        CategorySpinner(
+        CategoryFilter(
             modifier = Modifier.constrainAs(categorySpinner){
-                top.linkTo(titleText.bottom,24.dp)
-                bottom.linkTo(parent.bottom,16.dp)
+                top.linkTo(titleText.bottom,25.dp)
                 start.linkTo(titleText.start)
+                bottom.linkTo(parent.bottom,16.dp)
             },
-            onCategorySpinnerClicked=onCategorySpinnerClicked,
+            onClick=onCategoryFilterClicked,
             categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
-            onPendingClicked = onPendingClicked,
-            onCompletedClicked = onCompletedClicked,
             dropDownExpanded=categoryExpanded,
-            spinnerText = categorySpinnerText
+            spinnerText = categorySpinnerText,
+            categoryFilterDisabled=filteringDisabled,
+            onDropDownMenuItemClicked = onTaskProgressDropDownItemClicked
         )
 
     }
@@ -178,8 +368,8 @@ fun TaskList(
 
     val listState= rememberLazyListState()
     LazyColumn(modifier = modifier
-        .fillMaxSize(),
-        //.background(color = Color.Yellow),
+        .fillMaxSize()
+        .padding(top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
         state = listState
     ){
@@ -203,28 +393,34 @@ fun TaskList(
 }
 
 @Composable
-fun CategorySpinner(
+fun CategoryFilter(
     modifier: Modifier = Modifier,
-    onCategorySpinnerClicked: () -> Unit,
+    onClick: () -> Unit,
     categoryDropDownOnDismissCallBack: () -> Unit,
-    onPendingClicked: () -> Unit,
-    onCompletedClicked: () -> Unit,
+    onDropDownMenuItemClicked:(Int)->Unit,
     dropDownExpanded: Boolean,
-    spinnerText:String
+    spinnerText: String,
+    categoryFilterDisabled: Boolean
 ) {
 
+
+    val contentColor=if (!categoryFilterDisabled) primaryColor else deactivatedColorDeep
 
     Row(
         modifier = modifier
             .height(28.dp)
             .background(color = Color.White, shape = RoundedCornerShape(8.dp))
-            .border(width = 1.dp, color = dividerColor, shape = RoundedCornerShape(8.dp))
+            .border(width = 1.dp, color = deactivatedColorDeep, shape = RoundedCornerShape(8.dp))
+            .clickable(enabled = !categoryFilterDisabled) {
+                onClick()
+            }
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_drop_down_indicator), contentDescription =null ,
             modifier = Modifier
                 .align(Alignment.CenterVertically)
-                .padding(start = 10.dp)
+                .padding(start = 12.dp),
+            tint = contentColor
             )
         
         Text(
@@ -234,7 +430,8 @@ fun CategorySpinner(
             fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .align(Alignment.CenterVertically)
-                .padding(start = 6.dp)
+                .padding(start = 14.dp),
+            color=contentColor
         )
 
 
@@ -245,10 +442,9 @@ fun CategorySpinner(
                 contentDescription =null,
                 modifier= Modifier
                     .align(Alignment.CenterVertically)
-                    .padding(start = 8.67.dp, end = 11.74.dp)
-                    .clickable {
-                        onCategorySpinnerClicked()
-                    }
+                    .padding(start = 16.6.dp, end = 11.74.dp),
+                tint = contentColor
+
             )
 
 
@@ -258,60 +454,76 @@ fun CategorySpinner(
             modifier =Modifier.background(color= Color.White, shape = RoundedCornerShape(4.dp))
         ) {
             DropdownMenuItem(text = { Text(text = "Pending", fontSize = 12.sp, color = yvText)}, onClick = {
-                onPendingClicked()
+                onDropDownMenuItemClicked(1)
             })
             DropdownMenuItem(text = { Text(text = "Failed", fontSize = 12.sp, color = yvText)}, onClick = {
-
+                onDropDownMenuItemClicked(2)
             })
 
             DropdownMenuItem(text = { Text(text = "Executed", fontSize = 12.sp, color = yvText)}, onClick = {
-                onCompletedClicked()
+                onDropDownMenuItemClicked(3)
             })
             DropdownMenuItem(text = { Text(text = "In Progress", fontSize = 12.sp, color = yvText)}, onClick = {
+                onDropDownMenuItemClicked(4)
             })
         }
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateSpinner(
+fun DateFilter(
     modifier: Modifier = Modifier,
-    onDateSpinnerClicked: () -> Unit,
-    selectedStartDateMillis:Long,
-    selectedEndDateMillis: Long
+    dateFilterDisabled: Boolean,
+    dateRange: DateRange,
+    bottomSheetState: SheetState,
+
 ) {
 
-
-
+    val coroutineScope= rememberCoroutineScope()
+    val contentColor=if (!dateFilterDisabled) primaryColor else deactivatedColorDeep
+    val showDefaultFilterText= dateRange.startDateMillis==null || dateRange.endDateMillis==null
+    val filterText=if (showDefaultFilterText) "Filter by date" else getDateRange(dateRange.startDateMillis!!,dateRange.endDateMillis!!)
 
     Row(
         modifier = modifier
             .height(28.dp)
             .background(color = Color.White, shape = RoundedCornerShape(8.dp))
-            .border(width = 1.dp, color = dividerColor, shape = RoundedCornerShape(8.dp))
+            .border(width = 1.dp, color = deactivatedColorDeep, shape = RoundedCornerShape(8.dp))
+            .clickable(enabled = !dateFilterDisabled) {
+                coroutineScope.launch { bottomSheetState.show() }
+            }
     ) {
 
+        Icon(
+            painter = painterResource(id = R.drawable.ic_calendar),
+            contentDescription =null ,
+            modifier= Modifier
+                .align(Alignment.CenterVertically)
+                .padding(start = 7.33.dp),
+            tint = contentColor
+        )
+
         Text(
-            text = getDateRange(selectedStartDateMillis,selectedEndDateMillis),
+            text = filterText,
             fontSize = 10.sp,
             lineHeight = 20.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .align(Alignment.CenterVertically)
-                .padding(start = 8.dp)
+                .padding(start = 14.dp),
+            color = contentColor
         )
 
 
             Icon(
-                painter = painterResource(id = R.drawable.ic_spinner),
+                painter = painterResource(id = R.drawable.ic_drop_down_indicator),
                 contentDescription =null ,
                 modifier= Modifier
                     .align(Alignment.CenterVertically)
-                    .padding(start = 8.67.dp, end = 11.74.dp)
-                    .clickable {
-                        onDateSpinnerClicked()
-                    }
+                    .padding(start = 14.dp, end = 10.dp),
+                tint = contentColor
             )
 
     }
@@ -331,7 +543,6 @@ fun PendingTaskItem(
 
     Row(
         modifier = modifier
-            //.padding(horizontal = 20.dp)
             .fillMaxWidth()
             .height(72.dp)
             .clickable {
@@ -359,7 +570,7 @@ fun PendingTaskItem(
                     color = taskItemBorderColor,
                     shape = RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
                 )
-                .background(color = taskItemFillColor)
+                .background(color = Color(0XFFF7F7F9))
                 .padding(start = 8.dp),
 
             content = {
@@ -384,7 +595,7 @@ fun PendingTaskItem(
                     },
                     fontSize = 10.sp,
                     lineHeight = 16.sp,
-                    color = bodyTextColor
+                    color = bodyTextLightColor
                 )
 
 
@@ -400,7 +611,7 @@ fun PendingTaskItem(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     lineHeight = 16.sp,
-                    color = inputDeepTextColor
+                    color = Color(0XFF344054)
                 )
 
                 Checkbox(
@@ -414,7 +625,7 @@ fun PendingTaskItem(
                         },
                     colors = CheckboxDefaults.colors(
                         checkedColor = yvColor,
-                        uncheckedColor = bodyTextColor,
+                        uncheckedColor = bodyTextLightColor,
                         checkmarkColor = Color.White
                     )
                 )
@@ -437,7 +648,6 @@ fun CompletedTaskItem(
 
     Row(
         modifier = modifier
-            //.padding(horizontal = 20.dp)
             .fillMaxWidth()
             .height(72.dp)
             .clickable {
@@ -467,7 +677,7 @@ fun CompletedTaskItem(
                     color = taskItemBorderColor,
                     shape = RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
                 )
-                .background(color = taskItemFillColor)
+                .background(color = Color(0XFFF7F7F9))
                 .padding(start = 8.dp),
 
             content = {
@@ -486,7 +696,7 @@ fun CompletedTaskItem(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     lineHeight = 16.sp,
-                    color = inputDeepTextColor
+                    color = Color(0XFF344054)
                 )
 
                 Checkbox(
@@ -500,7 +710,7 @@ fun CompletedTaskItem(
                         },
                     colors = CheckboxDefaults.colors(
                         checkedColor = yvColor,
-                        uncheckedColor = bodyTextColor,
+                        uncheckedColor = bodyTextLightColor,
                         checkmarkColor = Color.White
                     )
                 )
@@ -511,26 +721,112 @@ fun CompletedTaskItem(
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomSheetDatePicker(
+    modifier: Modifier = Modifier,
+    state: DatePickerState,
+    onOkButtonClicked: (DatePickerState, Int) -> Unit,
+    onCancelButtonClicked: () -> Unit,
+    currentIndex: Int,
+    bottomSheetState: SheetState,
+    coroutineScope: CoroutineScope
+){
+
+        Column(
+            modifier = modifier
+                //.fillMaxWidth()
+                //.height(408.dp)
+                //.width(316.dp)
+                //.padding(start = 24.dp)
+                .background(color = Color.White, shape = RoundedCornerShape(12.dp)),
+            content = {
+                DatePicker(
+                    state =state,
+
+                    title = {},
+                    // headline = {},
+                    showModeToggle = false,
+                    colors = DatePickerDefaults.colors(
+                        containerColor = Color.White,
+                        selectedDayContentColor = Color(0XFFEDFBFF),
+                        selectedDayContainerColor = yvColor,
+                        weekdayContentColor = bodyTextDeepColor,
+                        disabledDayContentColor = Color(0xFF181E30),
+                    ),
+                    modifier = Modifier
+                        //.width(316.dp)
+                        .height(460.dp)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(end = 23.dp, top = 9.dp, bottom = 23.dp),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    content = {
+
+                        Text(
+                            text = "Cancel",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,color= primaryColor,
+                            modifier=Modifier.clickable {
+
+                                //coroutineScope.launch { bottomSheetState.show() }
+                                onCancelButtonClicked()
+                                coroutineScope.launch { bottomSheetState.show() }
+                               // coroutineScope.launch {
+                                   // delay(100)
+                                   // bottomSheetState.show()
+                               // }
+                            }
+                        )
+                        Text(
+                            text = "Ok",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,color= primaryColor,
+                            modifier=Modifier.clickable {
+
+                                //coroutineScope.launch { bottomSheetState.show() }
+                                onOkButtonClicked(state,currentIndex)
+                                coroutineScope.launch { bottomSheetState.show() }
 
 
+                            }
+                        )
+                    }
+                )
 
+            }
+        )
+
+
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun TaskListScreenPreview(){
     YouHrTheme {
         Surface {
+            val uiState =remember { mutableStateOf(TaskViewModel.UiState(tasks = pendingTasks)) }
             TaskListScreen(
-                tasks = completedTasks,
+                uiState =uiState,
                 listState = rememberLazyListState(),
                 categoryDropDownExpanded = false,
-                showDatePicker = true,
-                onCategorySpinnerClicked = {},
-                onDateSpinnerClicked = {},
+                showDatePicker = false,
+                onDatePickerOkClicked = {_,_->},
+                onCategoryFilterClicked = {},
                 categoryDropDownOnDismissCallBack = {},
                 onTaskItemClicked = {},
-                onPendingClicked = {},
-                onCompletedClicked = {},
                 categorySpinnerText = "Pending",
+                isEmptyState = false,
+                dateRange = DateRange(),
+                onDateInputFieldClicked = { _->},
+                onTaskProgressDropDownItemClicked = {},
+                currentEditableDateInputField = 0,
+                onDatePickerCancelClicked = {}
             )
         }
 
@@ -583,17 +879,97 @@ fun CompletedTaskItemPreview(){
 
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun DateSpinnerPreview(){
+fun DateFilterPreview(){
     YouHrTheme {
         Surface {
-            DateSpinner(
-                onDateSpinnerClicked = {},
-                selectedEndDateMillis = System.currentTimeMillis(),
-                selectedStartDateMillis = System.currentTimeMillis()-(3600*24*7*1000)
+            DateFilter(
+                dateFilterDisabled = false,
+                dateRange = DateRange(),
+                bottomSheetState = rememberModalBottomSheetState()
             )
         }
+
+    }
+}
+
+
+@Composable
+@Preview
+fun CategoryFilterPreview(){
+    YouHrTheme {
+        Surface {
+            CategoryFilter(
+                onClick = { },
+                categoryDropDownOnDismissCallBack = {},
+                dropDownExpanded =false ,
+                spinnerText ="Pending" ,
+                categoryFilterDisabled =false,
+                onDropDownMenuItemClicked = {_->}
+            )
+        }
+
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun DateInputFieldPreview(){
+    YouHrTheme {
+        Surface {
+            DateInputField(
+                fieldValue = "16 - 04 -2023",
+                modifier = Modifier.padding(horizontal = 20.dp),
+                index = 1,
+                onClick = {_->},
+                title ="Start Date",
+                sheetState = SheetState(skipPartiallyExpanded = true)
+            )
+        }
+
+    }
+}
+
+
+@Composable
+@Preview
+fun EmptyStateContentPreview(){
+    YouHrTheme {
+        Surface {
+            EmptyStateContent()
+        }
+
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun DatePickerPreview(){
+    YouHrTheme {
+
+        Surface {
+            val bottomSheetScaffoldState= rememberBottomSheetScaffoldState(
+                 bottomSheetState = SheetState(
+                    initialValue = SheetValue.Hidden,
+                    skipPartiallyExpanded = true,
+                    skipHiddenState = false
+                )
+            )
+            BottomSheetDatePicker(
+                state = rememberDatePickerState(),
+                onOkButtonClicked = {_,_->},
+                onCancelButtonClicked = {},
+                currentIndex = 1,
+                bottomSheetState = bottomSheetScaffoldState.bottomSheetState,
+                coroutineScope = rememberCoroutineScope()
+            )
+        }
+
+
 
     }
 }
@@ -687,3 +1063,5 @@ val taskItemSpacerColors= listOf(
     Color(0XFFD619DA),
     Color(0XFF93FD52),
 )
+
+data class DateRange( val startDateMillis: Long?=null,  val endDateMillis: Long?=null)

@@ -1,30 +1,22 @@
 package co.youverify.youhr.presentation.ui.login
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import co.youverify.youhr.R
 import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.CodeInputBox
-import co.youverify.youhr.presentation.ui.components.LoadingDialog
 import co.youverify.youhr.presentation.ui.theme.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+
 
 @Composable
 fun CreateCodeScreen(
@@ -68,7 +60,7 @@ fun CreateCodeScreen(
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
                 modifier = Modifier.padding(horizontal = 29.5.dp,vertical=24.dp),
-                color = bodyTextColor
+                color = bodyTextLightColor
             )
 
             CodeInputBox(

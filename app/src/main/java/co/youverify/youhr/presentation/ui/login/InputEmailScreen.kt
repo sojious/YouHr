@@ -20,7 +20,6 @@ import co.youverify.youhr.R
 import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.TitleText
 import co.youverify.youhr.presentation.ui.components.TitledTextField
-import co.youverify.youhr.presentation.ui.theme.yvColor2
 
 @Composable
 fun InputEmailScreen(

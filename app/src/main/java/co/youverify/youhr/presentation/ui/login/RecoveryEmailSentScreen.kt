@@ -19,7 +19,6 @@ import co.youverify.youhr.R
 import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.ClickableMultiColoredText
 import co.youverify.youhr.presentation.ui.components.TitleText
-import co.youverify.youhr.presentation.ui.theme.yvColor2
 import co.youverify.youhr.presentation.ui.theme.yvText
 
 @Composable

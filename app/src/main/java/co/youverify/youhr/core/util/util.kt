@@ -2,18 +2,46 @@ package co.youverify.youhr.core.util
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.toUpperCase
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 
- @RequiresApi(Build.VERSION_CODES.O)
  val zoneId= ZoneId.of("Africa/Lagos")
-@RequiresApi(Build.VERSION_CODES.O)
+
+
+fun Long.toCardinalDateString():String{
+
+
+
+    val instant=Instant.ofEpochMilli(this)
+    val zoneDateTime=ZonedDateTime.ofInstant(instant,zoneId)
+
+    val month= zoneDateTime.month.value
+    val year= zoneDateTime.year
+
+    val formattedDay=when(val day=zoneDateTime.dayOfMonth){
+
+        1,21 -> "${day}st"
+        2,22 -> "${day}nd"
+        3,23->"${day}rd"
+        else -> "${day}th"
+    }
+
+    val formattedMonth = getFormattedMonth(month,capitalize=true)
+
+
+    return "$formattedMonth $formattedDay,$year"
+
+}
+
 fun Long.toOrdinalDateString(includeOf:Boolean=true):String{
 
 
@@ -32,7 +60,7 @@ fun Long.toOrdinalDateString(includeOf:Boolean=true):String{
         else -> "${day}th"
     }
 
-    val formattedMonth = getFormattedMonth(month)
+    val formattedMonth = getFormattedMonth(month, true)
 
 
     return if (includeOf)
@@ -42,7 +70,8 @@ fun Long.toOrdinalDateString(includeOf:Boolean=true):String{
 
 }
 
-private fun getFormattedMonth(month: Int)= when (month) {
+private fun getFormattedMonth(month: Int, capitalize: Boolean=false):String{
+    val monthString=when (month) {
 
         1 -> "jan"
         2 -> "feb"
@@ -58,8 +87,9 @@ private fun getFormattedMonth(month: Int)= when (month) {
 
         else -> "dec"
     }
+    return if (capitalize) monthString.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() } else monthString
+}
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun getDateRange(startDateMillis:Long, endDateMillis:Long):String{
 
 
@@ -79,9 +109,12 @@ fun getDateRange(startDateMillis:Long, endDateMillis:Long):String{
     val endDay=zoneDateTime2.dayOfMonth
 
     return if (startYear==endYear)
-        "${getFormattedMonth(startMonth)} $startDay - ${getFormattedMonth(endMonth)} $endDay,$startYear"
+        "${getFormattedMonth(startMonth, true)} $startDay - ${getFormattedMonth(endMonth, true)} $endDay,$startYear"
     else
-        "${getFormattedMonth(startMonth)} $startDay,$startYear - ${getFormattedMonth(endMonth)} $endDay,$endYear"
+        "${getFormattedMonth(startMonth, true)} $startDay,$startYear - ${getFormattedMonth(
+            endMonth,
+            true
+        )} $endDay,$endYear"
 
 }
 
@@ -90,6 +123,13 @@ fun String.capitalizeWords():String =
         word.replaceFirstChar {character->
         character.uppercase()
     }
+}
+
+
+ fun Long.toFormattedDateString(pattern: String): String {
+    val instant=Instant.ofEpochMilli(this)
+    val formatter=DateTimeFormatter.ofPattern(pattern)
+    return formatter.format(instant.atZone(zoneId))
 }
 
  suspend fun<T:Any> handleApi(callApi: suspend () -> Response<T>):NetworkResult<T>{

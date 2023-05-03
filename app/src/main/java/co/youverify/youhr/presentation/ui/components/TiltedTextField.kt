@@ -53,7 +53,7 @@ fun TitledTextField(
                    text = fieldPlaceHolder,
                    fontSize = 10.sp,
                    lineHeight = 13.sp,
-                   color = deactivatedColor,
+                   color = deactivatedColorDeep,
                )
                          },
            isError = isErrorValue,

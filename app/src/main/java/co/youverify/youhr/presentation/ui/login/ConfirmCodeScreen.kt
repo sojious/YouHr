@@ -71,7 +71,7 @@ fun ConfirmCodeScreen(
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
                 modifier = Modifier.padding(horizontal = 29.5.dp,vertical=24.dp),
-                color = bodyTextColor
+                color = bodyTextLightColor
             )
 
             CodeInputBox(
@@ -158,7 +158,7 @@ fun SuccessDialog(
                     Text(
                         text = "You have successfully created a new login code for the next time you want to login.",
                         fontSize = 12.sp,
-                        color = bodyTextColor,
+                        color = bodyTextLightColor,
                         modifier = Modifier.padding(start = 28.dp,end=28.dp, bottom=24.dp),
                         lineHeight = 16.sp,
                         textAlign = TextAlign.Center

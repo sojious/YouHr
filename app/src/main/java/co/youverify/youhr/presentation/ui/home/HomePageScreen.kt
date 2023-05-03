@@ -1,7 +1,5 @@
 package co.youverify.youhr.presentation.ui.home
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -375,7 +373,7 @@ fun AnnouncementItem(announcement: Announcement,index: Int) {
             fontWeight=FontWeight.Normal,
             lineHeight=16.sp,
             //textAlign=TextAlign.Start,
-            color= bodyTextColor,
+            color= bodyTextLightColor,
             modifier = Modifier
                 .constrainAs(announcementContent){
                     start.linkTo(announcerName.start)
@@ -391,7 +389,7 @@ fun AnnouncementItem(announcement: Announcement,index: Int) {
 
         Text(
             text = buildAnnotatedString {
-                withStyle(SpanStyle(color = bodyTextColor)){
+                withStyle(SpanStyle(color = bodyTextLightColor)){
                     append(text="To ")
                 }
 
@@ -471,7 +469,7 @@ fun EmployeeOnLeaveItem(employeeOnLeave: EmployeeOnLeave){
             fontWeight=FontWeight.Normal,
             lineHeight=16.sp,
             //textAlign=TextAlign.Start,
-            color= bodyTextColor,
+            color= bodyTextLightColor,
             modifier = Modifier
                 .constrainAs(designation){
                     start.linkTo(name.start)
@@ -489,7 +487,7 @@ fun EmployeeOnLeaveItem(employeeOnLeave: EmployeeOnLeave){
             fontWeight=FontWeight.Normal,
             lineHeight=16.sp,
             //textAlign=TextAlign.Start,
-            color= bodyTextColor,
+            color= bodyTextLightColor,
             modifier = Modifier
                 .constrainAs(relieverName){
                     start.linkTo(name.start)
@@ -543,7 +541,7 @@ fun EmployeeOnLeaveItem(employeeOnLeave: EmployeeOnLeave){
     ){
         itemsIndexed(items = employeesOnLeave){ index,employee->
             EmployeeOnLeaveItem(employeeOnLeave = employee)
-            if (index< employeesOnLeave.lastIndex) Divider(thickness = 0.2.dp, color = dividerColor)
+            if (index< employeesOnLeave.lastIndex) Divider(thickness = 0.2.dp, color = deactivatedColorDeep)
         }
     }
 }
