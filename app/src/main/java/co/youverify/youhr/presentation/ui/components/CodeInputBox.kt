@@ -2,24 +2,44 @@ package co.youverify.youhr.presentation.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.youverify.youhr.presentation.ui.theme.YouHrTheme
+import co.youverify.youhr.presentation.ui.theme.backGroundColor
 import co.youverify.youhr.presentation.ui.theme.codeInputUnfocused
 import co.youverify.youhr.presentation.ui.theme.yvColor
 
@@ -33,8 +53,10 @@ fun CodeInputBox(
     codeValue5: String,
     codeValue6: String,
     errorMessage: String,
-    isError:Boolean,
+    isError: Boolean,
+    activeFieldIndex: Int,
     onValueChanged: (String, Int) -> Unit,
+    onBackSpaceKeyPressed: (Int) -> Unit,
 
 
     ) {
@@ -45,12 +67,13 @@ fun CodeInputBox(
             horizontalArrangement = Arrangement.spacedBy(5.dp),
             modifier = modifier
         ) {
-            CodeInputField(codeValue1,1,onValueChanged)
-            CodeInputField(codeValue2,2,onValueChanged)
-            CodeInputField(codeValue3,3,onValueChanged)
-            CodeInputField(codeValue4,4,onValueChanged)
-            CodeInputField(codeValue5,5,onValueChanged)
-            CodeInputField(codeValue6,6,onValueChanged)
+
+            CodeInputField(codeValue1,1,activeFieldIndex,onValueChanged, onBackSpaceKeyPressed)
+            CodeInputField(codeValue2,2,activeFieldIndex,onValueChanged,onBackSpaceKeyPressed)
+            CodeInputField(codeValue3,3,activeFieldIndex,onValueChanged,onBackSpaceKeyPressed)
+            CodeInputField(codeValue4,4,activeFieldIndex,onValueChanged,onBackSpaceKeyPressed)
+            CodeInputField(codeValue5,5,activeFieldIndex,onValueChanged,onBackSpaceKeyPressed)
+            CodeInputField(codeValue6,6,activeFieldIndex,onValueChanged,onBackSpaceKeyPressed)
 
 
         }
@@ -67,20 +90,38 @@ fun CodeInputBox(
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun CodeInputField(value: String, index: Int, onValueChanged: (String,Int) -> Unit) {
+fun CodeInputField(
+    value: String,
+    index: Int,
+    activeIndex: Int,
+    onValueChanged: (String,Int) -> Unit,
+    onBackSpaceKeyPressed: (Int) -> Unit,
 
-    var borderColor by remember { mutableStateOf(codeInputUnfocused) }
+){
 
+    val enabled=activeIndex==index
+    val borderColor =if (enabled) yvColor else codeInputUnfocused
+    val interactionSource=remember{ MutableInteractionSource() }
+    val focusRequester=remember{FocusRequester()}
+
+    LaunchedEffect(key1 = enabled){
+
+        if (enabled)
+            focusRequester.requestFocus()
+
+    }
 
     BasicTextField(
         value = value,
         onValueChange ={
-               onValueChanged(it,index)
+                       onValueChanged(it,index)
         },
+        enabled=enabled,
         maxLines=1,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-        textStyle = TextStyle.Default.copy(fontSize = 30.sp, textAlign = TextAlign.Center),
+        textStyle = TextStyle( textAlign = TextAlign.Center, fontWeight = FontWeight.ExtraBold, baselineShift = BaselineShift(0.5f)),
         modifier = Modifier
             .size(36.dp, 42.dp)
             .background(color = Color.White, shape = RoundedCornerShape(12.dp))
@@ -89,18 +130,39 @@ fun CodeInputField(value: String, index: Int, onValueChanged: (String,Int) -> Un
                 brush = SolidColor(borderColor),
                 shape = RoundedCornerShape(12.dp)
             )
-
-            .onFocusChanged { focusState ->
-                borderColor = if (focusState.isFocused) yvColor else codeInputUnfocused
+           .focusRequester(focusRequester)
+            .onKeyEvent {
+                if (it.key == Key.Backspace && value.isEmpty())
+                    onBackSpaceKeyPressed(index)
+                true
             },
-        visualTransformation = PasswordVisualTransformation(mask = '.')
+
+        interactionSource = interactionSource,
+        visualTransformation = PasswordVisualTransformation('.'),
+        decorationBox = {
+            TextFieldDefaults.DecorationBox(
+                value = "1",
+                innerTextField = it,
+                enabled = enabled,
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation('.'),
+                supportingText = null,
+                shape = TextFieldDefaults.shape,
+                contentPadding = PaddingValues(0.dp),
+                interactionSource = interactionSource,
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = backGroundColor,
+                    focusedContainerColor = backGroundColor,
+                    disabledContainerColor = backGroundColor,
+                ),
+                container = {}
+            )
+        },
+        keyboardActions = KeyboardActions(onPrevious = null),
 
 
     )
-
-
 }
-
 @Preview
 @Composable
 fun CodeInputBoxPreview(){
@@ -112,12 +174,29 @@ fun CodeInputBoxPreview(){
             codeValue4 = "4",
             codeValue5 = "5",
             codeValue6 = "6",
-            onValueChanged = { _, _ ->},
             errorMessage = "You entered the wrong passcode, try again!!",
-            isError = true
+            isError = true,
+            activeFieldIndex = 1,
+            onValueChanged = { _, _ ->},
+            onBackSpaceKeyPressed = {}
         )
     }
 }
+
+
+@Preview
+@Composable
+fun CodeInputFieldPreview(){
+    Surface {
+        CodeInputField(
+            value = "", index = 1,
+            onValueChanged = {_,_->},
+            activeIndex = 1,
+            onBackSpaceKeyPressed = {}
+        )
+    }
+}
+
 
 data class CodeInputBoxUiState(
     val input1:String,

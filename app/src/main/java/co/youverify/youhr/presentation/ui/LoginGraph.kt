@@ -24,11 +24,10 @@ fun NavGraphBuilder.loginGraph(
     loginWithPassWordViewModel: LoginWithPassWordViewModel,
     resetPassWordViewModel: ResetPassWordViewModel,
     createCodeViewModel: CreateCodeViewModel,
-    confirmCodeViewModel: ConfirmCodeViewModel
+    confirmCodeViewModel: ConfirmCodeViewModel,
+
 ){
     navigation(startDestination =InputEmail.route , route =LoginGraph.route ){
-
-
 
         //Create Password Screen
         composable(
@@ -36,24 +35,15 @@ fun NavGraphBuilder.loginGraph(
             enterTransition = { slideInHorizontally() }
         ){
 
-
-
-
-
             InputEmailScreen(
                 emailValue =inputEmailViewModel.userEmail,
                 onEmailValueChanged ={newValue->
                   inputEmailViewModel.updateUserEmail(newValue)
                 },
-
                 onNextButtonClicked = { inputEmailViewModel.onNextButtonClicked() },
-
                 isErrorValue = inputEmailViewModel.isErrorValue,
                 errorMessage = inputEmailViewModel.errorMessage,
-                onBackArrowClicked ={inputEmailViewModel.navigateBack()}
             )
-
-
         }
 
         //Create Code Screen
@@ -61,12 +51,7 @@ fun NavGraphBuilder.loginGraph(
 
             //set the email from the LoginWithEmail screen
             loginWithPassWordViewModel.userEmail= inputEmailViewModel.userEmail
-
             val uiState by loginWithPassWordViewModel.uIStatFlow.collectAsState()
-
-
-
-
 
             LoginWithPasswordScreen(
                 passwordValue =loginWithPassWordViewModel.userPassword,
@@ -82,14 +67,11 @@ fun NavGraphBuilder.loginGraph(
                 onBackArrowClicked = {loginWithPassWordViewModel.navigateBack()}
             )
         }
-        
-        
-        composable(route=LoginWithCode.route){
 
+        composable(route=LoginWithCode.route){
 
             val focusManager= LocalFocusManager.current
             val uiState by loginWithCodeViewModel.uIStatFlow.collectAsState()
-
 
             LoginWithCodeScreen(
                 codeValue1 = loginWithCodeViewModel.code1,
@@ -98,44 +80,54 @@ fun NavGraphBuilder.loginGraph(
                 codeValue4 = loginWithCodeViewModel.code4,
                 codeValue5 = loginWithCodeViewModel.code5,
                 codeValue6 = loginWithCodeViewModel.code6,
+                isErrorCode = loginWithCodeViewModel.isErrorCode,
+                activeCodeInputFieldIndex = loginWithCodeViewModel.activeCodeInputFieldIndex,
+                uiState = uiState,
+                onCodeValueChanged = {newValue, codeIndex->
 
-                onCodeValueChanged = {newValue, index->
-                             loginWithCodeViewModel.updateCode(newValue,index)
+                    loginWithCodeViewModel.updateCode(newValue,codeIndex)
 
-                    if (index in 2..5){
-                        if (newValue.length==1) focusManager.moveFocus(FocusDirection.Next)
-                        if (newValue.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                    if (codeIndex in 2..5){
+                        if (newValue.length==1) {
+                            loginWithCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
+                            //focusManager.moveFocus(FocusDirection.Next)
+                        }
+                        if (newValue.isEmpty()){
+                            loginWithCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
+                            //focusManager.moveFocus(FocusDirection.Previous)
+                        }
                     }
 
-                    if(index==1 && newValue.isEmpty()) return@LoginWithCodeScreen
-                    if(index==1 && newValue.isNotEmpty()) focusManager.moveFocus(FocusDirection.Next)
+                    if(codeIndex==1 && newValue.isEmpty()) return@LoginWithCodeScreen
+                    if(codeIndex==1 && newValue.isNotEmpty()) {
+                        loginWithCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
+                        //focusManager.moveFocus(FocusDirection.Next)
+                    }
 
-                    if (index==6 && loginWithCodeViewModel.code6.isNotEmpty()){
+                    if (codeIndex==6 && loginWithCodeViewModel.code6.isNotEmpty()) {
                         focusManager.clearFocus()
                         loginWithCodeViewModel.logUserIn()
                     }
-                    if (index==6 && loginWithCodeViewModel.code6.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
-
-
+                    if (codeIndex==6 && loginWithCodeViewModel.code6.isEmpty()) {
+                        loginWithCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
+                        //focusManager.moveFocus(FocusDirection.Previous)
+                    }
                 },
                 onPasswordLoginOptionClicked = { loginWithCodeViewModel.onPasswordLoginOptionClicked() },
-                //onLoginButtonClicked = {loginWithCodeViewModel.logUserIn()},
-                isErrorCode = loginWithCodeViewModel.isErrorCode,
-                uiState = uiState
+                onBackSpaceKeyPressed = {codeInputFieldIndex->
+                    loginWithCodeViewModel.onBackSpaceKeyPressed(codeInputFieldIndex)
+                }
 
             )
         }
-
 
         //Create Code Screen
         composable(
             route=CreateCode.route,
             enterTransition = { expandIn()}
         ){
-
             val focusManager= LocalFocusManager.current
             val uiState by createCodeViewModel.uIStatFlow.collectAsState()
-
 
             CreateCodeScreen(
                 codeValue1 = createCodeViewModel.code1,
@@ -144,40 +136,51 @@ fun NavGraphBuilder.loginGraph(
                 codeValue4 = createCodeViewModel.code4,
                 codeValue5 = createCodeViewModel.code5,
                 codeValue6 = createCodeViewModel.code6,
-                isErrorCode = createCodeViewModel.isErrorCode,
                 uiState =uiState,
-
+                isErrorCode = createCodeViewModel.isErrorCode,
                 onNextButtonClicked = { createCodeViewModel.goToConfirmCodeScreen() },
                 onCodeValueChanged = {newValue,codeIndex->
 
                     createCodeViewModel.updateCode(newValue,codeIndex)
 
                     if (codeIndex in 2..5){
-                        if (newValue.length==1) focusManager.moveFocus(FocusDirection.Next)
-                        if (newValue.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                        if (newValue.length==1) {
+                            createCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
+                            focusManager.moveFocus(FocusDirection.Next)
+
+                        }
+                        if (newValue.isEmpty()){
+                            createCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
+                            focusManager.moveFocus(FocusDirection.Previous)
+                        }
                     }
 
                     if(codeIndex==1 && newValue.isEmpty()) return@CreateCodeScreen
-                    if(codeIndex==1 && newValue.isNotEmpty()) focusManager.moveFocus(FocusDirection.Next)
+                    if(codeIndex==1 && newValue.isNotEmpty()) {
+                        createCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
+                        focusManager.moveFocus(FocusDirection.Next)
+                    }
 
                     if (codeIndex==6 && createCodeViewModel.code6.isNotEmpty()) focusManager.clearFocus()
-                    if (codeIndex==6 && createCodeViewModel.code6.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                    if (codeIndex==6 && createCodeViewModel.code6.isEmpty()) {
+                        createCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
+                        focusManager.moveFocus(FocusDirection.Previous)
+                    }
 
                 },
+                activeCodeInputFieldIndex = createCodeViewModel.activeCodeInputFieldIndex,
+                onBackSpaceKeyPressed = {createCodeViewModel.onBackSpaceKeyPressed()}
             )
 
         }
-
 
         //Create Code Screen
         composable(
             route=ConfirmCode.route,
             enterTransition = { expandIn()}
         ){
-
             val focusManager= LocalFocusManager.current
             val uiState by createCodeViewModel.uIStatFlow.collectAsState()
-
 
             ConfirmCodeScreen(
                 codeValue1 = confirmCodeViewModel.code1,
@@ -186,41 +189,45 @@ fun NavGraphBuilder.loginGraph(
                 codeValue4 = confirmCodeViewModel.code4,
                 codeValue5 = confirmCodeViewModel.code5,
                 codeValue6 = confirmCodeViewModel.code6,
-                isErrorCode =confirmCodeViewModel.isErrorCode,
                 uiState =uiState,
-
+                isErrorCode =confirmCodeViewModel.isErrorCode,
+                activeCodeInputFieldIndex = confirmCodeViewModel.activeCodeInputFieldIndex,
+                showSuccessDialog = confirmCodeViewModel.showSuccessDialog,
                 onCreateCodeButtonClicked = { confirmCodeViewModel.createCode(createCodeViewModel) },
+                onProceedButtonClicked = {confirmCodeViewModel.onProceedButtonClicked()},
                 onCodeValueChanged = {newValue,codeIndex->
-
                     confirmCodeViewModel.updateCode(newValue,codeIndex)
 
                     if (codeIndex in 2..5){
-                        if (newValue.length==1) focusManager.moveFocus(FocusDirection.Next)
-                        if (newValue.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                        if (newValue.length==1) {
+                            confirmCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
+                            focusManager.moveFocus(FocusDirection.Next)
+
+                        }
+                        if (newValue.isEmpty()){
+                            confirmCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
+                            focusManager.moveFocus(FocusDirection.Previous)
+                        }
                     }
 
                     if(codeIndex==1 && newValue.isEmpty()) return@ConfirmCodeScreen
-                    if(codeIndex==1 && newValue.isNotEmpty()) focusManager.moveFocus(FocusDirection.Next)
+                    if(codeIndex==1 && newValue.isNotEmpty()) {
+                        confirmCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
+                        focusManager.moveFocus(FocusDirection.Next)
+                    }
 
                     if (codeIndex==6 && confirmCodeViewModel.code6.isNotEmpty()) focusManager.clearFocus()
-                    if (codeIndex==6 && confirmCodeViewModel.code6.isEmpty()) focusManager.moveFocus(FocusDirection.Previous)
+                    if (codeIndex==6 && confirmCodeViewModel.code6.isEmpty()) {
+                        confirmCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
+                        focusManager.moveFocus(FocusDirection.Previous)
+                    }
 
 
                 },
-                showSuccessDialog = confirmCodeViewModel.showSuccessDialog,
-                onProceedButtonClicked = {confirmCodeViewModel.onProceedButtonClicked()}
-            )
-
-        }
-
-        composable(route = CodeCreationSuccess.route){
-
-            CodeCreationSuccessScreen(
-                onLoginRedirectButtonClicked = {confirmCodeViewModel.onLoginRedirectClicked()}
+                onBackSpaceKeyPressed = {confirmCodeViewModel.onBackSpaceKeyPressed()}
             )
         }
-        
-        
+
         composable(route = ResetPassword.route){
 
             val uiState by resetPassWordViewModel.uIStatFlow.collectAsState()
@@ -237,8 +244,7 @@ fun NavGraphBuilder.loginGraph(
             )
         }
     }
-    
-    
+
     composable(route = RecoveryEmailSent.route){
 
         RecoveryEmailSentScreen(

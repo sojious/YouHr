@@ -20,17 +20,19 @@ import co.youverify.youhr.presentation.ui.theme.*
 
 @Composable
 fun CreateCodeScreen(
-    modifier: Modifier=Modifier,
-    codeValue1:String,
-    codeValue2:String,
-    codeValue3:String,
-    codeValue4:String,
-    codeValue5:String,
-    codeValue6:String,
+    modifier: Modifier = Modifier,
+    codeValue1: String,
+    codeValue2: String,
+    codeValue3: String,
+    codeValue4: String,
+    codeValue5: String,
+    codeValue6: String,
     uiState: UiState,
-    isErrorCode:Boolean,
-    onNextButtonClicked:()->Unit,
-    onCodeValueChanged: (String,Int) -> Unit
+    isErrorCode: Boolean,
+    onNextButtonClicked: () -> Unit,
+    onCodeValueChanged: (String, Int) -> Unit,
+    activeCodeInputFieldIndex: Int,
+    onBackSpaceKeyPressed: (Int) -> Unit
 ){
     Box(
         modifier = modifier.fillMaxSize()
@@ -71,9 +73,11 @@ fun CreateCodeScreen(
                 codeValue4 = codeValue4,
                 codeValue5 = codeValue5,
                 codeValue6 = codeValue6,
-                onValueChanged=onCodeValueChanged,
                 errorMessage = uiState.authenticationError,
-                isError = isErrorCode
+                isError = isErrorCode,
+                activeFieldIndex = activeCodeInputFieldIndex,
+                onValueChanged=onCodeValueChanged,
+                onBackSpaceKeyPressed = onBackSpaceKeyPressed
             )
 
             ActionButton(
@@ -86,10 +90,6 @@ fun CreateCodeScreen(
         if (uiState.loading)
             CircularProgressIndicator(modifier=Modifier.align(Alignment.Center))
             //LoadingDialog(message = "Creating passcode...")
-
-
-
-
     }
 }
 
@@ -99,16 +99,18 @@ fun CreateCodeScreen(
 fun CodeScreenPreview(){
     Surface {
         CreateCodeScreen(
-            onNextButtonClicked = {},
             codeValue1 ="1",
             codeValue2="2",
             codeValue3="3",
             codeValue4 = "4",
             codeValue5 = "5",
             codeValue6 = "6",
-            onCodeValueChanged ={_,_ ->},
+            uiState = UiState(),
             isErrorCode = false,
-            uiState = UiState()
+            onNextButtonClicked = {},
+            onCodeValueChanged ={_,_ ->},
+            activeCodeInputFieldIndex = 1,
+            onBackSpaceKeyPressed = {}
         )
     }
 }
@@ -123,9 +125,11 @@ fun CodeInputBoxPreview(){
         codeValue4 = "4",
         codeValue5 = "5",
         codeValue6 = "6",
-        onValueChanged ={_,_ ->},
         errorMessage = "",
-        isError = false
+        isError = false,
+        activeFieldIndex = 1,
+        onValueChanged ={_,_ ->},
+        onBackSpaceKeyPressed = {}
     )
 }
 

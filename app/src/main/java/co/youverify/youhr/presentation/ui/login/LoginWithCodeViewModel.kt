@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavHostController
 import co.youverify.youhr.core.util.*
 import co.youverify.youhr.data.model.LoginWithCodeRequest
 import co.youverify.youhr.domain.repository.PreferencesRepository
@@ -32,6 +31,9 @@ class LoginWithCodeViewModel @Inject constructor(
 
 
     //initialize codeinputField variables
+
+    var activeCodeInputFieldIndex by mutableStateOf(1)
+        private set
     var code1 by mutableStateOf("")
         private set
     var code2 by mutableStateOf("")
@@ -77,20 +79,9 @@ class LoginWithCodeViewModel @Inject constructor(
     }
 
 
-
-    fun onSignUpOptionClicked() {
-        navigator.navigatePopToInclusive(toRoute = CreatePassword.route, popToRoute = LoginWithCode.route)
-    }
-
-     fun onPasswordLoginOptionClicked() {
-
-
-        navigator.navigate(toRoute = LoginWithPassword.route)
-    }
+     fun onPasswordLoginOptionClicked() { navigator.navigate(toRoute = LoginWithPassword.route) }
 
     fun logUserIn() {
-
-        //navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginWithEmail.route)
 
         _uIStateFlow.value=_uIStateFlow.value.copy(loading = true)
 
@@ -108,17 +99,16 @@ class LoginWithCodeViewModel @Inject constructor(
             loginWithCodeUseCase(loginRequest).collect{networkResult->
                 when(networkResult){
 
-                    is NetworkResult.Success->{
+                    is Result.Success->{
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
                         _uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
 
                         //check if LoginWithEmail Screen is presently on the BackStack pop up to it
                         //if (destinationOnBackStack(LoginWithEmail.route))
                             navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginWithCode.route)
-
-
                     }
-                    is NetworkResult.Error->{
+
+                    is Result.Error->{
                         val authError:String = when(networkResult.code){
                             INPUT_ERROR_CODE->networkResult.message.toString()
                             RESOURCE_NOT_FOUND_ERROR_CODE-> "Invalid Email!"
@@ -127,9 +117,9 @@ class LoginWithCodeViewModel @Inject constructor(
                         }
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false, authenticationError =authError )
                         isErrorCode=true
-
                     }
-                    is NetworkResult.Exception->{
+
+                    is Result.Exception->{
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false)
                         isErrorCode=false
                         _uIEventFlow.send(UiEvent.ShowSnackBar(message = networkResult.genericMessage))
@@ -139,9 +129,27 @@ class LoginWithCodeViewModel @Inject constructor(
         }
 
     }
+    fun updateActiveCodeInputFieldIndex(newActiveIndex: Int) {
+        if (newActiveIndex in 1..6)
+            activeCodeInputFieldIndex=newActiveIndex
+    }
 
+    fun onBackSpaceKeyPressed(codeInputFieldIndex: Int) {
+        if(codeInputFieldIndex==2 && code2.isEmpty())
+            activeCodeInputFieldIndex-=1
 
-    //function checks wether a given destination is present on the BackStack
+        if(codeInputFieldIndex==3 && code3.isEmpty())
+            activeCodeInputFieldIndex-=1
 
+        if(codeInputFieldIndex==4 && code4.isEmpty())
+            activeCodeInputFieldIndex-=1
+
+        if(codeInputFieldIndex==5 && code5.isEmpty())
+            activeCodeInputFieldIndex-=1
+
+        if(codeInputFieldIndex==6 && code6.isEmpty())
+            activeCodeInputFieldIndex-=1
+
+    }
 
 }

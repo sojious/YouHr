@@ -2,9 +2,6 @@ package co.youverify.youhr.presentation.ui.task
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -22,17 +19,20 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import co.youverify.youhr.R
 import co.youverify.youhr.core.util.capitalizeWords
+import co.youverify.youhr.core.util.getStatus
+import co.youverify.youhr.core.util.toCardinalDateFormat
 import co.youverify.youhr.core.util.toCardinalDateString
-import co.youverify.youhr.core.util.toOrdinalDateString
+import co.youverify.youhr.core.util.toTimeAgo
+import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.presentation.ui.components.MultiColoredText
 import co.youverify.youhr.presentation.ui.components.YouHrTitleBar
 import co.youverify.youhr.presentation.ui.theme.*
+import pendingTasks
 
 @Composable
 fun TaskDetailScreen(
     modifier: Modifier = Modifier,
-    taskId:Int,
-    currentTaskList:List<Task>,
+    currentTask: Task,
     taskMessage: String,
     onTaskMessageChanged:(String)->Unit,
     onSendMessageButtonClicked:()->Unit,
@@ -41,15 +41,15 @@ fun TaskDetailScreen(
    // val taskId=taskDetailViewModel.taskId
     //val task= pendingTasks[0]// should be gotten from the database using the id
 
-    val currentTask=currentTaskList[taskId]
+    //val currentTask=currentTask[taskId]
     val scrollState= rememberScrollState()
     Column(modifier= modifier
         .fillMaxSize()
         .verticalScroll(scrollState)) {
         YouHrTitleBar(
-            title = currentTask.title,
             modifier = Modifier.padding(top=36.dp, start = 21.dp,end=20.dp),
-            onBackArrowClicked = onBackArrowClicked
+            title = currentTask.title,
+            onBackArrowClicked = onBackArrowClicked,
         )
         Divider(thickness = 0.2.dp, color = codeInputUnfocused, modifier = Modifier
             .fillMaxWidth()
@@ -94,7 +94,7 @@ fun TaskProgress(task: Task, modifier: Modifier) {
                     .padding(start = 15.dp)
             )
             Text(
-                text = "Pending",
+                text = task.getStatus().id,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color  = Color(0XFFF7B32B),
@@ -113,7 +113,7 @@ fun TaskActivitiesSection(modifier: Modifier = Modifier, task: Task) {
             .padding(start = 20.dp, top = 11.dp, bottom = 17.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        TaskCreatorSection(task = pendingTasks.first())
+        TaskCreatorSection(task = task)
         
         Row {
             MultiColoredText(
@@ -122,16 +122,16 @@ fun TaskActivitiesSection(modifier: Modifier = Modifier, task: Task) {
                 secondColor = yvColor,
                 neutralColor = bodyTextLightColor,
                 parts = arrayOf(
-                    "${task.assigner} added to ",
-                    task.project
+                    "${task.assignedBy} added to ",
+                    task.type
                 )
             )
             
-            Text(text = " 57 mins ago", fontSize = 8.sp, color = bodyTextLightColor, modifier=Modifier.padding(top=2.dp))
+            Text(text = " ${task.timeStampCreated.toTimeAgo()}", fontSize = 8.sp, color = bodyTextLightColor, modifier=Modifier.padding(top=2.dp))
         }
 
-        Text(text = "${task.assigner} assigned this task to you", fontSize = 10.sp, color = bodyTextLightColor)
-        Text(text = "${task.assigner} changed due date to Wednesday", fontSize = 10.sp, color = bodyTextLightColor)
+        Text(text = "${task.assignedBy} assigned this task to you", fontSize = 10.sp, color = bodyTextLightColor)
+        //Text(text = "${task.assigner} changed due date to Wednesday", fontSize = 10.sp, color = bodyTextLightColor)
     }
 }
 
@@ -155,13 +155,21 @@ fun AssigneeInfo(modifier: Modifier=Modifier, task: Task) {
                 color = bodyTextLightColor,
             )
 
-            Image(
+            /*Image(
                 painterResource(id = R.drawable.profile_photo_edna_ibeh),
                 modifier = Modifier
                     .size(18.dp)
                     .clip(shape = CircleShape),
                 contentDescription = null,
                 contentScale = ContentScale.Crop
+            )*/
+
+            Text(
+                text = task.assignedBy,
+                fontSize = 12.sp,
+                fontWeight=FontWeight.Bold,
+                color = bodyTextDeepColor,
+                modifier=Modifier.align(Alignment.CenterHorizontally)
             )
         }
         
@@ -190,7 +198,7 @@ fun AssigneeInfo(modifier: Modifier=Modifier, task: Task) {
 
 
                Text(
-                   text = task.dueDate.toCardinalDateString(),
+                   text = task.dueDate.toCardinalDateFormat(),
                    fontSize = 10.sp,
                    color = bodyTextLightColor,
                )
@@ -243,7 +251,7 @@ fun ProjectInfo(task: Task, modifier: Modifier=Modifier) {
         modifier = modifier.fillMaxWidth()
     ) {
         Text(text = "Project", fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp, color = inputDeepTextColor)
-        Text(text = task.project, fontSize = 11.sp, lineHeight = 16.sp, color = bodyTextLightColor)
+        Text(text = task.type, fontSize = 11.sp, lineHeight = 16.sp, color = bodyTextLightColor)
 
     }
 
@@ -282,17 +290,22 @@ fun AttachmentList(task: Task, modifier: Modifier=Modifier) {
         modifier=modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ){
-        AttachmentItem(
-            fileName = "List of new employees . xlxs",
-            fileSize = "234kb",
-            fileType = FileType.EXCELSHEET
-        )
 
-        AttachmentItem(
-            fileName = "Schedule document . pdf",
-            fileSize = "120kb",
-            fileType = FileType.PDF
-        )
+        task.attachedDocs.forEach {
+            val fileType=if(it.name.contains("pdf")){ FileType.PDF }
+            else if (it.name.contains("xlxs")){FileType.EXCELSHEET}
+            else if (it.name.contains("jpg")||it.name.contains("jpeg") ||it.name.contains("png")){FileType.IMAGE}
+            else{FileType.UNIDENTIFIED}
+
+            AttachmentItem(
+                fileName = it.name,
+                fileSize = "120kb",
+                fileType = fileType
+            )
+        }
+
+
+
 
         AttachmentItem(
             fileName = "Privacy policy . jpg",
@@ -310,6 +323,7 @@ fun AttachmentItem( fileName: String, fileSize: String,fileType:FileType) {
         FileType.EXCELSHEET->R.drawable.ms_excel_logo
         FileType.PDF->R.drawable.pdf_logo
         FileType.IMAGE->R.drawable.icons8_picture
+        FileType.UNIDENTIFIED->R.drawable.icons8_picture
     }
     ConstraintLayout {
         val (logo,name,size)=createRefs()
@@ -368,7 +382,7 @@ fun TaskCreatorSection(task: Task){
         )
 
         Text(
-            text ="${task.creator.capitalizeWords()} created this task",
+            text ="${task.assignedBy} created this task",
             fontSize=12.sp,
             fontWeight=FontWeight.Medium,
             lineHeight=16.sp,
@@ -382,7 +396,7 @@ fun TaskCreatorSection(task: Task){
 
 
         Text(
-            text ="42 minutes ago",
+            text =task.timeStampCreated.toTimeAgo(),
             fontSize=10.sp,
             lineHeight=16.sp,
             color= bodyTextLightColor,
@@ -438,9 +452,8 @@ fun TaskDetailScreenPreview(){
             taskMessage ="" ,
             onTaskMessageChanged ={},
             onSendMessageButtonClicked = {},
-            taskId = 0,
-            currentTaskList = pendingTasks,
-            onBackArrowClicked = {}
+            onBackArrowClicked = {},
+            currentTask = pendingTasks.first()
         )
     }
 }
@@ -504,7 +517,13 @@ fun TaskMessageBoxPreview(){
 }
 
 enum class FileType{
-    PDF,EXCELSHEET,IMAGE
+    PDF,EXCELSHEET,IMAGE, UNIDENTIFIED
+}
+enum class TaskStatus(val id:String){
+    PENDING("Pending"),
+    COMPLETED("Complete"),
+    FAILED("Failed"),
+    EXECUTED("Executed")
 }
 
 

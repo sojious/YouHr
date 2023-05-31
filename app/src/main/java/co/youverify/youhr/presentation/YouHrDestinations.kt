@@ -20,43 +20,30 @@ object BottomNavGraph:YouHrDestination{
 object LoginGraph:YouHrDestination{
     override val route="login"
 }
-
 object OnBoardingGraph:YouHrDestination{
     override val route="onboarding"
 }
-
-object SignUpGraph:YouHrDestination{
-    override val route="signUp"
-}
-
 object Splash:YouHrDestination{
     override val route="splash"
 }
-
 object CodeCreationSuccess:YouHrDestination{
     override val route="codeCreationSuccess"
 }
-
 object Blank:YouHrDestination{
     override val route="blank"
 }
-
 object OnBoardingPager:YouHrDestination{
     override val route="pager"
 }
-
 object HomePageGraph:YouHrDestination{
     override val route="homePageGraph"
 }
-
 object TaskGraph:YouHrDestination{
     override val route="taskGraph"
 }
-
 object SettingsGraph:YouHrDestination{
     override val route="settingsGraph"
 }
-
 object CreatePassword:YouHrDestination{
 
     override val route="createPassword"
@@ -77,28 +64,21 @@ object CreateCode:YouHrDestination{
 object InputEmail:YouHrDestination{
     override val route="inputEmail"
 }
-
 object LoginWithPassword:YouHrDestination{
     override val route="loginWithPassword"
 }
-
-
 object RecoveryEmailSent:YouHrDestination{
     override val route="recoveryEmailSent"
 }
-
 object ResetPassword:YouHrDestination{
     override val route="resetPassword"
 }
-
 object LoginWithCode:YouHrDestination{
     override val route="loginWithCode"
 }
-
 object TaskList:YouHrDestination{
     override val route="taskList"
 }
-
 object TaskDetail:YouHrDestination{
     override val route="taskDetail"
     val taskIdArg="taskId"
@@ -109,17 +89,18 @@ object TaskDetail:YouHrDestination{
         }
     )
 }
-
 object Settings:YouHrDestination{
     override val route="settings"
 }
-
 object Home:YouHrDestination{
     override val route="home"
 }
-
 object ConfirmCode:YouHrDestination{
     override val route="confirmCode"
+}
+
+object Profile:YouHrDestination{
+    override val route="profile"
 }
 
 

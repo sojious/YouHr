@@ -1,9 +1,8 @@
 package co.youverify.youhr.core.util
 
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.compose.ui.text.capitalize
-import androidx.compose.ui.text.toUpperCase
+import co.youverify.youhr.domain.model.Task
+import co.youverify.youhr.presentation.ui.task.TaskStatus
+import com.github.marlonlom.utilities.timeago.TimeAgo
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
@@ -14,9 +13,74 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 
- val zoneId= ZoneId.of("Africa/Lagos")
+val zoneId= ZoneId.of("Africa/Lagos")
 
 
+
+fun String.toTimeAgo(): String {
+    val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+     val instant=Instant.from(formatter.parse(this))
+    return TimeAgo.using(instant.toEpochMilli())
+}
+fun Task.getStatus(): TaskStatus {
+    return when(status){
+        "To-do"-> TaskStatus.PENDING
+        else->TaskStatus.COMPLETED
+    }
+}
+fun String.toCardinalDateFormat(): String {
+    val split=split('-')
+    val month=when(split[1]){
+        "01" -> "Jan"
+        "02" -> "Feb"
+        "03" -> "Mar"
+        "04" -> "Apr"
+        "05" -> "May"
+        "06" -> "Jun"
+        "07" -> "Jul"
+        "08" -> "Aug"
+        "09" -> "Sep"
+        "10" -> "Oct"
+        "11" -> "Nov"
+
+        else -> "Dec"
+    }
+    return "$month ${split[2]},${split[0]}"
+}
+
+fun String.toCardinalDateFormat2(): String {
+    val split=split('-')
+    val month=when(split[1]){
+        "01" -> "Jan"
+        "02" -> "Feb"
+        "03" -> "Mar"
+        "04" -> "Apr"
+        "05" -> "May"
+        "06" -> "Jun"
+        "07" -> "Jul"
+        "08" -> "Aug"
+        "09" -> "Sep"
+        "10" -> "Oct"
+        "11" -> "Nov"
+
+        else -> "Dec"
+    }
+
+        val formattedDay=when(split[2]){
+
+            "04","05","06","07","08","09", -> "${split[2].last()}th"
+            "01"->"${split[2].last()}st"
+            "21"->"${split[2]}st"
+            "31"->"${split[2]}st"
+            "02"->"${split[2].last()}nd"
+            "22"->"${split[2]}nd"
+            "03"->"${split[2].last()}rd"
+            "23"->"${split[2]}rd"
+            else -> "${split[2]}th"
+        }
+
+    return "$formattedDay $month ${split[0]}"
+}
 fun Long.toCardinalDateString():String{
 
 
@@ -132,7 +196,7 @@ fun String.capitalizeWords():String =
     return formatter.format(instant.atZone(zoneId))
 }
 
- suspend fun<T:Any> handleApi(callApi: suspend () -> Response<T>):NetworkResult<T>{
+ suspend fun<T:Any> handleApi(callApi: suspend () -> Response<T>): Result<T> {
 
 
    return try{
@@ -141,20 +205,23 @@ fun String.capitalizeWords():String =
 
        //for a response with a body
         if (response.isSuccessful && body!=null)
-            NetworkResult.Success(data = body)
+            Result.Success(data = body)
         else
             //for a response with error message
-            NetworkResult.Error(code=response.code(), message = response.message())
+            Result.Error(code=response.code(), message = response.message())
 
 
        //for exceptions
     }catch (exception:HttpException){
-        NetworkResult.Exception(e=exception, genericMessage = "Oops..Something went wrong")
+        Result.Exception(e=exception, genericMessage = "Oops..Something went wrong")
     }catch (exception: IOException){
-        NetworkResult.Exception(e=exception, genericMessage = "Could not reach Server, Check your Internet Connection")
+        Result.Exception(e=exception, genericMessage = "Could not reach Server, Check your Internet Connection")
     }catch (exception:Throwable){
-        NetworkResult.Exception(e=exception, genericMessage = "Oops..An error occurred from the server")
+        Result.Exception(e=exception, genericMessage = "Oops..An error occurred from the server")
     }
 
 
 }
+
+
+//Extension function that encapsulates pagination logic

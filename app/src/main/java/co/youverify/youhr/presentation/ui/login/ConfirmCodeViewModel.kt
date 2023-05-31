@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.EMPTY_PASSCODE_VALUE
 import co.youverify.youhr.core.util.INPUT_ERROR_CODE
-import co.youverify.youhr.core.util.NetworkResult
+import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.data.model.CreateCodeRequest
 import co.youverify.youhr.domain.repository.PreferencesRepository
 import co.youverify.youhr.domain.use_case.CreateCodeUseCase
@@ -30,6 +30,8 @@ class ConfirmCodeViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository
 ) :ViewModel(){
 
+    var activeCodeInputFieldIndex by mutableStateOf(1)
+        private set
     //initialize codeinputField variables
     var code1 by mutableStateOf("")
         private set
@@ -106,20 +108,20 @@ class ConfirmCodeViewModel @Inject constructor(
             createCodeUseCase.invoke(createCodeRequest, passcode1).collect{ networkResult->
                 when(networkResult){
 
-                    is NetworkResult.Success->{
+                   is Result.Success->{
 
                         preferencesRepository.setUserPasscodeCreationStatus(passcodeCreated = true)
 
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
                         showSuccessDialog=true
                     }
-                    is NetworkResult.Error->{
+                    is Result.Error->{
 
                         val authError=if (networkResult.code== INPUT_ERROR_CODE) networkResult.message.toString() else "An unexpected error occurred! try again! "
                         isErrorCode=true
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false, authenticationError =authError )
                     }
-                    is NetworkResult.Exception->{
+                    is Result.Exception->{
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false)
                         isErrorCode=false
                         _uIEventFlow.send(UiEvent.ShowSnackBar(message = networkResult.genericMessage))
@@ -143,6 +145,14 @@ class ConfirmCodeViewModel @Inject constructor(
 
     }
 
+    fun updateActiveCodeInputFieldIndex(newActiveIndex: Int) {
+        activeCodeInputFieldIndex=newActiveIndex
+    }
+
+    fun onBackSpaceKeyPressed() {
+        if (activeCodeInputFieldIndex!=1)
+            activeCodeInputFieldIndex -= 1
+    }
 
 
 }

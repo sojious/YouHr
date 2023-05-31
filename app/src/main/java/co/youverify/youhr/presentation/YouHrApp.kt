@@ -19,8 +19,8 @@ import co.youverify.youhr.presentation.ui.login.LoginWithCodeViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithPassWordViewModel
 import co.youverify.youhr.presentation.ui.login.ResetPassWordViewModel
 import co.youverify.youhr.presentation.ui.login.CreateCodeViewModel
+import co.youverify.youhr.presentation.ui.task.TaskViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YouHrApp(
     modifier: Modifier = Modifier,
@@ -34,13 +34,14 @@ fun YouHrApp(
     val loginWithCodeViewModel:LoginWithCodeViewModel= hiltViewModel()
     val createCodeViewModel: CreateCodeViewModel = hiltViewModel()
     val resetPassWordViewModel:ResetPassWordViewModel= hiltViewModel()
+    val taskViewModel:TaskViewModel= hiltViewModel()
     val snackBarHostState= remember{ SnackbarHostState() }
     val context= LocalContext.current
 
 
     createLaunchEffects(
         loginWithPassWordViewModel,loginWithCodeViewModel,
-        createCodeViewModel,resetPassWordViewModel,snackBarHostState,context
+        createCodeViewModel,resetPassWordViewModel,taskViewModel,snackBarHostState,context
     )
 
 
@@ -70,6 +71,7 @@ fun createLaunchEffects(
     loginWithCodeViewModel: LoginWithCodeViewModel,
     createCodeViewModel: CreateCodeViewModel,
     resetPassWordViewModel: ResetPassWordViewModel,
+    taskViewModel: TaskViewModel,
     snackBarHostState: SnackbarHostState,
     context: Context
 ) {
@@ -98,6 +100,13 @@ fun createLaunchEffects(
     LaunchedEffect(key1 = true){
 
         resetPassWordViewModel.uiEventFlow.collect {event->
+            handleEvent(event,snackBarHostState,context)
+        }
+    }
+
+    LaunchedEffect(key1 = true){
+
+        taskViewModel.uiEventFlow.collect {event->
             handleEvent(event,snackBarHostState,context)
         }
     }

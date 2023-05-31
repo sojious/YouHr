@@ -3,24 +3,31 @@ package co.youverify.youhr.data.remote
 import co.youverify.youhr.data.model.*
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.Header
+import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface YouHrService {
 
-    @POST("user/login")
+    @POST("user-service/v1/user/login")
     @Headers("No-Authentication: true")
     suspend fun loginWithPassword( @Body loginWithPassWordRequest: LoginWithPassWordRequest): Response<AuthResponse>
 
-    @POST("user/loginpasscode")
+    @POST("user-service/v1/user/loginpasscode")
     @Headers("No-Authentication: true")
     suspend fun loginWithCode( @Body loginWithCodeRequest: LoginWithCodeRequest): Response<AuthResponse>
 
-    @POST("user/resetpassword")
+    @POST("user-service/v1/user/resetpassword")
     @Headers("No-Authentication: true")
     suspend fun resetPassword( @Body resetPasswordRequest: ResetPasswordRequest): Response<GenericResponse>
 
-    @POST("user/setpasscode")
+    @POST("user-service/v1/user/setpasscode")
     suspend fun createCode( @Body createCodeRequest:CreateCodeRequest): Response<GenericResponse>
+
+    @GET("v1/task/taskassignedto")
+    suspend fun getAssignedTask(@Query("page") page: Int =1):Response<AssignedTasksResponse>
+
+    @GET("employee-service/v1/employee")
+    suspend fun getUserProfile():Response<UserProfileResponse>
 }

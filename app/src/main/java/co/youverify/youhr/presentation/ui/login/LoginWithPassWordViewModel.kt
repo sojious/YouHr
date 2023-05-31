@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.BAD_REQUEST_ERROR_CODE
 import co.youverify.youhr.core.util.INPUT_ERROR_CODE
-import co.youverify.youhr.core.util.NetworkResult
+import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.core.util.RESOURCE_NOT_FOUND_ERROR_CODE
 import co.youverify.youhr.data.model.LoginWithPassWordRequest
 import co.youverify.youhr.data.remote.TokenInterceptor
@@ -43,10 +43,8 @@ class LoginWithPassWordViewModel @Inject constructor(
     var isErrorPassword by  mutableStateOf(false)
         private set
 
-
    private val _uIStateFlow= MutableStateFlow(UiState())
     val uIStatFlow=_uIStateFlow.asStateFlow()
-
 
    private val _uIEventFlow = Channel<UiEvent>()
     val uiEventFlow =_uIEventFlow.receiveAsFlow()
@@ -59,28 +57,20 @@ class LoginWithPassWordViewModel @Inject constructor(
         if (isErrorPassword) isErrorPassword=false
         userPassword=newValue
     }
-
-
-
-
     fun togglePasswordVisibility(){
         hideUserPassword=!hideUserPassword
     }
-
     fun logUserIn() {
-
 
         viewModelScope.launch {
 
             _uIStateFlow.value=_uIStateFlow.value.copy(loading = true)
-
             val loginRequest=LoginWithPassWordRequest(email = userEmail, password = userPassword )
 
             loginWithPasswordUseCase(loginRequest).collect{networkResult->
                 when(networkResult){
 
-                    is NetworkResult.Success->{
-
+                    is Result.Success->{
                         val savedEmail=preferencesRepository.getUserEmail().first()
                         if (savedEmail.isEmpty()) preferencesRepository.saveUserEmail(loginRequest.email)
 
@@ -91,9 +81,7 @@ class LoginWithPassWordViewModel @Inject constructor(
                         if (tokenInterceptor.getToken().isEmpty())
                             tokenInterceptor.setToken(networkResult.data.data.token)
 
-
                         val savedCodeCreationStatus=preferencesRepository.getUserPasscodeCreationStatus().first()
-
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
                         _uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
 
@@ -106,10 +94,9 @@ class LoginWithPassWordViewModel @Inject constructor(
 
                         if (!savedCodeCreationStatus)
                             navigator.navigatePopToInclusive(toRoute = CreateCode.route, popToRoute = InputEmail.route)
-
                     }
-                    is NetworkResult.Error->{
 
+                    is Result.Error->{
                         val authError:String = when(networkResult.code){
                             INPUT_ERROR_CODE->networkResult.message.toString()
                             RESOURCE_NOT_FOUND_ERROR_CODE -> "Invalid Email!"
@@ -120,7 +107,8 @@ class LoginWithPassWordViewModel @Inject constructor(
                         isErrorPassword=true
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false, authenticationError =authError )
                     }
-                    is NetworkResult.Exception->{
+
+                    is Result.Exception->{
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false)
                         isErrorPassword=false
                         _uIEventFlow.send(UiEvent.ShowSnackBar(message = networkResult.genericMessage))
@@ -131,15 +119,7 @@ class LoginWithPassWordViewModel @Inject constructor(
 
     }
 
-    fun onForgetPasswordClicked() {
-
-        navigator.navigate(
-            //toRoute = "${CreatePassword.route}?createPassword=true",
-
-            toRoute = ResetPassword.route,
-        )
-    }
-
+    fun onForgetPasswordClicked() { navigator.navigate(toRoute = ResetPassword.route) }
     fun navigateBack() =navigator.navigateBack()
 
 }

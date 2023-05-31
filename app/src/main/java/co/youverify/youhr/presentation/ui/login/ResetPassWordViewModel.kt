@@ -5,9 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.youverify.youhr.core.util.BAD_REQUEST_ERROR_CODE
 import co.youverify.youhr.core.util.INPUT_ERROR_CODE
-import co.youverify.youhr.core.util.NetworkResult
+import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.core.util.RESOURCE_NOT_FOUND_ERROR_CODE
 import co.youverify.youhr.data.model.ResetPasswordRequest
 import co.youverify.youhr.domain.use_case.ResetPasswordUseCase
@@ -55,18 +54,15 @@ class ResetPassWordViewModel @Inject constructor(
 
     fun resetPassword() {
 
-
-
         viewModelScope.launch {
 
             _uIStateFlow.value=_uIStateFlow.value.copy(loading = true)
-
             val resetPasswordRequest= ResetPasswordRequest(email =userEmail)
 
             resetPasswordUseCase(resetPasswordRequest).collect{ networkResult->
                 when(networkResult){
 
-                    is NetworkResult.Success->{
+                    is Result.Success->{
 
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
                         _uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
@@ -82,7 +78,7 @@ class ResetPassWordViewModel @Inject constructor(
                             navigator.navigatePopToInclusive(toRoute = RecoveryEmailSent.route, popToRoute = LoginWithCode.route)
 
                     }
-                    is NetworkResult.Error->{
+                    is Result.Error->{
 
                         val authError:String = when(networkResult.code){
                             INPUT_ERROR_CODE->networkResult.message.toString()
@@ -93,7 +89,7 @@ class ResetPassWordViewModel @Inject constructor(
                         isErrorValue=true
 
                     }
-                    is NetworkResult.Exception->{
+                    is Result.Exception->{
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false)
                         _uIEventFlow.send(UiEvent.ShowSnackBar(message = networkResult.genericMessage))
                         isErrorValue=false
@@ -103,15 +99,9 @@ class ResetPassWordViewModel @Inject constructor(
             }
         }
     }
-
      fun onGotItClicked() {
-
          navigator.userPasswordReset=true
-
          navigator.navigatePopToInclusive(toRoute = InputEmail.route, popToRoute = RecoveryEmailSent.route)
     }
-
     fun navigateBack() =navigator.navigateBack()
-
-
 }

@@ -27,42 +27,36 @@ class HomeViewModel @Inject constructor( private val navigator: Navigator) : Vie
 
 
     var userName ="Edith"
-    private set
+        private set
     var profilePhotoResId = R.drawable.profile_photo_edith
-    private set
+        private set
     var activeSideNavItem by mutableStateOf(0)
-    private set
+        private set
+
     @OptIn(ExperimentalPagerApi::class)
     val pagerState = PagerState(currentPage = 0)
-    @OptIn(ExperimentalMaterial3Api::class)
-    val drawerState = DrawerState(initialValue = DrawerValue.Closed)
+
+    var drawerState = DrawerState(initialValue = DrawerValue.Closed)
+        private set
+
     private var _shouldUpdateDrawerState = MutableStateFlow(false)
-    val shouldUpdateDrawerState = _shouldUpdateDrawerState.asStateFlow()
+    var shouldUpdateDrawerState = _shouldUpdateDrawerState.asStateFlow()
+        private set
 
 
 
 
-    fun onBottomNavItemClicked(route: String) {
-
-            navigator.navigatePopToForBottomNavItem(toRoute =route )
-        //navigatePopToInclusive(toRoute = CreatePassword.route, popToRoute = LoginWithCode.route)
-    }
-
+    fun onBottomNavItemClicked(route: String) { navigator.navigatePopToForBottomNavItem(toRoute =route ) }
     fun updateActiveSideNavItem(newIndex: Int) {
         activeSideNavItem=newIndex
     }
-
-    fun onNotificationClicked(count: String) {
-        
-    }
-
+    fun onNotificationClicked(count: String) {}
     @OptIn(ExperimentalPagerApi::class)
     fun scrollToPage(pageIndex: Int) {
         viewModelScope.launch {
             pagerState.animateScrollToPage(pageIndex)
         }
     }
-
     fun updateDrawerState() {
         if (!_shouldUpdateDrawerState.value) _shouldUpdateDrawerState.value=true
     }

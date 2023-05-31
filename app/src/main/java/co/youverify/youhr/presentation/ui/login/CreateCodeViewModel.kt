@@ -19,6 +19,9 @@ import javax.inject.Inject
 @HiltViewModel
 class CreateCodeViewModel @Inject constructor(private val navigator: Navigator, ) :ViewModel(){
 
+    var activeCodeInputFieldIndex by mutableStateOf(1)
+        private set
+
     //initialize codeinputField variables
     var code1 by mutableStateOf("")
         private set
@@ -64,6 +67,7 @@ class CreateCodeViewModel @Inject constructor(private val navigator: Navigator, 
             }
         }
 
+
     }
 
 
@@ -101,7 +105,14 @@ class CreateCodeViewModel @Inject constructor(private val navigator: Navigator, 
             navigator.navigate(toRoute = ConfirmCode.route)
        }
     }
+    fun updateActiveCodeInputFieldIndex(newActiveIndex: Int) {
+        activeCodeInputFieldIndex=newActiveIndex
+    }
 
+    fun onBackSpaceKeyPressed() {
+        if (activeCodeInputFieldIndex!=1)
+            activeCodeInputFieldIndex -= 1
+    }
 
 }
 

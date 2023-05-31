@@ -32,16 +32,8 @@ fun LoginWithPasswordScreen(
     onHidePasswordIconClicked: () -> Unit,
     onForgotPasswordClicked: () -> Unit,
     onBackArrowClicked:()->Unit,
-    uiState: UiState,
-    //loginWithPassWordViewModel: LoginWithPassWordViewModel= hiltViewModel()
-
+    uiState: UiState
 ){
-
-
-
-
-
-
 
     Box(modifier = modifier.fillMaxSize()){
 
@@ -74,7 +66,6 @@ fun LoginWithPasswordScreen(
                 onTrailingIconClicked = onHidePasswordIconClicked
             )
 
-
             Text(
                 text = stringResource(id = R.string.forgot_password),
                 fontSize = 12.sp,
@@ -90,7 +81,6 @@ fun LoginWithPasswordScreen(
                 text = stringResource(id = R.string.login),
                 onButtonClicked = onLoginButtonClicked
             )
-
         }
 
         if (uiState.loading)

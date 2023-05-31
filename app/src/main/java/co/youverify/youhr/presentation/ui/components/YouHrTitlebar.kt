@@ -1,7 +1,11 @@
 package co.youverify.youhr.presentation.ui.components
 
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -9,22 +13,34 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
-import androidx.navigation.NavHostController
 import co.youverify.youhr.R
 import co.youverify.youhr.presentation.ui.theme.yvText
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 
 @Composable
-fun YouHrTitleBar(modifier: Modifier = Modifier, title: String,onBackArrowClicked:()->Unit){
+fun YouHrTitleBar(
+    modifier: Modifier = Modifier,
+    title: String,
+    onBackArrowClicked: () -> Unit = {},
+){
     ConstraintLayout(
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -44,9 +60,9 @@ fun YouHrTitleBar(modifier: Modifier = Modifier, title: String,onBackArrowClicke
                       onBackArrowClicked()
             },
             content = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_back_arrow), contentDescription =null ,
-                )
+                   Icon(
+                       painter = painterResource(id = R.drawable.ic_back_arrow), contentDescription =null ,
+                   )
             }
         )
 
@@ -75,7 +91,36 @@ fun YouHrTitleBarPreview(){
     Surface {
         YouHrTitleBar(
             title = "Interview With Candidate For Product Design Role",
-            onBackArrowClicked = {}
+            onBackArrowClicked = {},
         )
     }
+}
+
+fun Modifier.shimmerEffect(): Modifier = composed {
+    var size by remember {
+        mutableStateOf(IntSize.Zero)
+    }
+    val transition = rememberInfiniteTransition()
+    val startOffsetX by transition.animateFloat(
+        initialValue = -2 * size.width.toFloat(),
+        targetValue = 2 * size.width.toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000)
+        )
+    )
+
+    background(
+        brush = Brush.linearGradient(
+            colors = listOf(
+                Color(0xFFB8B5B5),
+                Color(0xFF8F8B8B),
+                Color(0xFFB8B5B5),
+            ),
+            start = Offset(startOffsetX, 0f),
+            end = Offset(startOffsetX + size.width.toFloat(), size.height.toFloat())
+        )
+    )
+        .onGloballyPositioned {
+            size = it.size
+        }
 }

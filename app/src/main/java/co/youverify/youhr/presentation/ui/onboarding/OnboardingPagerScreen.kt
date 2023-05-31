@@ -69,21 +69,6 @@ fun OnboardingPagerScreen(
         ) {
             OnboardingPager(pagerState =pagerState,viewModel=onboardingViewModel )
 
-
-            /*HorizontalPagerIndicator(
-                pagerState =pagerState,
-                activeColor= yvColor,
-                inactiveColor = indicatorInactive,
-                indicatorShape = RoundedCornerShape(4.dp),
-                indicatorWidth = 24.dp,
-                indicatorHeight = 8.dp,
-                spacing = 4.dp,
-                modifier = Modifier.padding(top = 36.dp)
-            )*/
-
-            //PagerIndicator()
-
-            //Spacer(modifier = Modifier.weight(1f))
             
             WormPageIndicator(
                 modifier = Modifier.padding(top = 31.17.dp),
@@ -206,10 +191,7 @@ fun WormPageIndicator(
     pagerState: PagerState
 ) {
 
-    /*assert(
-        value = currentPage in 0 until  totalPages,
-        lazyMessage = { "Current page index is out of range." }
-    )*/
+
     val rowWidth = (inActiveIndicatorWidth * (totalPages - 1)) + (spacing * (totalPages - 1) + activeIndicatorWidth)
     Row(
         modifier = modifier

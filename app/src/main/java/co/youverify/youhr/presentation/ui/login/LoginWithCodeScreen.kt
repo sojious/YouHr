@@ -22,17 +22,18 @@ import co.youverify.youhr.presentation.ui.theme.*
 @Composable
 fun LoginWithCodeScreen(
     modifier: Modifier = Modifier,
-    codeValue1:String,
-    codeValue2:String,
-    codeValue3:String,
-    codeValue4:String,
-    codeValue5:String,
-    codeValue6:String,
-    isErrorCode:Boolean,
+    codeValue1: String,
+    codeValue2: String,
+    codeValue3: String,
+    codeValue4: String,
+    codeValue5: String,
+    codeValue6: String,
+    isErrorCode: Boolean,
+    activeCodeInputFieldIndex: Int,
     uiState: UiState,
-    onCodeValueChanged:(String, Int)->Unit,
+    onCodeValueChanged: (String, Int) -> Unit,
     onPasswordLoginOptionClicked: () -> Unit,
-    //onLoginButtonClicked: () -> Unit,
+    onBackSpaceKeyPressed: (Int) -> Unit,
 ){
    Box(modifier = modifier.fillMaxSize()) {
 
@@ -66,9 +67,11 @@ fun LoginWithCodeScreen(
                codeValue4=codeValue4,
                codeValue5=codeValue5,
                codeValue6=codeValue6,
-               onValueChanged =onCodeValueChanged,
                errorMessage = uiState.authenticationError,
-               isError = isErrorCode
+               isError = isErrorCode,
+               activeFieldIndex = activeCodeInputFieldIndex,
+               onValueChanged =onCodeValueChanged,
+               onBackSpaceKeyPressed = onBackSpaceKeyPressed
            )
 
            Text(
@@ -81,12 +84,6 @@ fun LoginWithCodeScreen(
                color = primaryColor,
                fontWeight = FontWeight.Medium
            )
-
-           /*ActionButton(
-               modifier=Modifier.padding(horizontal = 28.dp),
-               text = stringResource(id = R.string.login),
-               onButtonClicked = onLoginButtonClicked
-           )*/
 
        }
 
@@ -102,18 +99,20 @@ fun LoginWithCodeScreen(
 fun LoginWithCodePreview(){
    Surface {
        LoginWithCodeScreen(
-           onPasswordLoginOptionClicked = {},
+           codeValue1="1",
            //onLoginButtonClicked = {},
            //onSignUpClicked = {},
-           codeValue1="1",
            codeValue2="2",
            codeValue3="3",
-           codeValue4="4" ,
+           codeValue4="4",
            codeValue5 = "5",
            codeValue6 = "6",
-           onCodeValueChanged = {_,_->},
            isErrorCode = true,
-           uiState = UiState(authenticationError = "You entered the wrong passcode, try again!!",)
+           activeCodeInputFieldIndex = 1,
+           uiState = UiState(authenticationError = "You entered the wrong passcode, try again!!"),
+           onCodeValueChanged = {_,_->},
+           onPasswordLoginOptionClicked = {},
+           onBackSpaceKeyPressed = {}
        )
    }
 }
