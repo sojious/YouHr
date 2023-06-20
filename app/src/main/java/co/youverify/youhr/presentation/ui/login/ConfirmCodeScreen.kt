@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -77,7 +78,7 @@ fun ConfirmCodeScreen(
             )
 
             CodeInputBox(
-                modifier = Modifier.padding(bottom = 36.dp),
+                modifier = Modifier.padding(bottom = 16.dp),
                 codeValue1 =codeValue1,
                 codeValue2=codeValue2,
                 codeValue3=codeValue3,
@@ -85,7 +86,7 @@ fun ConfirmCodeScreen(
                 codeValue5 = codeValue5,
                 codeValue6 = codeValue6,
                 errorMessage = uiState.authenticationError,
-                isError = isErrorCode,
+                isError = uiState.authenticationError.isNotEmpty(),
                 activeFieldIndex = activeCodeInputFieldIndex,
                 onValueChanged=onCodeValueChanged,
                 onBackSpaceKeyPressed = onBackSpaceKeyPressed
@@ -93,7 +94,8 @@ fun ConfirmCodeScreen(
 
             ActionButton(
                 text ="Create Code",
-                onButtonClicked = onCreateCodeButtonClicked
+                onButtonClicked = onCreateCodeButtonClicked,
+                modifier = Modifier.padding(top=16.dp)
             )
 
         }
@@ -114,6 +116,9 @@ fun ConfirmCodeScreen(
 fun SuccessDialog(
     modifier: Modifier = Modifier,
     onButtonClicked: () -> Unit,
+    title:String="Great, all set!",
+    message:String="You have successfully created a new login code for the next time you want to login.",
+    buttonText:String="Proceed to homepage",
 ) {
 
     var animateTrigger by remember { mutableStateOf(false) }
@@ -134,7 +139,8 @@ fun SuccessDialog(
 
             AnimatedVisibility(
                 visible = animateTrigger,
-                enter = scaleIn(animationSpec = tween(1000), initialScale = 0.5f)
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,7 +157,7 @@ fun SuccessDialog(
                     )
 
                     Text(
-                        text = "Great, all set!",
+                        text = title,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = yvText,
@@ -160,7 +166,7 @@ fun SuccessDialog(
 
 
                     Text(
-                        text = "You have successfully created a new login code for the next time you want to login.",
+                        text = message,
                         fontSize = 12.sp,
                         color = bodyTextLightColor,
                         modifier = Modifier.padding(start = 28.dp,end=28.dp, bottom=24.dp),
@@ -168,10 +174,25 @@ fun SuccessDialog(
                         textAlign = TextAlign.Center
                     )
 
-                    ActionButton(text= stringResource(id = R.string.next),
-                        onButtonClicked = onButtonClicked,
-                        modifier = Modifier.padding(start = 69.dp,end=69.dp, bottom = 39.dp)
-                    )
+
+
+                    Button(
+                        onClick = onButtonClicked,
+                        shape= RoundedCornerShape(4.dp),
+                        modifier = modifier
+                            //.padding(horizontal = 16.dp)
+                            .padding(start = 69.dp,end=69.dp, bottom = 39.dp)
+                            .fillMaxWidth().height(42.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                    ) {
+                        androidx.compose.material.Text(
+                            text = buttonText,
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            lineHeight = 15.6.sp
+                        )
+                    }
                 }
             }
         }
@@ -191,8 +212,8 @@ fun ConfirmCodeScreenPreview(){
             codeValue4 = "4",
             codeValue5 = "5",
             codeValue6 = "6",
-            uiState = UiState(),
-            isErrorCode = false,
+            uiState = UiState(authenticationError = "The code entered is wrong or invalid"),
+            isErrorCode = true,
             activeCodeInputFieldIndex = 1,
             showSuccessDialog = true,
             onCreateCodeButtonClicked = {},

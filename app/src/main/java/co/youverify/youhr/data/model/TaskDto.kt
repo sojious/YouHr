@@ -11,7 +11,7 @@ data class AssignedTasksResponse(
 )
 
 data class TaskData(
-    val apiTasks: List<ApiTask>,
+    val docs: List<ApiTask>,
     val pagination: Pagination
 )
 

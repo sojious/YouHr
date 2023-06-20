@@ -7,6 +7,7 @@ import co.youverify.youhr.data.model.ApiTask
 import co.youverify.youhr.domain.model.AttachedDoc
 import co.youverify.youhr.domain.model.Task
 
+
 class DbToDomainTaskMapper:Mapper<DBTask, Task>{
     override fun map(input: DBTask): Task {
         return Task(
@@ -63,11 +64,19 @@ class DbToDomainTaskListMapper(private val mapper: DbToDomainTaskMapper):ListMap
 }
 
 
-class DtoToDbTaskListMapper(private val mapper: DtoToDbTaskMapper):ListMapper<ApiTask,DBTask>{
+/*class DtoToDbTaskListMapper(private val mapper: DtoToDbTaskMapper):ListMapper<ApiTask,DBTask>{
     override fun map(input: List<ApiTask>): List<DBTask> {
         return  input.map {
             mapper.map(it)
         }
     }
 
+}*/
+
+class DtoToDbTaskListMapper<I,O>(private val mapper: Mapper<I,O>):NullableInputListMapper<I,O> {
+    override fun map(input: List<I>?): List<O> {
+        return input?.map {
+            mapper.map(it)
+        }.orEmpty()
+    }
 }

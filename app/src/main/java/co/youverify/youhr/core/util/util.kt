@@ -1,31 +1,75 @@
 package co.youverify.youhr.core.util
 
+import TaskProgressColor
+import android.icu.text.SimpleDateFormat
+import android.icu.util.Calendar
+import android.icu.util.TimeZone
+import androidx.compose.ui.graphics.Color
 import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.presentation.ui.task.TaskStatus
 import com.github.marlonlom.utilities.timeago.TimeAgo
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.*
+import java.text.ParseException
+import java.util.Date
+import java.util.Locale
 
 
-val zoneId= ZoneId.of("Africa/Lagos")
+val timeZone: TimeZone =TimeZone.getTimeZone("Africa/Lagos")
 
 
 
-fun String.toTimeAgo(): String {
-    val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
-     val instant=Instant.from(formatter.parse(this))
-    return TimeAgo.using(instant.toEpochMilli())
+fun getLeavePeriod(startDate:String,endDate:String): String {
+    val split1=startDate.split(' ')
+    val startMonth=split1[1]
+    val startYear=split1[3]
+    val formattedStartDay= getFormattedDay(split1[2])
+
+    val split2=endDate.split(' ')
+    val endMonth=split2[1]
+    val endYear=split2[3]
+    val formattedEndDay= getFormattedDay(split2[2])
+
+    return if (startYear==endYear)
+        "$formattedStartDay $startMonth - $formattedEndDay $endMonth $startYear"
+    else "$formattedStartDay $startMonth $startYear - $formattedEndDay $endMonth $endYear"
+
 }
+fun getFormattedLeaveDate(dateString:String): String {
+    val split=dateString.split(' ')
+    return "${split[0]} ${split[1]} ${split[2]} ${split[3]}"
+
+}
+
+fun getGreetingMessage():String{
+
+    return when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+        in 0..11 -> "Good Morning"
+        in 12..15 -> "Good Afternoon"
+        in 16..20 -> "Good Evening"
+        in 21..23 -> "Good Night"
+        else -> "Hello"
+    }
+}
+fun String.toTimeAgo(): String { return TimeAgo.using(this.toEpochMillis()) }
 fun Task.getStatus(): TaskStatus {
     return when(status){
-        "To-do"-> TaskStatus.PENDING
-        else->TaskStatus.COMPLETED
+        TaskStatus.COMPLETED.id -> TaskStatus.COMPLETED
+        TaskStatus.IN_PROGRESS.id-> TaskStatus.IN_PROGRESS
+        TaskStatus.OVER_DUE.id-> TaskStatus.OVER_DUE
+        TaskStatus.TO_DO.id -> TaskStatus.TO_DO
+        else ->TaskStatus.REVIEW
+    }
+}
+
+fun TaskStatus.getColor(): Color {
+   return when (this) {
+        TaskStatus.COMPLETED -> TaskProgressColor.COMPLETED.value
+        TaskStatus.IN_PROGRESS -> TaskProgressColor.IN_PROGRESS.value
+        TaskStatus.OVER_DUE -> TaskProgressColor.OVERDUE.value
+        TaskStatus.TO_DO -> TaskProgressColor.TO_DO.value
+        else -> TaskProgressColor.REVIEW.value
     }
 }
 fun String.toCardinalDateFormat(): String {
@@ -66,32 +110,35 @@ fun String.toCardinalDateFormat2(): String {
         else -> "Dec"
     }
 
-        val formattedDay=when(split[2]){
-
-            "04","05","06","07","08","09", -> "${split[2].last()}th"
-            "01"->"${split[2].last()}st"
-            "21"->"${split[2]}st"
-            "31"->"${split[2]}st"
-            "02"->"${split[2].last()}nd"
-            "22"->"${split[2]}nd"
-            "03"->"${split[2].last()}rd"
-            "23"->"${split[2]}rd"
-            else -> "${split[2]}th"
-        }
+        val formattedDay= getFormattedDay(split[2])
 
     return "$formattedDay $month ${split[0]}"
 }
+
+fun getFormattedDay(dayString:String): String {
+   return when(dayString){
+
+        "04", "05", "06", "07", "08", "09" -> "${dayString.last()}th"
+        "01"->"${dayString.last()}st"
+        "21"->"${dayString}st"
+        "31"->"${dayString}st"
+        "02"->"${dayString.last()}nd"
+        "22"->"${dayString}nd"
+        "03"->"${dayString.last()}rd"
+        "23"->"${dayString}rd"
+        else -> "${dayString}th"
+    }
+}
 fun Long.toCardinalDateString():String{
 
+    val calendar = Calendar.getInstance();
+    calendar.timeInMillis = this;
+    calendar.timeZone = timeZone;
 
+    val month = calendar.get(Calendar.MONTH) + 1; // Note: Month value in Calendar API is 0-based
+    val year = calendar.get(Calendar.YEAR);
 
-    val instant=Instant.ofEpochMilli(this)
-    val zoneDateTime=ZonedDateTime.ofInstant(instant,zoneId)
-
-    val month= zoneDateTime.month.value
-    val year= zoneDateTime.year
-
-    val formattedDay=when(val day=zoneDateTime.dayOfMonth){
+    val formattedDay=when(val day=calendar.get(Calendar.DAY_OF_MONTH)){
 
         1,21 -> "${day}st"
         2,22 -> "${day}nd"
@@ -108,15 +155,17 @@ fun Long.toCardinalDateString():String{
 
 fun Long.toOrdinalDateString(includeOf:Boolean=true):String{
 
+    val calendar = Calendar.getInstance()
+    calendar.timeInMillis = this
+
+    val month= calendar.get(Calendar.MONTH) + 1 // Note: Month value in Calendar API is 0-based
+
+    val year= calendar.get(Calendar.YEAR)
 
 
-    val instant=Instant.ofEpochMilli(this)
-    val zoneDateTime=ZonedDateTime.ofInstant(instant,zoneId)
 
-    val month= zoneDateTime.month.value
-    val year= zoneDateTime.year
 
-    val formattedDay=when(val day=zoneDateTime.dayOfMonth){
+    val formattedDay=when(val day=calendar.get(Calendar.DAY_OF_MONTH)){
 
         1,21 -> "${day}st"
         2,22 -> "${day}nd"
@@ -157,20 +206,21 @@ private fun getFormattedMonth(month: Int, capitalize: Boolean=false):String{
 fun getDateRange(startDateMillis:Long, endDateMillis:Long):String{
 
 
-    //using New  Java date/time Api
-    val instant1=Instant.ofEpochMilli(startDateMillis)
-    val zoneDateTime1=ZonedDateTime.ofInstant(instant1,zoneId)
-    val instant2=Instant.ofEpochMilli(endDateMillis)
-    val zoneDateTime2=ZonedDateTime.ofInstant(instant2,zoneId)
+    val calendar1 = Calendar.getInstance(timeZone)
+    calendar1.timeInMillis = startDateMillis
 
-    val startYear=zoneDateTime1.year
-    val endYear=zoneDateTime2.year
+    val calendar2: Calendar = Calendar.getInstance(timeZone)
+    calendar2.timeInMillis = endDateMillis
 
-    val startMonth=zoneDateTime1.month.value
-    val endMonth=zoneDateTime2.month.value
+    val startYear = calendar1[Calendar.YEAR]
+    val endYear = calendar2[Calendar.YEAR]
 
-    val startDay=zoneDateTime1.dayOfMonth
-    val endDay=zoneDateTime2.dayOfMonth
+    val startMonth = calendar1[Calendar.MONTH] + 1 // Note: Month value in Calendar API is 0-based
+
+    val endMonth = calendar2[Calendar.MONTH] + 1
+
+    val startDay = calendar1[Calendar.DAY_OF_MONTH]
+    val endDay = calendar2[Calendar.DAY_OF_MONTH]
 
     return if (startYear==endYear)
         "${getFormattedMonth(startMonth, true)} $startDay - ${getFormattedMonth(endMonth, true)} $endDay,$startYear"
@@ -182,6 +232,31 @@ fun getDateRange(startDateMillis:Long, endDateMillis:Long):String{
 
 }
 
+
+
+fun String.toEpochMillis(): Long {
+
+    val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.getDefault());
+    formatter.timeZone = timeZone
+
+    val date:Date;
+    try {
+        date = formatter.parse(this);
+    } catch (e: ParseException) {
+        e.printStackTrace();
+        return 0; // or handle the parse exception accordingly
+    }
+
+    val calendar = Calendar.getInstance();
+    calendar.time = date;
+
+    val epochMillis = calendar.timeInMillis;
+
+    return epochMillis;
+
+}
+
+
 fun String.capitalizeWords():String =
     split(" ").joinToString(" "){ word ->
         word.replaceFirstChar {character->
@@ -190,10 +265,16 @@ fun String.capitalizeWords():String =
 }
 
 
- fun Long.toFormattedDateString(pattern: String): String {
-    val instant=Instant.ofEpochMilli(this)
-    val formatter=DateTimeFormatter.ofPattern(pattern)
-    return formatter.format(instant.atZone(zoneId))
+fun Long.toFormattedDateString(pattern: String): String {
+
+
+    val calendar = Calendar.getInstance();
+    calendar.timeInMillis = this
+
+    val formatter = SimpleDateFormat(pattern, Locale.ENGLISH)
+    formatter.timeZone = timeZone
+
+    return formatter.format(calendar.time)
 }
 
  suspend fun<T:Any> handleApi(callApi: suspend () -> Response<T>): Result<T> {
@@ -208,7 +289,7 @@ fun String.capitalizeWords():String =
             Result.Success(data = body)
         else
             //for a response with error message
-            Result.Error(code=response.code(), message = response.message())
+            Result.Error(code=response.code(), message = response.errorBody().toString())
 
 
        //for exceptions

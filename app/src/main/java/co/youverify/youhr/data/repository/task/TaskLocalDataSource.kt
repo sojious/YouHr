@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 
 interface TaskLocalDataSource {
-    fun getTasks(): Flow<List<DBTask>>
-    fun getTasksPaginated(pageNumber: Int): Flow<List<DBTask>>
+    suspend fun getTasks(): List<DBTask>
+    suspend fun getTasksPaginated(pageNumber: Int): List<DBTask>
     suspend fun clearTasks()
     suspend fun insertTasks(tasks: List<DBTask>)
 }

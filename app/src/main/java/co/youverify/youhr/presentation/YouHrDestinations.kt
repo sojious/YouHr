@@ -23,6 +23,9 @@ object LoginGraph:YouHrDestination{
 object OnBoardingGraph:YouHrDestination{
     override val route="onboarding"
 }
+object LeaveManagementGraph:YouHrDestination{
+    override val route="leaveManagement"
+}
 object Splash:YouHrDestination{
     override val route="splash"
 }
@@ -101,6 +104,25 @@ object ConfirmCode:YouHrDestination{
 
 object Profile:YouHrDestination{
     override val route="profile"
+}
+
+object LeaveManagement:YouHrDestination{
+    override val route="leaveOverview"
+}
+
+object LeaveRequest:YouHrDestination{
+    override val route="leaveRequest"
+}
+
+object LeaveDetail:YouHrDestination{
+    override val route="leaveDetail"
+    val leaveIdArg="leaveId"
+    val routWithArgs="$route/{$leaveIdArg}"
+    val args = listOf(
+        navArgument(name = leaveIdArg){
+            type= NavType.IntType
+        }
+    )
 }
 
 

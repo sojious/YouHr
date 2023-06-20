@@ -54,7 +54,7 @@ fun NavGraphBuilder.onboardingGraph(navController: NavController, density: Densi
 
             OnboardingPagerScreen(
                 pagerState = pagerState,
-                actionButtonText = stringResource(id = R.string.login),
+                actionButtonText = "Get Started",
                 onLoginButtonClicked = {
                     navController.navigate(LoginGraph.route){
                         launchSingleTop=true

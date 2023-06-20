@@ -1,5 +1,7 @@
 package co.youverify.youhr.presentation.ui.settings
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,19 +10,26 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +37,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.youverify.youhr.R
+import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
+import co.youverify.youhr.presentation.ui.Navigator
+import co.youverify.youhr.presentation.ui.home.HomeViewModel
+import co.youverify.youhr.presentation.ui.home.ProfileRepoMock
 import co.youverify.youhr.presentation.ui.theme.YouHrTheme
 import co.youverify.youhr.presentation.ui.theme.bodyTextDeepColor
 import co.youverify.youhr.presentation.ui.theme.bodyTextLightColor
@@ -37,11 +50,19 @@ import co.youverify.youhr.presentation.ui.theme.yvText
 
 @Composable
 fun SettingsScreen(
-    modifier: Modifier=Modifier,
-    user: User,
+    modifier: Modifier = Modifier,
+    profileBitmap: Bitmap?,
+    name: String,
+    email: String,
     onSettingsItemClicked: (Int) -> Unit,
-    onProfilePicClicked:() -> Unit
+    onProfilePicClicked: () -> Unit,
+    settingsViewModel: SettingsViewModel,
+    homeViewModel: HomeViewModel
 ){
+
+    LaunchedEffect(key1 = Unit){
+        settingsViewModel.updateCurrentUser(homeViewModel.user)
+    }
 
     Column(
         modifier = modifier
@@ -67,10 +88,10 @@ fun SettingsScreen(
         )
 
         UserInfo(
-            modifier=Modifier.padding(start = 20.dp),
-            name=user.name,email=user.email,
-            profileResId=user.profileResId?: R.drawable.profile_pic_placeholder,
-            onProfilePicClicked=onProfilePicClicked
+            modifier =Modifier.padding(start = 20.dp),
+            name =name, email =email,
+            profileBitmap =profileBitmap,
+            onProfilePicClicked =onProfilePicClicked
         )
 
         Divider(
@@ -102,9 +123,10 @@ fun SettingsItem(index: Int, onItemClicked: (Int) -> Unit, item: Item) {
     Row(
         horizontalArrangement =Arrangement.spacedBy(12.dp),
         modifier = Modifier
-            .fillMaxWidth().clickable {
-            onItemClicked(index+1)
-        },
+            .fillMaxWidth()
+            .clickable {
+                onItemClicked(index + 1)
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(painter = painterResource(id = item.imageResId), contentDescription =null )
@@ -122,15 +144,16 @@ fun UserInfo(
     modifier: Modifier = Modifier,
     name: String,
     email: String,
-    profileResId: Int,
+    profileBitmap: Bitmap?,
     onProfilePicClicked: () -> Unit
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Image(
-            painter = painterResource(id = profileResId), 
+            bitmap = profileBitmap?.asImageBitmap()?: ImageBitmap.imageResource(id = R.drawable.placeholder_pic),
             contentDescription =null ,
             modifier= Modifier
                 .size(55.dp)
+                .clip(shape = CircleShape)
                 .clickable { onProfilePicClicked() },
             contentScale = ContentScale.Crop
         )
@@ -149,20 +172,22 @@ fun UserInfo(
 fun SettingsScreenPreview(){
     YouHrTheme {
         Surface {
+            val context= LocalContext.current
+            val bitmap= remember{
+                BitmapFactory.decodeResource(
+                    context.resources,
+                    R.drawable.profile_photo_edith,
+                    BitmapFactory.Options()
+                )
+            }
            SettingsScreen(
-               user = User(
-                   name = "Edit",
-                   email = "Edith@youverify.co",
-                   role = "Project Manager",
-                   dob = "12/12/1997",
-                   phone = "08037582010",
-                   gender = "Female",
-                   address = "No 12, Akintola str Yaba Lagos",
-                   nextOfKin = "Yvonne Johnson",
-                   nextOfKinPhoneNumber = "08149502340"
-               ) ,
+               profileBitmap = bitmap ,
                onSettingsItemClicked ={_->} ,
-               onProfilePicClicked = {}
+               onProfilePicClicked = {},
+               email = "edith@youverify.co",
+               name = "Edith",
+               settingsViewModel = SettingsViewModel(Navigator()),
+               homeViewModel = HomeViewModel(Navigator(), GetUserProfileUseCase(ProfileRepoMock()))
            )
         }
     }
@@ -173,12 +198,19 @@ fun SettingsScreenPreview(){
 fun UserInfoPreview(){
     YouHrTheme {
         Surface {
+            val context= LocalContext.current
+            val bitmap= remember{
+                BitmapFactory.decodeResource(
+                    context.resources,
+                    R.drawable.profile_photo_edith,
+                    BitmapFactory.Options()
+                )
+            }
             UserInfo(
                 name ="Edith Ibeh",
                 email ="Edith@youverify.co",
-                profileResId =R.drawable.profile_pic_placeholder,
-                onProfilePicClicked = {}
-            )
+                profileBitmap =bitmap
+            ) {}
         }
     }
 }
@@ -208,20 +240,6 @@ fun SettingsItemPreview(){
 }
 
 
-data class User(
-    val name: String,
-    val email: String,
-    val profileResId: Int? = null,
-    val role: String = "",
-    val dob: String,
-    val phone: String,
-    val gender: String,
-    val address: String,
-    val nextOfKin: String,
-    val nextOfKinPhoneNumber: String
-) {
-
-}
 
 data class Item(val imageResId:Int,val text:String)
 val items= listOf(

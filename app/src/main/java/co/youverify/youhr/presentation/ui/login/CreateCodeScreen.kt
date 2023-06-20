@@ -32,7 +32,8 @@ fun CreateCodeScreen(
     onNextButtonClicked: () -> Unit,
     onCodeValueChanged: (String, Int) -> Unit,
     activeCodeInputFieldIndex: Int,
-    onBackSpaceKeyPressed: (Int) -> Unit
+    onBackSpaceKeyPressed: (Int) -> Unit,
+    //errorMessage: String
 ){
     Box(
         modifier = modifier.fillMaxSize()
@@ -66,7 +67,7 @@ fun CreateCodeScreen(
             )
 
             CodeInputBox(
-                modifier = Modifier.padding(bottom = 36.dp),
+                modifier = Modifier.padding(bottom = 16.dp),
                 codeValue1 =codeValue1,
                 codeValue2=codeValue2,
                 codeValue3=codeValue3,
@@ -74,7 +75,7 @@ fun CreateCodeScreen(
                 codeValue5 = codeValue5,
                 codeValue6 = codeValue6,
                 errorMessage = uiState.authenticationError,
-                isError = isErrorCode,
+                isError = uiState.authenticationError.isNotEmpty(),
                 activeFieldIndex = activeCodeInputFieldIndex,
                 onValueChanged=onCodeValueChanged,
                 onBackSpaceKeyPressed = onBackSpaceKeyPressed
@@ -82,7 +83,8 @@ fun CreateCodeScreen(
 
             ActionButton(
                 text = stringResource(id = R.string.next),
-                onButtonClicked = onNextButtonClicked
+                onButtonClicked = onNextButtonClicked,
+                modifier = Modifier.padding(top=16.dp)
             )
 
         }
@@ -105,8 +107,9 @@ fun CodeScreenPreview(){
             codeValue4 = "4",
             codeValue5 = "5",
             codeValue6 = "6",
-            uiState = UiState(),
-            isErrorCode = false,
+            uiState = UiState(authenticationError = "The code entered is wrong or invalid"),
+            isErrorCode = true,
+            //errorMessage="The code entered is wrong or invalid",
             onNextButtonClicked = {},
             onCodeValueChanged ={_,_ ->},
             activeCodeInputFieldIndex = 1,
@@ -125,8 +128,8 @@ fun CodeInputBoxPreview(){
         codeValue4 = "4",
         codeValue5 = "5",
         codeValue6 = "6",
-        errorMessage = "",
-        isError = false,
+        errorMessage = "The code entered is wrong or invalid",
+        isError = true,
         activeFieldIndex = 1,
         onValueChanged ={_,_ ->},
         onBackSpaceKeyPressed = {}

@@ -8,12 +8,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import co.youverify.youhr.core.util.navigateSingleTop
 import co.youverify.youhr.core.util.navigateSingleTopPopTo
 import co.youverify.youhr.core.util.navigateSingleTopPopToInclusive
-import co.youverify.youhr.domain.repository.PreferencesRepository
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
+import co.youverify.youhr.presentation.ui.leave.LeaveDetailScreen
+import co.youverify.youhr.presentation.ui.leave.LeaveManagementViewModel
 import co.youverify.youhr.presentation.ui.login.ConfirmCodeViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithCodeViewModel
 import co.youverify.youhr.presentation.ui.login.InputEmailViewModel
@@ -23,6 +26,7 @@ import co.youverify.youhr.presentation.ui.onboarding.SplashScreen
 import co.youverify.youhr.presentation.ui.login.CreateCodeViewModel
 import co.youverify.youhr.presentation.ui.onboarding.PreferencesViewModel
 import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
+import co.youverify.youhr.presentation.ui.settings.profile.ProfileViewModel
 import co.youverify.youhr.presentation.ui.task.TaskDetailViewModel
 import co.youverify.youhr.presentation.ui.task.TaskViewModel
 import com.google.accompanist.navigation.animation.AnimatedNavHost
@@ -36,7 +40,6 @@ fun YouHrNavHost(
     modifier: Modifier,
     navController: NavHostController,
     navigator: Navigator,
-    preferencesRepository: PreferencesRepository,
 ){
 
 
@@ -52,6 +55,8 @@ fun YouHrNavHost(
     val taskDetailViewModel:TaskDetailViewModel= hiltViewModel()
     val confirmCodeViewModel:ConfirmCodeViewModel= hiltViewModel()
     val settingsViewModel:SettingsViewModel = hiltViewModel()
+    val leaveManagementViewModel:LeaveManagementViewModel = hiltViewModel()
+    val profileViewModel:ProfileViewModel= hiltViewModel()
 
     val density= LocalDensity.current
     val pagerState = rememberPagerState()
@@ -105,10 +110,15 @@ fun YouHrNavHost(
             pagerState= pagerState,
             drawerState = drawerState,
             taskDetailViewModel = taskDetailViewModel,
-            settingsViewModel=settingsViewModel
+            settingsViewModel=settingsViewModel,
+            leaveManagementViewModel=leaveManagementViewModel,
+            profileViewModel = profileViewModel
         )
 
-
+        leaveManagementGraph(
+            leaveManagementViewModel = leaveManagementViewModel,
+            homeViewModel=homeViewModel
+        )
 
     }
 }

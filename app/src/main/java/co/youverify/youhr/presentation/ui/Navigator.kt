@@ -2,6 +2,7 @@ package co.youverify.youhr.presentation.ui
 
 
 import co.youverify.youhr.presentation.Home
+import co.youverify.youhr.presentation.LeaveDetail
 import co.youverify.youhr.presentation.Splash
 import co.youverify.youhr.presentation.TaskDetail
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,8 +38,6 @@ class Navigator{
     fun navigate(toRoute: String){
 
         popBackStackType=PopBackStackType.NONE
-
-
         _destinationRoute.value=toRoute
 
     }
@@ -65,7 +64,7 @@ class Navigator{
     }
     fun updateRouteIfOutdated(updatedRoute: String) {
         if (_destinationRoute.value!=updatedRoute){
-            if(updatedRoute==TaskDetail.routWithArgs)
+            if(updatedRoute==TaskDetail.routWithArgs||updatedRoute==LeaveDetail.routWithArgs)
                 return
             _destinationRoute.value=updatedRoute
         }

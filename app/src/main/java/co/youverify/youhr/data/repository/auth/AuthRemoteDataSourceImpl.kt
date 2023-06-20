@@ -6,7 +6,7 @@ import co.youverify.youhr.data.model.*
 import co.youverify.youhr.data.remote.YouHrService
 import javax.inject.Inject
 
-class AuthRemoteDataSourceImpl @Inject constructor(  val youHrService: YouHrService):AuthRemoteDataSource {
+class AuthRemoteDataSourceImpl @Inject constructor(private val youHrService: YouHrService): AuthRemoteDataSource {
 
 
     override suspend fun loginWithPassword(loginWithPassWordRequest: LoginWithPassWordRequest): Result<AuthResponse> =

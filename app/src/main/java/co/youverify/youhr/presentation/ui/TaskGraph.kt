@@ -22,7 +22,6 @@ fun NavGraphBuilder.TaskGraph(taskViewModel: TaskViewModel,taskDetailViewModel: 
         composable(route= TaskList.route){
 
             val uiState=taskViewModel.uiStateFlow.collectAsState()
-            val isRefreshing by taskViewModel.isRefreshing.collectAsState()
            TaskListScreen(
                uiState =uiState,
                listState = rememberLazyListState(),
@@ -37,20 +36,21 @@ fun NavGraphBuilder.TaskGraph(taskViewModel: TaskViewModel,taskDetailViewModel: 
                    taskViewModel.showTaskDetail(it)
                },
                categorySpinnerText = taskViewModel.categorySpinnerText,
-               isEmptyState = taskViewModel.isEmptyState,
                dateRange = taskViewModel.dateRange,
                onDateInputFieldClicked = { index->
                    taskViewModel.onDateInputFieldClicked(index)
                },
                onTaskProgressDropDownItemClicked = { itemIndex ->
-                   taskViewModel.onTaskProgressDropDownItemClicked(itemIndex)
+                   taskViewModel.filterTasksByStatus(itemIndex)
                },
                currentEditableDateInputField = taskViewModel.currentEditableDateInputField,
                onDatePickerCancelClicked = {taskViewModel.onDatePickerCancelClicked()},
                fetchMore = {taskViewModel.fetchMore()},
                isFetchingMore = taskViewModel.isFetchingMore,
-               isRefreshing = isRefreshing
-           ) { taskViewModel.refresh() }
+               onRefresh = { taskViewModel.refresh() },
+               getTaskOnFirstLoad = {taskViewModel.getTaskFirstLoad()},
+               onDateFilterBottomSheetConfirmClicked = {taskViewModel.filterTasksByDate()}
+           )
         }
 
         composable(

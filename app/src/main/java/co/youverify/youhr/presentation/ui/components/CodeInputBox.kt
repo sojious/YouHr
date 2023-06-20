@@ -17,20 +17,13 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.BaselineShift
@@ -38,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.youverify.youhr.presentation.ui.theme.YouHrTheme
 import co.youverify.youhr.presentation.ui.theme.backGroundColor
 import co.youverify.youhr.presentation.ui.theme.codeInputUnfocused
 import co.youverify.youhr.presentation.ui.theme.yvColor
@@ -82,7 +74,7 @@ fun CodeInputBox(
         if (isError)
             Text(
             text = errorMessage,
-            color = co.youverify.youhr.presentation.ui.theme.errorMessage,
+            color = co.youverify.youhr.presentation.ui.theme.errorMessageColor,
             modifier = Modifier.padding(top=8.dp),
             fontSize = 12.sp
         )

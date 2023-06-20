@@ -7,31 +7,30 @@ import co.youverify.youhr.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
-class AuthRepositoryImpl  @Inject constructor(val authRemoteDataSource: AuthRemoteDataSource):AuthRepository {
+class AuthRepositoryImpl  @Inject constructor(private val authRemoteDataSource: AuthRemoteDataSource):AuthRepository {
 
     override suspend fun loginWithPassword(loginWithPassWordRequest: LoginWithPassWordRequest): Flow<Result<AuthResponse>> =
          flow {
-
-             val networkResult= authRemoteDataSource.loginWithPassword(loginWithPassWordRequest)
+             val networkResult = authRemoteDataSource.loginWithPassword(loginWithPassWordRequest)
              emit(networkResult)
          }
 
     override suspend fun loginWithCode(loginWithCodeRequest: LoginWithCodeRequest): Flow<Result<AuthResponse>> =
         flow {
-        val networkResult= authRemoteDataSource.loginWithCode(loginWithCodeRequest)
+        val networkResult = authRemoteDataSource.loginWithCode(loginWithCodeRequest)
         emit(networkResult)
     }
 
     override suspend fun resetPassword(resetPasswordRequest: ResetPasswordRequest): Flow<Result<GenericResponse>> =
         flow {
-        val networkResult= authRemoteDataSource.resetPassword(resetPasswordRequest)
+        val networkResult = authRemoteDataSource.resetPassword(resetPasswordRequest)
         emit(networkResult)
     }
 
     override suspend fun createCode(createCodeRequest: CreateCodeRequest): Flow<Result<GenericResponse>> =
         flow {
 
-        val networkResult= authRemoteDataSource.createCode(createCodeRequest)
+        val networkResult = authRemoteDataSource.createCode(createCodeRequest)
         emit(networkResult)
     }
 

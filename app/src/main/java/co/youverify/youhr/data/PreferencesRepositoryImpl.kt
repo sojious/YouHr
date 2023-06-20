@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-class PreferencesRepositoryImpl @Inject constructor(val preferencesDataStore: DataStore<Preferences>) :PreferencesRepository{
+class PreferencesRepositoryImpl @Inject constructor(private val preferencesDataStore: DataStore<Preferences>) :PreferencesRepository{
 
     override suspend fun getUserEmail(): Flow<String> {
         return  preferencesDataStore.data
@@ -24,7 +24,7 @@ class PreferencesRepositoryImpl @Inject constructor(val preferencesDataStore: Da
 
     override suspend fun saveUserEmail(userEmail:String) {
         preferencesDataStore.edit { mutablePreferences->
-            mutablePreferences[PreferenceKeys.USER_EMAIL]=userEmail
+            mutablePreferences[PreferenceKeys.USER_EMAIL] = userEmail
         }
     }
 
@@ -40,13 +40,13 @@ class PreferencesRepositoryImpl @Inject constructor(val preferencesDataStore: Da
 
     override suspend fun saveUserToken(userToken: String) {
         preferencesDataStore.edit { mutablePreferences->
-            mutablePreferences[PreferenceKeys.USER_TOKEN]=userToken
+            mutablePreferences[PreferenceKeys.USER_TOKEN] = userToken
         }
     }
 
     override suspend fun setFirstRun(isFirstRun: Boolean) {
         preferencesDataStore.edit {mutablePreferences ->
-            mutablePreferences[PreferenceKeys.FIRST_RUN]=isFirstRun
+            mutablePreferences[PreferenceKeys.FIRST_RUN] = isFirstRun
         }
     }
 
@@ -56,7 +56,7 @@ class PreferencesRepositoryImpl @Inject constructor(val preferencesDataStore: Da
                 //if (exception is IOException) emptyPreferences() else throw exception
                 throw exception
             }.map {preferences->
-                preferences[PreferenceKeys.FIRST_RUN]?:true
+                preferences[PreferenceKeys.FIRST_RUN]?: true
             }
     }
 
@@ -70,9 +70,9 @@ class PreferencesRepositoryImpl @Inject constructor(val preferencesDataStore: Da
             }
     }
 
-    override suspend fun setUserPasscodeCreationStatus(passodeCreated: Boolean) {
+    override suspend fun setUserPasscodeCreationStatus(passcodeCreated: Boolean) {
         preferencesDataStore.edit {mutablePreferences ->
-            mutablePreferences[PreferenceKeys.CREATED_CODE]=passodeCreated
+            mutablePreferences[PreferenceKeys.CREATED_CODE] = passcodeCreated
         }
     }
 }

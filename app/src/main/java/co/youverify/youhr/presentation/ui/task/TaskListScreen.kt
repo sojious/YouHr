@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,10 +27,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
+import co.youverify.youhr.core.util.getColor
 import co.youverify.youhr.core.util.getDateRange
+import co.youverify.youhr.core.util.getStatus
 import co.youverify.youhr.core.util.toCardinalDateFormat2
 import co.youverify.youhr.core.util.toFormattedDateString
 import co.youverify.youhr.domain.model.AttachedDoc
@@ -39,6 +41,7 @@ import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.ConnectionErrorScreen
 import co.youverify.youhr.presentation.ui.components.shimmerEffect
+import co.youverify.youhr.presentation.ui.task.TaskStatus
 import co.youverify.youhr.presentation.ui.task.TaskViewModel
 import co.youverify.youhr.presentation.ui.theme.*
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +61,6 @@ fun TaskListScreen(
     categoryDropDownOnDismissCallBack: () -> Unit,
     onTaskItemClicked: (Int) -> Unit,
     categorySpinnerText: String,
-    isEmptyState: Boolean,
     dateRange: DateRange,
     onDateInputFieldClicked: (Int) -> Unit,
     onTaskProgressDropDownItemClicked: (Int) -> Unit,
@@ -66,8 +68,9 @@ fun TaskListScreen(
     onDatePickerCancelClicked: () -> Unit,
     fetchMore: () -> Unit,
     isFetchingMore: Boolean,
-    isRefreshing: Boolean,
-    onRefresh:()->Unit
+    onRefresh:()->Unit,
+    getTaskOnFirstLoad:()->Unit,
+    onDateFilterBottomSheetConfirmClicked:()->Unit
 
 
 ){
@@ -81,7 +84,13 @@ fun TaskListScreen(
     val myDatePickerState= rememberDatePickerState()
     val  bottomSheetState= rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val coroutineScope= rememberCoroutineScope()
-    val pullRefreshState= rememberPullRefreshState(refreshing = isRefreshing, onRefresh = { onRefresh() })
+    //val pullRefreshState= rememberPullRefreshState(refreshing = isRefreshing, onRefresh = { onRefresh() })
+
+
+    LaunchedEffect(key1 = Unit){
+        getTaskOnFirstLoad()
+    }
+
     Box(modifier = modifier) {
         Column(
             modifier=Modifier.fillMaxSize(),
@@ -93,26 +102,33 @@ fun TaskListScreen(
                     onCategoryFilterClicked =onCategoryFilterClicked,
                     categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
                     categorySpinnerText = categorySpinnerText,
-                    filteringDisabled =isEmptyState,
+                    filteringDisabled =uiState.value.tasks.isNullOrEmpty(),
                     dateRange =dateRange,
                     onTaskProgressDropDownItemClicked = onTaskProgressDropDownItemClicked,
                     bottomSheetState =bottomSheetState
                 )
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = Color(0X3DCECECE))
-                        .pullRefresh(state = pullRefreshState),
+                    modifier = Modifier.fillMaxSize(),
+
                     content = {
 
-                        if (uiState.value.loading){ ShimmerList()}
-                        if(uiState.value.connectionError){ ConnectionErrorScreen(
-                            description = "Ooops, your connection seems off",
-                            resolution = "Keep calm and pull the refresh indicator to try again"
-                        )}
-                        if (!uiState.value.loading && uiState.value.tasks==null){ return@Box}
-                        if (uiState.value.tasks?.isEmpty()==true) EmptyStateContent(modifier=Modifier.align(Alignment.Center))
-                        if(uiState.value.tasks!!.isNotEmpty() && !uiState.value.loading) {
+
+
+                        if (uiState.value.loading){
+                            ShimmerList()
+                        }
+                       else if(uiState.value.connectionError){
+                           ConnectionErrorScreen(
+                            description = "Ooops, your connection seems off...",
+                            //resolution = "Keep calm and swipe down to try again",
+                           onRetryButtonClicked = {onRefresh()}
+                           )
+                       }
+                            else if(uiState.value.tasks?.isEmpty()==true && !uiState.value.loading){
+                                EmptyStateContent(contentMessage = uiState.value.emptyTaskContentMessage)
+                            }
+                       //else if (!uiState.value.loading && uiState.value.tasks==null){ return}
+                       else if(uiState.value.tasks?.isNotEmpty()==true && !uiState.value.loading) {
                             TaskList(
                                 tasks = uiState.value.tasks!!,
                                 listState =listState,
@@ -121,12 +137,7 @@ fun TaskListScreen(
                                 isFetchingMore = isFetchingMore
                             )
                         }
-                        
-                        PullRefreshIndicator(
-                            refreshing = isRefreshing,
-                            state = pullRefreshState,
-                            modifier=Modifier.align(Alignment.TopEnd).padding(top = 16.dp,end=16.dp)
-                        )
+
 
                     }
                 )
@@ -158,7 +169,8 @@ fun TaskListScreen(
                         sheetState =bottomSheetState ,
                         dateRange =dateRange ,
                         onInputFieldClicked =onDateInputFieldClicked ,
-                        coroutineScope =coroutineScope
+                        coroutineScope =coroutineScope,
+                        onConfirmClicked=onDateFilterBottomSheetConfirmClicked
                     )
                           },
                 sheetState = bottomSheetState
@@ -170,36 +182,45 @@ fun TaskListScreen(
 
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun EmptyStateContent(modifier: Modifier=Modifier) {
+fun EmptyStateContent(
+    modifier: Modifier = Modifier,
+    contentMessage:String
+) {
 
-    Column(
-        modifier=modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Box(
+        modifier= modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ){
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-        Image(
-            painter = painterResource(id = R.drawable.task_list_empty_state),
-            contentDescription =null ,
-            modifier=Modifier.padding(bottom=24.dp)
-        )
-        
-        Text(
-            text = "No Tasks",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color= bodyTextDeepColor,
-            modifier=Modifier.padding(bottom =8.dp ),
-        )
+            Image(
+                painter = painterResource(id = R.drawable.task_list_empty_state),
+                contentDescription =null ,
+                modifier=Modifier.padding(bottom=24.dp)
+            )
 
-        Text(
-            text = "You haven’t been assigned any tasks yet",
-            fontSize = 12.sp,
-            color= bodyTextLightColor,
-            modifier=Modifier.padding(bottom =8.dp ),
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = "No Tasks",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color= bodyTextDeepColor,
+                modifier=Modifier.padding(bottom =8.dp ),
+            )
+
+            Text(
+                text = contentMessage,
+                fontSize = 12.sp,
+                color= bodyTextLightColor,
+                modifier=Modifier.padding(bottom =8.dp ),
+                textAlign = TextAlign.Center
+            )
+        }
+
     }
+
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -209,7 +230,8 @@ fun DateRangeInputBottomSheetContent(
     sheetState: SheetState,
     dateRange: DateRange,
     onInputFieldClicked: (Int) -> Unit,
-    coroutineScope:CoroutineScope
+    coroutineScope: CoroutineScope,
+    onConfirmClicked: () -> Unit
 ) {
 
 
@@ -281,7 +303,7 @@ fun DateRangeInputBottomSheetContent(
                 modifier = Modifier
                     .padding(top = 28.dp, start = 20.dp, end = 20.dp, bottom = 30.dp)
                     .fillMaxWidth(),
-                onButtonClicked = {}
+                onButtonClicked = {onConfirmClicked()}
             )
 
         }
@@ -317,7 +339,7 @@ fun DateInputField(
                         onClick(index)
                     }
 
-                },
+                }.fillMaxWidth(),
             trailingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_calendar_2),
@@ -414,21 +436,14 @@ fun TaskList(
 
         itemsIndexed(items = tasks){index,task->
 
-            val isCompletedTask=task.status!="To-do"
 
-            if(isCompletedTask){
-                CompletedTaskItem(
+            TaskItem(
                         modifier =Modifier.padding(horizontal = 20.dp),
                         task = task,
                         index =index,
-                        onTaskItemClicked =onTaskItemClicked)
-                } else {
-                    PendingTaskItem(
-                    modifier =Modifier.padding(horizontal = 20.dp),
-                    task = task,
-                    index =index,
-                    onTaskItemClicked =onTaskItemClicked)
-                }
+                        onTaskItemClicked =onTaskItemClicked
+                    )
+
         }
 
         if(isFetchingMore){ item{ CircularProgressIndicator(strokeWidth = 1.dp)} }
@@ -498,19 +513,72 @@ fun CategoryFilter(
             onDismissRequest = { categoryDropDownOnDismissCallBack()},
             modifier =Modifier.background(color= Color.White, shape = RoundedCornerShape(4.dp))
         ) {
-            DropdownMenuItem(text = { Text(text = "Pending", fontSize = 12.sp, color = yvText)}, onClick = {
-                onDropDownMenuItemClicked(1)
-            })
-            DropdownMenuItem(text = { Text(text = "Failed", fontSize = 12.sp, color = yvText)}, onClick = {
-                onDropDownMenuItemClicked(2)
-            })
+            DropdownMenuItem(
+                text = { Text(text = "Completed", fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(1) },
+                leadingIcon = {
+                    Box(
+                        modifier=Modifier.size(6.dp).background(
+                            color = TaskProgressColor.COMPLETED.value,
+                            shape = CircleShape
+                        )
+                    )
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(text = "In-Progress", fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(2) },
+                leadingIcon = {
+                    Box(
+                        modifier=Modifier.size(6.dp)
+                            .background(
+                                color = TaskProgressColor.IN_PROGRESS.value,
+                                shape = CircleShape
+                            )
+                    )
+                }
+            )
 
-            DropdownMenuItem(text = { Text(text = "Executed", fontSize = 12.sp, color = yvText)}, onClick = {
-                onDropDownMenuItemClicked(3)
-            })
-            DropdownMenuItem(text = { Text(text = "In Progress", fontSize = 12.sp, color = yvText)}, onClick = {
-                onDropDownMenuItemClicked(4)
-            })
+            DropdownMenuItem(
+                text = { Text(text = "Over-due", fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(3) },
+                leadingIcon = {
+                    Box(
+                        modifier=Modifier.size(6.dp)
+                            .background(
+                                color = TaskProgressColor.OVERDUE.value,
+                                shape = CircleShape
+                            )
+                    )
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(text = "To-do", fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(4) },
+                leadingIcon = {
+                    Box(
+                        modifier=Modifier.size(6.dp)
+                            .background(
+                                color = TaskProgressColor.TO_DO.value,
+                                shape = CircleShape
+                            )
+                    )
+                }
+            )
+
+            DropdownMenuItem(
+                text = { Text(text = "Review", fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(5) },
+                leadingIcon = {
+                    Box(
+                        modifier=Modifier.size(6.dp)
+                            .background(
+                                color = TaskProgressColor.REVIEW.value,
+                                shape = CircleShape
+                            )
+                    )
+                }
+            )
         }
     }
 }
@@ -575,7 +643,7 @@ fun DateFilter(
 }
 
 @Composable
-fun PendingTaskItem(
+fun TaskItem(
     modifier: Modifier = Modifier,
     task: Task,
     index: Int,
@@ -583,8 +651,9 @@ fun PendingTaskItem(
 ){
 
 
+    val taskStatus=task.getStatus()
 
-
+    val taskColor=taskStatus.getColor()
 
     Row(
         modifier = modifier
@@ -600,7 +669,7 @@ fun PendingTaskItem(
                 .fillMaxHeight()
                 .width(4.dp)
                 .background(
-                    color = taskItemSpacerColors[index % taskItemSpacerColors.size],
+                    color = taskColor,
                     shape = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp)
                 )
 
@@ -620,7 +689,7 @@ fun PendingTaskItem(
 
             content = {
 
-                val (clockIcon,dueDateText,descriptionText,checkBox) = createRefs()
+                val (clockIcon,dueDateText,descriptionText,progressIndicatorBox) = createRefs()
 
 
 
@@ -636,11 +705,11 @@ fun PendingTaskItem(
                     text = "Due ${task.dueDate.toCardinalDateFormat2()}",
                     modifier = Modifier.constrainAs(dueDateText){
                         start.linkTo(clockIcon.end,9.33.dp)
-                        top.linkTo(parent.top,8.dp)
+                        top.linkTo(clockIcon.top)
                     },
                     fontSize = 10.sp,
                     lineHeight = 16.sp,
-                    color = bodyTextLightColor
+                    color = bodyTextDeepColor
                 )
 
 
@@ -650,7 +719,7 @@ fun PendingTaskItem(
                         start.linkTo(clockIcon.start)
                         top.linkTo(dueDateText.bottom,8.dp)
                         bottom.linkTo(parent.bottom,8.dp)
-                        end.linkTo(checkBox.start,60.dp)
+                        end.linkTo(progressIndicatorBox.start,60.dp)
                         width= Dimension.fillToConstraints
                     },
                     fontSize = 14.sp,
@@ -659,198 +728,29 @@ fun PendingTaskItem(
                     color = Color(0XFF344054)
                 )
 
-                Checkbox(
-                    checked = false,
-                    onCheckedChange ={} ,
+                Box(
+
                     modifier = Modifier
-                        .size(18.dp)
-                        .constrainAs(checkBox) {
+                        .background(
+                            color = taskColor.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        //.size(18.dp)
+                        .constrainAs(progressIndicatorBox) {
                             end.linkTo(parent.end, 15.dp)
-                            centerVerticallyTo(parent)
+                            top.linkTo(parent.top, 14.dp)
                         },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = yvColor,
-                        uncheckedColor = bodyTextLightColor,
-                        checkmarkColor = Color.White
-                    )
-                )
-            }
 
-        )
-    }
-
-}
-
-
-@Composable
-fun ShimmerTaskItem(
-    modifier: Modifier = Modifier,
-){
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(72.dp)
-            .padding(horizontal = 20.dp)
-            .shimmerEffect()
-            .background(Color.White)
-
-
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(4.dp)
-                .clip(shape = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp))
-
-        )
-
-        ConstraintLayout(
-
-            modifier = Modifier
-                .fillMaxSize()
-                .border(
-                    width = 1.dp,
-                    color = Color.White,
-                    shape = RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
-                )
-                .padding(start = 8.dp),
-
-            content = {
-
-                val (clockIcon,dueDateText,descriptionText,checkBox) = createRefs()
-
-
-
-                Box(
-                    modifier = Modifier
-                        .constrainAs(clockIcon) {
-                            start.linkTo(parent.start)
-                            top.linkTo(parent.top, 9.33.dp)
-                        }
-                        .size(14.dp)
-                        .background(color = taskItemBorderColor, shape = CircleShape)
-
-                )
-
-                Box(
-                    modifier = Modifier
-                        .constrainAs(dueDateText) {
-                            start.linkTo(clockIcon.end, 9.33.dp)
-                            top.linkTo(parent.top, 8.dp)
-                        }
-                        .height(16.dp)
-                        .background(color = taskItemBorderColor),
-
-                )
-
-
-                Box(
-                    modifier = Modifier
-                        .constrainAs(descriptionText) {
-                            start.linkTo(clockIcon.start)
-                            top.linkTo(dueDateText.bottom, 8.dp)
-                            bottom.linkTo(parent.bottom, 8.dp)
-                            end.linkTo(checkBox.start, 60.dp)
-                            width = Dimension.fillToConstraints
-                        }
-                        .height(16.dp)
-                        .background(color = taskItemBorderColor)
-                )
-
-                Box(
-
-                    modifier = Modifier
-                        .size(18.dp)
-                        .constrainAs(checkBox) {
-                            end.linkTo(parent.end, 15.dp)
-                            centerVerticallyTo(parent)
-                        }
-                        .background(color = taskItemBorderColor, shape = RoundedCornerShape(2.dp)),
-                )
-            }
-
-        )
-    }
-
-}
-
-
-@Composable
-fun CompletedTaskItem(
-    modifier: Modifier = Modifier,
-    task: Task,
-    index: Int,
-    onTaskItemClicked: (Int) -> Unit
-){
-
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(72.dp)
-            .clickable {
-                onTaskItemClicked(index)
-            }
-
-    ) {
-
-
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(4.dp)
-                .background(
-                    color = taskItemSpacerColors[index % taskItemSpacerColors.size],
-                    shape = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp)
-                )
-
-        )
-
-
-        ConstraintLayout(
-            modifier = Modifier
-                .fillMaxSize()
-                .border(
-                    width = 1.dp,
-                    color = taskItemBorderColor,
-                    shape = RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
-                )
-                .background(color = Color(0XFFF7F7F9))
-                .padding(start = 8.dp),
-
-            content = {
-
-                val (descriptionText,checkBox) = createRefs()
-
-                Text(
-                    text = task.title,
-                    modifier = Modifier.constrainAs(descriptionText){
-                        start.linkTo(parent.start)
-                        centerVerticallyTo(parent)
-                        end.linkTo(checkBox.start,60.dp)
-                        width= Dimension.fillToConstraints
-
-                    },
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    lineHeight = 16.sp,
-                    color = Color(0XFF344054)
-                )
-
-                Checkbox(
-                    checked = true,
-                    onCheckedChange ={} ,
-                    modifier = Modifier
-                        .size(18.dp)
-                        .constrainAs(checkBox) {
-                            end.linkTo(parent.end, 15.dp)
-                            centerVerticallyTo(parent)
-                        },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = yvColor,
-                        uncheckedColor = bodyTextLightColor,
-                        checkmarkColor = Color.White
-                    )
+                    content = {
+                        Text(
+                            text = taskStatus.id,
+                            fontSize = 10.sp,
+                            lineHeight = 13.sp,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                            color=taskColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 )
             }
 
@@ -872,18 +772,11 @@ fun BottomSheetDatePicker(
 ){
 
         Column(
-            modifier = modifier
-                //.fillMaxWidth()
-                //.height(408.dp)
-                //.width(316.dp)
-                //.padding(start = 24.dp)
-                .background(color = Color.White, shape = RoundedCornerShape(12.dp)),
+            modifier = modifier.background(color = Color.White, shape = RoundedCornerShape(12.dp)),
             content = {
                 DatePicker(
                     state =state,
-
                     title = {},
-                    // headline = {},
                     showModeToggle = false,
                     colors = DatePickerDefaults.colors(
                         containerColor = Color.White,
@@ -893,7 +786,6 @@ fun BottomSheetDatePicker(
                         disabledDayContentColor = Color(0xFF181E30),
                     ),
                     modifier = Modifier
-                        //.width(316.dp)
                         .height(460.dp)
                 )
 
@@ -909,14 +801,8 @@ fun BottomSheetDatePicker(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,color= primaryColor,
                             modifier=Modifier.clickable {
-
-                                //coroutineScope.launch { bottomSheetState.show() }
                                 onCancelButtonClicked()
                                 coroutineScope.launch { bottomSheetState.show() }
-                               // coroutineScope.launch {
-                                   // delay(100)
-                                   // bottomSheetState.show()
-                               // }
                             }
                         )
                         Text(
@@ -924,12 +810,8 @@ fun BottomSheetDatePicker(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,color= primaryColor,
                             modifier=Modifier.clickable {
-
-                                //coroutineScope.launch { bottomSheetState.show() }
                                 onOkButtonClicked(state,currentIndex)
                                 coroutineScope.launch { bottomSheetState.show() }
-
-
                             }
                         )
                     }
@@ -937,8 +819,6 @@ fun BottomSheetDatePicker(
 
             }
         )
-
-
 }
 
 @Composable
@@ -975,7 +855,6 @@ fun TaskListScreenPreview(){
                 categoryDropDownOnDismissCallBack = {},
                 onTaskItemClicked = {},
                 categorySpinnerText = "Pending",
-                isEmptyState = false,
                 dateRange = DateRange(),
                 onDateInputFieldClicked = { _->},
                 onTaskProgressDropDownItemClicked = {},
@@ -983,8 +862,10 @@ fun TaskListScreenPreview(){
                 onDatePickerCancelClicked = {},
                 fetchMore = {},
                 isFetchingMore = true,
-                isRefreshing = false
-            ) {}
+                getTaskOnFirstLoad = {},
+                onRefresh = {},
+                onDateFilterBottomSheetConfirmClicked = {}
+            )
         }
 
     }
@@ -995,7 +876,7 @@ fun TaskListScreenPreview(){
 fun PendingTaskItemPreview(){
     YouHrTheme {
         Surface {
-            PendingTaskItem(
+            TaskItem(
                 task = co.youverify.youhr.domain.model.Task(
                     id="1",
                     "Interview with candidates for product design role",
@@ -1017,31 +898,7 @@ fun PendingTaskItemPreview(){
 }
 
 
-@Composable
-@Preview
-fun CompletedTaskItemPreview(){
-    YouHrTheme {
-        Surface {
-            CompletedTaskItem(
-                task = co.youverify.youhr.domain.model.Task(
-                    id="1",
-                    "Interview with candidates for product design role",
-                    status = "no",
-                    assignedBy = "Edet",
-                    description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster",
-                    type = "Employee Onboarding",
-                    hasNextPage = false,
-                    page = 1,
-                    attachedDocs = listOf(AttachedDoc("company_policy.pdf",url="")),
-                    dueDate = "2023-06-23",
-                    timeStampCreated = "2023-04-28T06:40:50.808Z"
-                ),
-                index = 0
-            ) {}
-        }
 
-    }
-}
 
 
 
@@ -1100,18 +957,19 @@ fun DateInputFieldPreview(){
 }
 
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 @Preview
 fun EmptyStateContentPreview(){
     YouHrTheme {
         Surface {
-            EmptyStateContent()
+            EmptyStateContent(contentMessage = "You haven’t been assigned any tasks yet")
         }
 
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/*@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun DatePickerPreview(){
@@ -1138,9 +996,124 @@ fun DatePickerPreview(){
 
 
     }
+}*/
+
+
+@Composable
+@Preview
+fun TaskItemPreview(){
+    YouHrTheme {
+
+        Surface {
+            TaskItem(
+                task = Task(
+                    id = "1",
+                    "Interview with candidates for product design role",
+                    status = "To-do",
+                    assignedBy = "Edet",
+                    description = "Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster",
+                    type = "Employee Onboarding",
+                    hasNextPage = false,
+                    page = 1,
+                    attachedDocs = listOf(AttachedDoc("company_policy.pdf", url = "")),
+                    dueDate = "2023-06-23",
+                    timeStampCreated = "2023-04-28T06:40:50.808Z"
+                ), index = 1, onTaskItemClicked = {}
+            )
+        }
+    }
 }
 
+@Composable
+@Preview
+fun ShimmerTaskItem(){
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(61.dp)
+            .padding(horizontal = 20.dp)
+            .shimmerEffect()
 
+
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(4.dp)
+                .background(
+                    color = Color.White,
+                    shape = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp)
+                )
+
+        )
+
+        ConstraintLayout(
+
+            modifier = Modifier
+                .fillMaxSize()
+                //.border(
+                  //  width = 1.dp,
+                   // color = Color.White,
+                   // shape = RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
+               // )
+                //.background(color = Color(0XFFF7F7F9))
+                //.background(Color.White)
+                .shimmerEffect()
+                .clip(RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp))
+                .padding(start = 8.dp),
+
+            content = {
+
+                val (clockIcon,dueDateText,descriptionText,progressIndicatorBox) = createRefs()
+
+
+
+                Box(
+                    modifier = Modifier.constrainAs(clockIcon){
+                        start.linkTo(parent.start)
+                        top.linkTo(parent.top,9.33.dp)
+                    }.size(13.dp)
+                        .background(color = taskItemBorderColor, shape = CircleShape)
+                )
+
+                Box(
+                    modifier = Modifier.constrainAs(dueDateText){
+                        start.linkTo(clockIcon.end,9.33.dp)
+                        top.linkTo(clockIcon.top)
+                    }.size(112.dp,12.dp)
+                        .background(color = taskItemBorderColor),
+
+                )
+
+
+                Box(
+                    modifier = Modifier.constrainAs(descriptionText){
+                        start.linkTo(clockIcon.start)
+                        top.linkTo(dueDateText.bottom,8.dp)
+                        bottom.linkTo(parent.bottom,8.dp)
+                        end.linkTo(progressIndicatorBox.start,60.dp)
+                        //width= Dimension.fillToConstraints
+                    }.size(200.dp,14.dp)
+                        .background(color = taskItemBorderColor)
+                )
+
+                Box(
+
+                    modifier = Modifier
+
+                        .size(45.dp,13.dp)
+                        .background(color = taskItemBorderColor,shape = RoundedCornerShape(10.dp))
+                        .constrainAs(progressIndicatorBox) {
+                            end.linkTo(parent.end, 15.dp)
+                            top.linkTo(parent.top, 14.dp)
+                        },
+
+                )
+            }
+
+        )
+    }
+}
 @Composable
 @Preview
 fun ShimmerTaskItemPreview(){
@@ -1170,82 +1143,7 @@ data class Task(
 /*val pendingTasks= listOf(
     Task(Instant.now().toEpochMilli(), "Interview with candidates for product design role", isCompleted = false, assignee = "Edet",
         assigner = "Seth Samuel", creator = "Timothy John", assigneeEmail = "Edna@youverify.co", project = "Employee Onboarding", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster" ),
-    Task(Instant.now().toEpochMilli(), "Meeting with the head of each department", isCompleted = false, assignee = "Bolaji", assigner = "Kene Nsofor", creator = "Adewusi Teni",
-        assigneeEmail = "bolaji@youverify.co",
-        project = "Client Meeting",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Meeting with the head of each department", isCompleted = false, assignee = "Yusuf",
-        assigner = "Tracy Mark", creator = "Keneth Brown",
-        assigneeEmail = "yusuf@youverify.co",
-        project = "Product Exhibition",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Create new email address for new employees", isCompleted = false, assignee = "Paul",
-        assigner = "Donald Njaoguani", creator = "Richard Fish",
-        assigneeEmail = "paul@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Create new email address for new employees", isCompleted = false, assignee = "Nkechi",
-        assigner = "Chioma Terena", creator = "Edna Ibeh",
-        assigneeEmail = "nkechi@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Draft intern documents", isCompleted = false, assignee = "Abidemi",
-        assigner = "Joseph Samuel", creator = "Danladi Abubakar",
-        assigneeEmail = "abidemi@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Draft intern documents", isCompleted = false, assignee = "Zahra",
-        assigner = "Praise Chima", creator = "Eniola Temidire",
-        assigneeEmail = "zahra@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Prepare Appraisals", isCompleted = false, assignee = "Tina",
-        assigner = "Bassey Kiriku", creator = "John Micheal",
-        assigneeEmail = "tina@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster")
-)*/
-
-
-
-/*val completedTasks= listOf(
-    Task(Instant.now().toEpochMilli(), "Interview with candidates for product design role", isCompleted = true, assignee = "Edet",
-        assigner = "Seth Samuel", creator = "Timothy John", assigneeEmail = "Edna@youverify.co", project = "Employee Onboarding", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster" ),
-    Task(Instant.now().toEpochMilli(), "Meeting with the head of each department", isCompleted = true, assignee = "Bolaji", assigner = "Kene Nsofor", creator = "Adewusi Teni",
-        assigneeEmail = "bolaji@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Meeting with the head of each department", isCompleted = true, assignee = "Yusuf",
-        assigner = "Tracy Mark", creator = "Keneth Brown",
-        assigneeEmail = "yusuf@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Create new email address for new employees", isCompleted = true, assignee = "Paul",
-        assigner = "Donald Njaoguani", creator = "Richard Fish",
-        assigneeEmail = "paul@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Create new email address for new employees", isCompleted = true, assignee = "Nkechi",
-        assigner = "Chioma Terena", creator = "Edna Ibeh",
-        assigneeEmail = "nkechi@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Draft intern documents", isCompleted = true, assignee = "Abidemi",
-        assigner = "Joseph Samuel", creator = "Danladi Abubakar",
-        assigneeEmail = "abidemi@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Draft intern documents", isCompleted = true, assignee = "Zahra",
-        assigner = "Praise Chima", creator = "Eniola Temidire",
-        assigneeEmail = "zahra@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster"),
-    Task(Instant.now().toEpochMilli(), "Prepare Appraisals", isCompleted = true, assignee = "Tina",
-        assigner = "Bassey Kiriku", creator = "John Micheal",
-        assigneeEmail = "tina@youverify.co",
-        project = "Employee Onboarding",
-        description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster")
-)*/
+    )*/
 
 val pendingTasks= listOf(co.youverify.youhr.domain.model.Task(
     id="1",
@@ -1261,7 +1159,7 @@ val pendingTasks= listOf(co.youverify.youhr.domain.model.Task(
     timeStampCreated = "2023-04-28T06:40:50.808Z"
 ))
 
-val completedTasks= listOf(co.youverify.youhr.domain.model.Task(
+val completedTasks= listOf(Task(
     id="1",
     "Interview with candidates for product design role",
     status = "noo",
@@ -1282,6 +1180,15 @@ val taskItemSpacerColors= listOf(
     Color(0XFFD619DA),
     Color(0XFF93FD52),
 )
+
+enum class TaskProgressColor(val value:Color){
+    IN_PROGRESS(Color(0XFFDAA419)),
+    COMPLETED(Color(0XFF4C7A40)),
+    OVERDUE(Color(0XFFFF5454)),
+    TO_DO(Color(0XFFFF993C)),
+    REVIEW(Color.Black)
+}
+
 
 data class DateRange( val startDateMillis: Long?=null,  val endDateMillis: Long?=null)
 @Composable

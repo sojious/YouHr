@@ -18,7 +18,7 @@ class TaskDetailViewModel @Inject constructor(private val stateHandle: SavedStat
     var taskMessage by mutableStateOf("")
 
     fun updateTaskMessage(newValue:String){
-        taskMessage=newValue
+        taskMessage = newValue
     }
 
 

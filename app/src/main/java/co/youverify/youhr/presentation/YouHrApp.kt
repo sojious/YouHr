@@ -15,6 +15,8 @@ import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
 import co.youverify.youhr.presentation.ui.YouHrNavHost
 import co.youverify.youhr.presentation.ui.components.YouHrBottomNav
+import co.youverify.youhr.presentation.ui.leave.LeaveManagementViewModel
+import co.youverify.youhr.presentation.ui.login.ConfirmCodeViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithCodeViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithPassWordViewModel
 import co.youverify.youhr.presentation.ui.login.ResetPassWordViewModel
@@ -34,14 +36,17 @@ fun YouHrApp(
     val loginWithCodeViewModel:LoginWithCodeViewModel= hiltViewModel()
     val createCodeViewModel: CreateCodeViewModel = hiltViewModel()
     val resetPassWordViewModel:ResetPassWordViewModel= hiltViewModel()
+    val confirmCodeViewModel:ConfirmCodeViewModel= hiltViewModel()
     val taskViewModel:TaskViewModel= hiltViewModel()
+    val leaveManagementViewModel:LeaveManagementViewModel= hiltViewModel()
     val snackBarHostState= remember{ SnackbarHostState() }
     val context= LocalContext.current
 
 
     createLaunchEffects(
         loginWithPassWordViewModel,loginWithCodeViewModel,
-        createCodeViewModel,resetPassWordViewModel,taskViewModel,snackBarHostState,context
+        createCodeViewModel,confirmCodeViewModel,resetPassWordViewModel,
+        taskViewModel,leaveManagementViewModel,snackBarHostState,context
     )
 
 
@@ -53,7 +58,6 @@ fun YouHrApp(
                 modifier = Modifier.padding(offsetPadding),
                 navController =navController,
                 navigator=navigator,
-                preferencesRepository = prefRepo
             )
         },
 
@@ -70,8 +74,10 @@ fun createLaunchEffects(
     loginWithPassWordViewModel: LoginWithPassWordViewModel,
     loginWithCodeViewModel: LoginWithCodeViewModel,
     createCodeViewModel: CreateCodeViewModel,
+    confirmCodeViewModel: ConfirmCodeViewModel,
     resetPassWordViewModel: ResetPassWordViewModel,
     taskViewModel: TaskViewModel,
+    leaveManagementViewModel: LeaveManagementViewModel,
     snackBarHostState: SnackbarHostState,
     context: Context
 ) {
@@ -99,6 +105,13 @@ fun createLaunchEffects(
 
     LaunchedEffect(key1 = true){
 
+        confirmCodeViewModel.uiEventFlow.collect { event->
+            handleEvent(event,snackBarHostState,context)
+        }
+    }
+
+    LaunchedEffect(key1 = true){
+
         resetPassWordViewModel.uiEventFlow.collect {event->
             handleEvent(event,snackBarHostState,context)
         }
@@ -107,6 +120,13 @@ fun createLaunchEffects(
     LaunchedEffect(key1 = true){
 
         taskViewModel.uiEventFlow.collect {event->
+            handleEvent(event,snackBarHostState,context)
+        }
+    }
+
+    LaunchedEffect(key1 = true){
+
+        leaveManagementViewModel.uIEventFlow.collect {event->
             handleEvent(event,snackBarHostState,context)
         }
     }

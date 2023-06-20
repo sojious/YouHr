@@ -18,10 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import co.youverify.youhr.R
-import co.youverify.youhr.core.util.capitalizeWords
+import co.youverify.youhr.core.util.getColor
 import co.youverify.youhr.core.util.getStatus
 import co.youverify.youhr.core.util.toCardinalDateFormat
-import co.youverify.youhr.core.util.toCardinalDateString
 import co.youverify.youhr.core.util.toTimeAgo
 import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.presentation.ui.components.MultiColoredText
@@ -47,7 +46,7 @@ fun TaskDetailScreen(
         .fillMaxSize()
         .verticalScroll(scrollState)) {
         YouHrTitleBar(
-            modifier = Modifier.padding(top=36.dp, start = 21.dp,end=20.dp),
+            modifier = Modifier.padding(top=45.dp),
             title = currentTask.title,
             onBackArrowClicked = onBackArrowClicked,
         )
@@ -72,6 +71,9 @@ fun TaskDetailScreen(
 fun TaskProgress(task: Task, modifier: Modifier) {
 
     Column(modifier=modifier){
+
+        val taskStatus=task.getStatus()
+        val taskColor=taskStatus.getColor()
         Text(
             text = "Task progress",
             fontSize = 12.sp,
@@ -81,24 +83,28 @@ fun TaskProgress(task: Task, modifier: Modifier) {
         )
         
         Row(
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            //horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .height(21.dp)
-                .background(color = Color(0XFFFEF7EA), shape = RoundedCornerShape(10.dp))
+                .background(color  = taskColor.copy(alpha = 0.1f), shape = RoundedCornerShape(10.dp))
         ) {
+
+
             Box(
                 modifier = Modifier
+
                     .size(6.dp)
-                    .background(color = Color(0XFFF7B32B), shape = CircleShape)
-                    .padding(start = 15.dp)
+                    .padding(start = 6.dp)
+                    .background(taskColor, CircleShape)
             )
+
             Text(
                 text = task.getStatus().id,
-                fontSize = 12.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Medium,
-                color  = Color(0XFFF7B32B),
-                modifier=Modifier.padding(end = 15.dp)
+                color  =taskColor,
+                modifier=Modifier.padding(start = 8.dp, end = 6.dp)
             )
         }
     }
@@ -520,10 +526,12 @@ enum class FileType{
     PDF,EXCELSHEET,IMAGE, UNIDENTIFIED
 }
 enum class TaskStatus(val id:String){
-    PENDING("Pending"),
-    COMPLETED("Complete"),
-    FAILED("Failed"),
-    EXECUTED("Executed")
+
+    IN_PROGRESS("In progress"),
+    COMPLETED("Completed"),
+    TO_DO("To-do"),
+    OVER_DUE("Overdue"),
+    REVIEW("Review")
 }
 
 

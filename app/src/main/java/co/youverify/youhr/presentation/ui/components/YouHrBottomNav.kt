@@ -33,7 +33,8 @@ fun YouHrBottomNav(
 
     val showBottomNav=currentDestination?.route==BottomNavGraph.route || currentDestination?.hierarchy?.any{it.route==BottomNavGraph.route}==true
 
-    if (showBottomNav){
+
+    if (showBottomNav && !homeViewModel.hideBottomNavBar.value){
 
 
 

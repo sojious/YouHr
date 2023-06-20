@@ -1,10 +1,15 @@
 package co.youverify.youhr.data.mapper
 
+
+//A Generic mapper definition for any type
 interface Mapper<I,O>{
     fun map(input:I):O
 }
 
+//A Generic List mapper definition for any type
 interface ListMapper<I,O>:Mapper<List<I>,List<O>>
+
+//A Generic List mapper definition for any type to handle null responses from the Backend
 interface NullableInputListMapper<I,O>:Mapper<List<I>?,List<O>>
 interface NullableOutPutListMapper<I,O>:Mapper<List<I>,List<O>?>
 

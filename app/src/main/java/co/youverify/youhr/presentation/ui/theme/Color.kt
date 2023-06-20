@@ -29,7 +29,7 @@ val yvText=Color(0xFF023A59)
 
 val textDim=Color(0xFF000000)
 val textLight=Color(0xFF666666)
-val errorMessage=Color(0xFFFF0202)
+val errorMessageColor=Color(0xFFFF0202)
 
 val indicatorInactive=Color(0xFFCCCCCC)
 

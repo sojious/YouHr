@@ -6,11 +6,11 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class TaskLocalDataSourceImpl @Inject constructor(private val youHrDatabase: YouHrDatabase):TaskLocalDataSource {
-    override fun getTasks(): Flow<List<DBTask>> {
+    override suspend fun getTasks(): List<DBTask> {
        return youHrDatabase.taskDao().getAll()
     }
 
-    override fun getTasksPaginated(pageNumber: Int): Flow<List<DBTask>> {
+    override suspend fun getTasksPaginated(pageNumber: Int): List<DBTask> {
         return youHrDatabase.taskDao().getPaginated(pageNumber)
     }
 

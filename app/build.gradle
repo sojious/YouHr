@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId "co.youverify.youhr"
-        minSdk 26
+        minSdk 24
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -97,6 +97,9 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-gson:$retrofitVersion"
     implementation "com.squareup.okhttp3:okhttp:$okHttp3Version"
     implementation "com.squareup.okhttp3:logging-interceptor:$okHttp3Version"
+
+    //Glide
+    implementation 'com.github.bumptech.glide:glide:4.15.1'
 
 
     //Jetpack Datastore

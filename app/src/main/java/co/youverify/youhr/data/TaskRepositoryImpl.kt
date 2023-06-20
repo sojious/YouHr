@@ -1,8 +1,10 @@
 package co.youverify.youhr.data
 
 import co.youverify.youhr.core.util.Result
+import co.youverify.youhr.data.local.DBTask
 import co.youverify.youhr.data.mapper.DbToDomainTaskListMapper
 import co.youverify.youhr.data.mapper.DtoToDbTaskListMapper
+import co.youverify.youhr.data.model.ApiTask
 import co.youverify.youhr.data.repository.task.TaskLocalDataSource
 import co.youverify.youhr.data.repository.task.TaskRemoteDataSource
 import co.youverify.youhr.domain.model.Task
@@ -15,46 +17,52 @@ class TaskRepositoryImpl @Inject constructor(
     private val taskRemoteDataSource: TaskRemoteDataSource,
     private val taskLocalDataSource: TaskLocalDataSource,
     private val dbToDomainTaskListMapper: DbToDomainTaskListMapper,
-    private val dtoToDbTaskListMapper: DtoToDbTaskListMapper
+    private val dtoToDbTaskListMapper: DtoToDbTaskListMapper<ApiTask,DBTask>
 ) :TaskRepository{
 
     override suspend fun getAssignedTaskFirstLoad():Flow<Result<List<Task>>> {
-        var tasks:List<Task> = emptyList()
-        val result:Result<List<Task>>
+        val tasks:List<Task>
 
-        taskLocalDataSource.getTasks().collect{dataBaseTasks->
-                tasks=dbToDomainTaskListMapper.map(dataBaseTasks)
-        }
+        val dataBaseTasks = taskLocalDataSource.getTasks()
+        tasks = dbToDomainTaskListMapper.map(dataBaseTasks)
 
-        result = if(tasks.isEmpty()){
+        //if the database contains no cached data, make a network call to get new data and cache it, otherwise return
+        // the cached data from the database
+        val result = if(tasks.isEmpty()){
             getPaginatedTask(page = 1)
         } else{
             Result.Success(data = tasks)
         }
 
-            return flow { emit(result) }
+            return flow {
+                emit(result)
+            }
     }
 
 
 
     override suspend fun getAssignedTasksPaginated(page: Int): Flow<Result<List<Task>>> {
-        val result=getPaginatedTask(page=page)
-        return flow { emit(result) }
+        val result = getPaginatedTask(page = page)
+        return flow {
+            emit(result)
+        }
     }
 
 
     override suspend fun refreshTasks(): Flow<Result<List<Task>>> {
         taskLocalDataSource.clearTasks()
-        val result=getPaginatedTask(page=1)
-        return flow { emit(result) }
+        val result = getPaginatedTask(page = 1)
+        return flow {
+            emit(result)
+        }
     }
 
     private suspend fun getPaginatedTask(page: Int): Result<List<Task>> {
-        val result:Result<List<Task>>
-        val getRemoteTaskResult=taskRemoteDataSource.getTasks(page = page)
+        val result: Result<List<Task>>
+        val getRemoteTaskResult = taskRemoteDataSource.getTasks(page = page)
         result = when(getRemoteTaskResult){
             is Result.Success->{
-                var dbTasks=dtoToDbTaskListMapper.map(getRemoteTaskResult.data.data.apiTasks)
+                var dbTasks = dtoToDbTaskListMapper.map(getRemoteTaskResult.data.data.docs)
 
                 //Add pagination information to each task
                 dbTasks=dbTasks.map {
@@ -65,15 +73,15 @@ class TaskRepositoryImpl @Inject constructor(
                 }
 
                 taskLocalDataSource.insertTasks(dbTasks)
-                Result.Success(data=dbToDomainTaskListMapper.map(dbTasks))
+                Result.Success(data = dbToDomainTaskListMapper.map(dbTasks))
             }
 
             is Result.Error->{
-                Result.Error(code=getRemoteTaskResult.code,message = getRemoteTaskResult.message)
+                Result.Error(code = getRemoteTaskResult.code,message = getRemoteTaskResult.message)
             }
 
             is Result.Exception->{
-                Result.Exception(e=getRemoteTaskResult.e, genericMessage = getRemoteTaskResult.genericMessage)
+                Result.Exception(e = getRemoteTaskResult.e, genericMessage = getRemoteTaskResult.genericMessage)
             }
         }
 

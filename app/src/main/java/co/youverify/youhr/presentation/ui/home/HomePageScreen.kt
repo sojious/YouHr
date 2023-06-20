@@ -1,5 +1,8 @@
 package co.youverify.youhr.presentation.ui.home
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.icu.text.SimpleDateFormat
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -20,16 +23,17 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -37,81 +41,105 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
+import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.core.util.capitalizeWords
 import co.youverify.youhr.core.util.getDateRange
+import co.youverify.youhr.core.util.getGreetingMessage
 import co.youverify.youhr.core.util.toOrdinalDateString
+import co.youverify.youhr.domain.repository.ProfileRepository
+import co.youverify.youhr.domain.use_case.CreateLeaveRequestUseCase
+import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
+import co.youverify.youhr.domain.use_case.GetLeaveSummaryUseCase
+import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
+import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.components.TextAvatar
+import co.youverify.youhr.presentation.ui.leave.LeaveManagementScreen
+import co.youverify.youhr.presentation.ui.leave.LeaveManagementViewModel
+import co.youverify.youhr.presentation.ui.leave.LeaveRepoMock
 import co.youverify.youhr.presentation.ui.theme.*
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalDate
-import java.time.Month
-import java.time.ZoneOffset
 import java.util.*
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HomePageScreen(
-    //modifier: Modifier = Modifier,
-    userName: String,
+
     notificationCount: String,
-    profilePhotoResId: Int,
+    profilePhotoBitmap: Bitmap?,
     onNotificationIconClicked: (String) -> Unit,
     onHamburgerClicked: () -> Unit,
     pagerState: PagerState,
     onTabItemClicked: (Int) -> Unit,
     onSideNavItemClicked: (Int) -> Unit,
-    //onBackArrowClicked:()->Unit,
     activeSideNavItemIndex: Int,
-    homeDrawerState:DrawerState
+    homeDrawerState: DrawerState,
+    onQuickAccessItemClicked: (Int) -> Unit,
+    leaveManagementViewModel: LeaveManagementViewModel,
+    homeViewModel: HomeViewModel,
+    userName: String
 
-    ){
-
-
-
-        ModalNavigationDrawer(
-            // modifier = modifier.fillMaxSize(),
-            drawerState = homeDrawerState,
-            gesturesEnabled = true,
-            drawerContent = {
-
-                SideNav(
-                    onItemClicked = onSideNavItemClicked,
-                    activeIndex = activeSideNavItemIndex
-                )
-            },
-            content = {
+){
 
 
-                    ScreenContent(
+    val leaveManagementUiState by leaveManagementViewModel.uIStateFlow.collectAsState()
+    val context=LocalContext.current.applicationContext
+    LaunchedEffect(key1 = Unit){
+        homeViewModel.getUserProfile(context)
+    }
+
+
+    ModalNavigationDrawer(
+        drawerState = homeDrawerState,
+        gesturesEnabled = true,
+        drawerContent = { SideNav(onItemClicked = onSideNavItemClicked, activeIndex = activeSideNavItemIndex, drawerState = homeDrawerState) },
+        content = {
+            when(activeSideNavItemIndex){
+                0->{
+                    HomeScreenContent(
                         modifier =Modifier.fillMaxSize(),
-                        userName = "Edith",
+                        userName = userName,
                         notificationCount =notificationCount,
-                        profilePhotoResId =profilePhotoResId,
+                        profileImageBitmap =profilePhotoBitmap?.asImageBitmap()?: ImageBitmap.imageResource(id = R.drawable.placeholder_pic),
                         onNotificationClicked = onNotificationIconClicked,
                         onHamburgerClicked = onHamburgerClicked,
                         pagerState = pagerState,
-                        onTabClicked =onTabItemClicked
+                        onTabClicked =onTabItemClicked,
+                        onQuickAccessItemClicked =onQuickAccessItemClicked
                     )
                 }
+                1->{}
+                else->{
+                    LeaveManagementScreen(
+                        onCreateRequestClicked = {leaveManagementViewModel.onCreateLeaveRequestClicked()},
+                        filterDropDownOnDismiss = {leaveManagementViewModel.onDropDownODismissRequested() },
+                        onFilterDropDownClicked = { leaveManagementViewModel.updateDropDownExpandedStatus() },
+                        onFilterDropDownItemClicked ={leaveManagementViewModel.onDropDownItemClicked(it)},
+                        onRefresh = {leaveManagementViewModel.onRefresh()},
+                        uiState = leaveManagementUiState,
+                        homeViewModel = homeViewModel,
+                        onLeaveHistoryItemClicked = {leaveManagementViewModel.displayLeaveDetail(it)},
+                        leaveManagementViewModel = leaveManagementViewModel,
+                    )
 
-
-        )
-
-
-
-
+                }
+            }
+        }
+    )
 }
 
 @Composable
 fun SideNav(
     modifier: Modifier=Modifier,
     onItemClicked:(Int)->Unit,
-    activeIndex:Int
+    activeIndex:Int,
+    drawerState: DrawerState
 
 ) {
 
@@ -127,8 +155,10 @@ fun SideNav(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(63.dp)
-                .background(brush = Brush.horizontalGradient(listOf(yvColor, yvColor1)),
-                    shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                .background(
+                    brush = Brush.horizontalGradient(listOf(yvColor, yvColor1)),
+                    shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+                )
         )
 
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr ){
@@ -143,6 +173,7 @@ fun SideNav(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
 
             ) {
+                val cts= rememberCoroutineScope()
 
                 Spacer(modifier = Modifier
                     .fillMaxWidth()
@@ -155,7 +186,9 @@ fun SideNav(
                         text = item.text,
                         onClick = onItemClicked,
                         position=index,
-                        active = index==activeIndex
+                        active = index==activeIndex,
+                        coroutineScope=cts,
+                        drawerState = drawerState
                     )
                 }
             }
@@ -171,21 +204,26 @@ fun SideNavItem(
     text: String,
     onClick:(Int)->Unit,
     position:Int,
-    active:Boolean
+    active:Boolean,
+    coroutineScope: CoroutineScope,
+    drawerState: DrawerState
 ){
 
     val iconTintColor= if (active) Color.White else sideNavIconTintColor.copy(alpha =0.5f )
     val textColor= if (active) Color.White else sideNavIconTextColor
     val dividerColor= if (active) Color.White else primaryColor
     val backgroundColor= if (active) yvColor else primaryColor
-    val firstItemPadding=if (position==0) PaddingValues(top = 30.dp) else PaddingValues()
+
     ConstraintLayout(
         modifier = Modifier
             .fillMaxWidth()
             .height(35.dp)
             .background(color = backgroundColor)
             //.padding(firstItemPadding)
-            .clickable { onClick(position) }
+            .clickable {
+                onClick(position)
+                coroutineScope.launch { drawerState.close() }
+            }
     ) {
         val (divider,icon,textField) = createRefs()
 
@@ -229,24 +267,26 @@ fun SideNavItem(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ScreenContent(
+fun HomeScreenContent(
     modifier: Modifier,
     userName: String,
     notificationCount: String,
-    profilePhotoResId: Int,
+    profileImageBitmap: ImageBitmap,
     onNotificationClicked: (String) -> Unit,
     onHamburgerClicked: () -> Unit,
     pagerState: PagerState,
     onTabClicked: (Int) -> Unit,
+    onQuickAccessItemClicked: (Int) -> Unit,
 ) {
 
     Column(modifier = modifier.fillMaxSize()) {
         TopSection(
             userName = userName,
             notificationCount =notificationCount ,
-            profilePhotoResId =profilePhotoResId,
+            profileImageBitmap =profileImageBitmap,
             onNotificationClicked = onNotificationClicked,
-            onHamburgerClicked = onHamburgerClicked
+            onHamburgerClicked = onHamburgerClicked,
+            onQuickAccessItemClicked =onQuickAccessItemClicked
         )
 
         Spacer(
@@ -387,7 +427,7 @@ fun AnnouncementItem(announcement: Announcement,index: Int) {
 
         //To Section
 
-        Text(
+        /*Text(
             text = buildAnnotatedString {
                 withStyle(SpanStyle(color = bodyTextLightColor)){
                     append(text="To ")
@@ -411,7 +451,7 @@ fun AnnouncementItem(announcement: Announcement,index: Int) {
                 start.linkTo(announcerName.start)
             }
 
-        )
+        )*/
 
 
 
@@ -522,7 +562,7 @@ fun EmployeeOnLeaveItem(employeeOnLeave: EmployeeOnLeave){
         modifier= modifier
             .padding(start = 21.dp, end = 21.dp, top = 24.dp)
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ){
         itemsIndexed(items = announcements){ index,announcement->
             AnnouncementItem(announcement =announcement,index=index)
@@ -552,9 +592,10 @@ fun TopSection(
     modifier: Modifier = Modifier,
     userName: String,
     notificationCount: String,
-    profilePhotoResId: Int,
+    profileImageBitmap: ImageBitmap,
     onNotificationClicked: (String) -> Unit,
     onHamburgerClicked: () -> Unit,
+    onQuickAccessItemClicked: (Int) -> Unit,
 
     ) {
 
@@ -565,7 +606,7 @@ fun TopSection(
         verticalArrangement = Arrangement.spacedBy(25.dp)
     ){
         ProfileSection(
-            profilePhotoResId =  profilePhotoResId,
+            profileImageBitmap =  profileImageBitmap,
             userName = userName,
             badgeText = notificationCount,
             onNotificationIconClicked = onNotificationClicked,
@@ -574,7 +615,8 @@ fun TopSection(
 
         QuickAccessSection(
             imageResIds = arrayOf(R.drawable.clarity_tools_solid,R.drawable.edit_document_sharp,R.drawable.frame),
-            stringResIds = arrayOf(R.string.work_tool_request,R.string.document_upload,R.string.leave_request)
+            stringResIds = arrayOf(R.string.work_tool_request,R.string.document_upload,R.string.leave_request),
+            onQuickAccessItemClicked=onQuickAccessItemClicked
         )
     }
 
@@ -586,7 +628,7 @@ fun TopSection(
 @Composable
 fun ProfileSection(
     modifier: Modifier = Modifier,
-    profilePhotoResId: Int,
+    profileImageBitmap: ImageBitmap,
     userName: String,
     badgeText: String,
     onNotificationIconClicked: (String) -> Unit,
@@ -614,7 +656,7 @@ fun ProfileSection(
 
 
             Text(
-                text = "Good Morning!",
+                text = getGreetingMessage(),
                 modifier= Modifier
                     .padding(top = 3.dp)
                     .constrainAs(greetingText, constrainBlock = {
@@ -628,7 +670,7 @@ fun ProfileSection(
             )
 
             Text(
-                text ="Edith", //userName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
+                text =userName, //userName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
                 modifier= Modifier
                     .padding(top = 2.dp)
                     .constrainAs(profileName, constrainBlock = {
@@ -673,7 +715,7 @@ fun ProfileSection(
                 .constrainAs(profileImage, constrainBlock = {
                     end.linkTo(parent.end, 0.dp)
                 }),
-            painter = painterResource(id =R.drawable.profile_photo_edith) ,
+            bitmap =profileImageBitmap ,
             contentDescription ="",
             contentScale = ContentScale.Crop
         )
@@ -689,9 +731,10 @@ fun ProfileSection(
 
 @Composable
 fun QuickAccessSection(
-    modifier: Modifier=Modifier,
-    imageResIds:Array<Int>,
-    stringResIds:Array<Int>
+    modifier: Modifier = Modifier,
+    imageResIds: Array<Int>,
+    stringResIds: Array<Int>,
+    onQuickAccessItemClicked: (Int) -> Unit
 ) {
     Row(
         modifier = modifier
@@ -705,7 +748,12 @@ fun QuickAccessSection(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         repeat(3){
-            QuickAccessItem(imageResId = imageResIds[it], textResId =stringResIds[it], index =it)
+            QuickAccessItem(
+                imageResId = imageResIds[it],
+                textResId =stringResIds[it],
+                index =it,
+                onQuickAccessItemClicked=onQuickAccessItemClicked
+            )
         }
     }
 }
@@ -714,7 +762,13 @@ fun QuickAccessSection(
 
 
 @Composable
-fun QuickAccessItem(modifier: Modifier = Modifier, imageResId: Int, index: Int, textResId: Int){
+fun QuickAccessItem(
+    modifier: Modifier = Modifier,
+    imageResId: Int,
+    index: Int,
+    textResId: Int,
+    onQuickAccessItemClicked: (Int) -> Unit
+){
 
 
     val paddingValues=when (index){
@@ -727,6 +781,7 @@ fun QuickAccessItem(modifier: Modifier = Modifier, imageResId: Int, index: Int, 
       modifier= modifier
           .padding(paddingValues)
           .clip(shape = RoundedCornerShape(12.dp))
+          .clickable { onQuickAccessItemClicked(index) }
   ){
 
 
@@ -795,7 +850,15 @@ fun QuickAccessItem(modifier: Modifier = Modifier, imageResId: Int, index: Int, 
 @Composable
 fun HomePageScreenPreview(){
     YouHrTheme {
-        var clickedIndex by remember {mutableStateOf(1)}
+        var clickedIndex by remember {mutableStateOf(0)}
+        val context=LocalContext.current
+        val bitmap=remember{
+            BitmapFactory.decodeResource(
+                context.resources,
+                R.drawable.profile_photo_edith,
+                BitmapFactory.Options()
+            )
+        }
 
         Surface {
 
@@ -803,10 +866,8 @@ fun HomePageScreenPreview(){
             val drawerState=rememberDrawerState(initialValue =DrawerValue.Closed )
             val coroutineScope= rememberCoroutineScope()
             HomePageScreen(
-                userName = "Edith",
                 notificationCount = "5",
-                profilePhotoResId = R.drawable.profile_photo_edith,
-                homeDrawerState = drawerState,
+                profilePhotoBitmap = bitmap ,
                 onNotificationIconClicked = { },
                 onHamburgerClicked = {
                                      coroutineScope.launch {
@@ -814,7 +875,7 @@ fun HomePageScreenPreview(){
                                      }
                 },
                 pagerState = pagerState,
-                onTabItemClicked = {tabIndex->
+                onTabItemClicked = { tabIndex->
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(tabIndex)
                     }
@@ -822,7 +883,15 @@ fun HomePageScreenPreview(){
                 onSideNavItemClicked = {
                            clickedIndex=it
                 },
-                activeSideNavItemIndex = clickedIndex
+                activeSideNavItemIndex = clickedIndex,
+                homeDrawerState = drawerState,
+                onQuickAccessItemClicked = {},
+                leaveManagementViewModel = LeaveManagementViewModel
+                    (Navigator(), GetLeaveRequestsUseCase(LeaveRepoMock()),
+                    GetLeaveSummaryUseCase(LeaveRepoMock()), CreateLeaveRequestUseCase(LeaveRepoMock())
+                ),
+                homeViewModel = HomeViewModel(Navigator(), GetUserProfileUseCase(ProfileRepoMock())),
+                userName = "Edith"
             )
         }
 
@@ -837,7 +906,8 @@ fun QuickAccessSectionPreview(){
         Surface {
             QuickAccessSection(
                 imageResIds = arrayOf(R.drawable.clarity_tools_solid,R.drawable.edit_document_sharp,R.drawable.frame),
-                stringResIds = arrayOf(R.string.work_tool_request,R.string.document_upload,R.string.leave_request)
+                stringResIds = arrayOf(R.string.work_tool_request,R.string.document_upload,R.string.leave_request),
+                onQuickAccessItemClicked = {}
             )
         }
 
@@ -850,7 +920,12 @@ fun QuickAccessItemPreview(){
     YouHrTheme {
 
         Surface {
-            QuickAccessItem(imageResId = R.drawable.clarity_tools_solid, index = 1, textResId = R.string.work_tool_request)
+            QuickAccessItem(
+                imageResId = R.drawable.clarity_tools_solid,
+                index = 1,
+                textResId = R.string.work_tool_request,
+                onQuickAccessItemClicked = {}
+            )
         }
 
     }
@@ -867,7 +942,7 @@ fun AnnouncementItemPreview(){
                 announcer = "Richard Cole",
                 message = "Good Morning, our get together party is today. Please talk to HR.",
                 addressee = "Everyone",
-                date = getDate()
+                date = getDateInMillis(2023,2,20)
             ) , index = 0)
         }
 
@@ -886,8 +961,8 @@ fun EmployeeOnLeaveItemPreview(){
                     "sharon chigorom",
                     "product designer",
                     "Abidat akinyele",
-                    getDate(),
-                    Instant.now().toEpochMilli()
+                    getDateInMillis(2023,2,20),
+                    System.currentTimeMillis()
                 )
             )
         }
@@ -931,7 +1006,11 @@ fun SideNavPreview(){
 
         Surface {
 
-            SideNav(onItemClicked ={} , activeIndex = 1)
+            SideNav(
+                onItemClicked ={} ,
+                activeIndex = 1,
+                drawerState= rememberDrawerState(initialValue = DrawerValue.Closed)
+            )
         }
 
     }
@@ -962,7 +1041,7 @@ val dummyAnnouncement=Announcement(
     announcer = "Richard Cole",
     message = "Good Morning, our get together party is today. Please talk to HR.",
     addressee = "Everyone",
-    date = getDate()
+    date = getDateInMillis(2023,2,20),
 )
 
 val announcements= listOf(
@@ -980,8 +1059,8 @@ val dummyEmployee=EmployeeOnLeave(
     "Edna Ibeh",
     "Product Designer",
     "Yusuf Babatunde",
-    getDate(),
-    Instant.now().toEpochMilli()
+    getDateInMillis(2023,2,20),
+    System.currentTimeMillis()
 )
 
 val employeesOnLeave= listOf(
@@ -998,9 +1077,13 @@ val employeesOnLeave= listOf(
 )
 
 
-fun getDate(): Long {
-    val localDate= LocalDate.of(2023,Month.FEBRUARY,20)
-    return localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+
+
+fun getDateInMillis(year: Int, month: Int, day: Int): Long {
+    val dateString = "$year-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val date = dateFormat.parse(dateString)
+    return date?.time ?: 0L
 }
 
 
@@ -1031,6 +1114,11 @@ fun Modifier.ownTabIndicatorOffset(
         .padding(horizontal = padding)
         .offset(x = indicatorOffset)
         .width(currentTabWidth)
+}
+
+class ProfileRepoMock:ProfileRepository{
+    override suspend fun getUserProfile(isFirstLogin: Boolean): Flow<Result<co.youverify.youhr.domain.model.User>> { return flow{} }
+
 }
 
 

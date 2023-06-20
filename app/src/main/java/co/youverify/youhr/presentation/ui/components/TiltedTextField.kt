@@ -40,7 +40,7 @@ fun TitledTextField(
 
        Row(modifier=Modifier.padding(bottom = 10.dp)) {
            Text(text = fieldTitle, fontSize = 12.sp, color = textFieldTitle, fontWeight = FontWeight.Normal)
-           Text(text = "*", color = co.youverify.youhr.presentation.ui.theme.errorMessage, textAlign = TextAlign.Center,modifier=Modifier.padding(start = 2.dp), fontSize = 12.sp)
+           Text(text = "*", color = co.youverify.youhr.presentation.ui.theme.errorMessageColor, textAlign = TextAlign.Center,modifier=Modifier.padding(start = 2.dp), fontSize = 12.sp)
        }
 
        OutlinedTextField(
@@ -79,7 +79,7 @@ fun TitledTextField(
        if (isErrorValue)
            Text(
                text = errorMessage,
-               color = co.youverify.youhr.presentation.ui.theme.errorMessage,
+               color = errorMessageColor,
                modifier = Modifier.padding(top=8.dp),
                fontSize = 12.sp
            )

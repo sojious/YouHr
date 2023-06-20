@@ -1,5 +1,6 @@
 package co.youverify.youhr.data.remote
 
+import co.youverify.youhr.data.model.LeaveRequestsResponse
 import co.youverify.youhr.data.model.*
 import retrofit2.Response
 import retrofit2.http.Body
@@ -25,9 +26,17 @@ interface YouHrService {
     @POST("user-service/v1/user/setpasscode")
     suspend fun createCode( @Body createCodeRequest:CreateCodeRequest): Response<GenericResponse>
 
-    @GET("v1/task/taskassignedto")
+    @GET("task-service/v1/task/taskassignedto")
     suspend fun getAssignedTask(@Query("page") page: Int =1):Response<AssignedTasksResponse>
 
     @GET("employee-service/v1/employee")
     suspend fun getUserProfile():Response<UserProfileResponse>
+    @GET("employee-service/v1/employee/leave/employeerequests")
+    suspend fun getLeaveRequests():Response<LeaveRequestsResponse>
+
+    @GET("employee-service/v1/employee/leave/leavesummary")
+    suspend fun getLeaveSummary():Response<LeaveSummaryResponse>
+
+    @POST("employee-service/v1/employee/leave/request")
+    suspend fun createLeaveRequest(@Body applicationRequest: LeaveApplicationRequest):Response<LeaveApplicationResponse>
 }

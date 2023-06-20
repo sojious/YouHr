@@ -51,9 +51,10 @@ fun YouHrTitleBar(
                 //.fillMaxWidth()
                 .size(16.dp)
                 .constrainAs(backArrow) {
-                    start.linkTo(parent.start, 4.42.dp)
+                    start.linkTo(parent.start, 24.dp)
                     //centerVerticallyTo(parent)
-                    top.linkTo(parent.top, 4.4.dp)
+                    top.linkTo(parent.top)
+                    bottom.linkTo(parent.bottom)
                     //width=Dimension.fillToConstraints
                 },
             onClick = {
@@ -74,10 +75,10 @@ fun YouHrTitleBar(
             lineHeight = 24.sp,
             textAlign = TextAlign.Center,
             modifier=Modifier.constrainAs(titleText){
-                start.linkTo(backArrow.end,14.dp)
+                start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 top.linkTo(parent.top)
-               width= Dimension.fillToConstraints
+               width= Dimension.value(200.dp)
             },
 
         )
@@ -112,9 +113,16 @@ fun Modifier.shimmerEffect(): Modifier = composed {
     background(
         brush = Brush.linearGradient(
             colors = listOf(
-                Color(0xFFB8B5B5),
-                Color(0xFF8F8B8B),
-                Color(0xFFB8B5B5),
+                //Color(0xFF949090),
+                //Color(0xFFBBB9B9),
+                Color(0xCCF7F7F9),
+                Color(0XFFF7F7F9),
+                //Color(0xFF635F5F),
+                //Color(0xFF9B9797),
+
+                //Color(0xFFB8B5B5),
+                //Color(0xFF3F3C3C),
+                Color(0x80F7F7F9)
             ),
             start = Offset(startOffsetX, 0f),
             end = Offset(startOffsetX + size.width.toFloat(), size.height.toFloat())

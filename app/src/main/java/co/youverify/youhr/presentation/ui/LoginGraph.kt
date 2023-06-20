@@ -6,6 +6,7 @@ import androidx.compose.animation.expandIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 
 import androidx.navigation.NavGraphBuilder
@@ -84,6 +85,7 @@ fun NavGraphBuilder.loginGraph(
                 activeCodeInputFieldIndex = loginWithCodeViewModel.activeCodeInputFieldIndex,
                 uiState = uiState,
                 onCodeValueChanged = {newValue, codeIndex->
+
 
                     loginWithCodeViewModel.updateCode(newValue,codeIndex)
 
@@ -169,7 +171,9 @@ fun NavGraphBuilder.loginGraph(
 
                 },
                 activeCodeInputFieldIndex = createCodeViewModel.activeCodeInputFieldIndex,
-                onBackSpaceKeyPressed = {createCodeViewModel.onBackSpaceKeyPressed()}
+                onBackSpaceKeyPressed = {codeInputFieldIndex->
+                    createCodeViewModel.onBackSpaceKeyPressed(codeInputFieldIndex)
+                                        },
             )
 
         }
@@ -180,7 +184,8 @@ fun NavGraphBuilder.loginGraph(
             enterTransition = { expandIn()}
         ){
             val focusManager= LocalFocusManager.current
-            val uiState by createCodeViewModel.uIStatFlow.collectAsState()
+            val context= LocalContext.current.applicationContext
+            val uiState by confirmCodeViewModel.uIStatFlow.collectAsState()
 
             ConfirmCodeScreen(
                 codeValue1 = confirmCodeViewModel.code1,
@@ -193,7 +198,7 @@ fun NavGraphBuilder.loginGraph(
                 isErrorCode =confirmCodeViewModel.isErrorCode,
                 activeCodeInputFieldIndex = confirmCodeViewModel.activeCodeInputFieldIndex,
                 showSuccessDialog = confirmCodeViewModel.showSuccessDialog,
-                onCreateCodeButtonClicked = { confirmCodeViewModel.createCode(createCodeViewModel) },
+                onCreateCodeButtonClicked = { confirmCodeViewModel.createCode(createCodeViewModel, context) },
                 onProceedButtonClicked = {confirmCodeViewModel.onProceedButtonClicked()},
                 onCodeValueChanged = {newValue,codeIndex->
                     confirmCodeViewModel.updateCode(newValue,codeIndex)
@@ -224,7 +229,9 @@ fun NavGraphBuilder.loginGraph(
 
 
                 },
-                onBackSpaceKeyPressed = {confirmCodeViewModel.onBackSpaceKeyPressed()}
+                onBackSpaceKeyPressed = {codeInputFieldIndex->
+                    confirmCodeViewModel.onBackSpaceKeyPressed(codeInputFieldIndex)
+                }
             )
         }
 

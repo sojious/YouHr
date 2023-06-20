@@ -109,9 +109,22 @@ class CreateCodeViewModel @Inject constructor(private val navigator: Navigator, 
         activeCodeInputFieldIndex=newActiveIndex
     }
 
-    fun onBackSpaceKeyPressed() {
-        if (activeCodeInputFieldIndex!=1)
-            activeCodeInputFieldIndex -= 1
+    fun onBackSpaceKeyPressed(codeInputFieldIndex: Int) {
+        if(codeInputFieldIndex==2 && code2.isEmpty())
+            activeCodeInputFieldIndex-=1
+
+        if(codeInputFieldIndex==3 && code3.isEmpty())
+            activeCodeInputFieldIndex-=1
+
+        if(codeInputFieldIndex==4 && code4.isEmpty())
+            activeCodeInputFieldIndex-=1
+
+        if(codeInputFieldIndex==5 && code5.isEmpty())
+            activeCodeInputFieldIndex-=1
+
+        if(codeInputFieldIndex==6 && code6.isEmpty())
+            activeCodeInputFieldIndex-=1
+
     }
 
 }

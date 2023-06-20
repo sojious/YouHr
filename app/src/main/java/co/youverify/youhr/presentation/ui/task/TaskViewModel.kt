@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.Result
+import co.youverify.youhr.core.util.toEpochMillis
 import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.domain.use_case.GetTasksUseCase
 import co.youverify.youhr.presentation.TaskDetail
@@ -32,7 +33,7 @@ class TaskViewModel @Inject constructor(
     ) : ViewModel(){
 
 
-    var allTasks: List<Task>?=null
+    var allTasks: List<Task>? = null
     private set
     var internetUnavailable by mutableStateOf(false)
     private set
@@ -40,14 +41,13 @@ class TaskViewModel @Inject constructor(
     private set
     var currentEditableDateInputField by  mutableStateOf(0)
     private set
-    //var  currentTaskList by mutableStateOf(pendingTasks)
-    //private set
+
     var categoryDropDownExpanded by mutableStateOf(false)
         private set
     var showDatePicker by mutableStateOf(false)
         private set
 
-    var categorySpinnerText by mutableStateOf("Pending")
+    var categorySpinnerText by mutableStateOf("All")
         private set
 
     var isEmptyState by mutableStateOf(false)
@@ -56,21 +56,19 @@ class TaskViewModel @Inject constructor(
     var dateRange by mutableStateOf(DateRange())
         private set
 
-    private var _uiStateFlow= MutableStateFlow(UiState())
+    private var _uiStateFlow = MutableStateFlow(UiState())
     val uiStateFlow=_uiStateFlow.asStateFlow()
 
-    private var _uiEventFlow= MutableSharedFlow<UiEvent>()
-    val uiEventFlow=_uiEventFlow.asSharedFlow()
+    private var _uiEventFlow = MutableSharedFlow<UiEvent>()
+    val uiEventFlow = _uiEventFlow.asSharedFlow()
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean>
         get() = _isRefreshing.asStateFlow()
 
-    init {
-        getTaskFirstLoad()
-    }
 
-    private fun getTaskFirstLoad() {
+
+    fun getTaskFirstLoad() {
         viewModelScope.launch {
             getTasksUseCase.invoke(firstLoad = true)
                 .collect{
@@ -80,12 +78,11 @@ class TaskViewModel @Inject constructor(
                             allTasks= _uiStateFlow.value.tasks
                         }
                         is Result.Error->{
-                            _uiStateFlow.value = _uiStateFlow.value.copy(loading = false,tasks =null)
+                            _uiStateFlow.value = _uiStateFlow.value.copy(loading = false,tasks = null)
                             _uiEventFlow.emit(UiEvent.ShowToast("An unexpected error occured while fetchind tasks!!"))
                         }
                         is Result.Exception->{
                             _uiStateFlow.value = _uiStateFlow.value.copy(loading = false,tasks = null, connectionError = true)
-                            //internetUnavailable=true
                         }
                     }
                 }
@@ -94,7 +91,6 @@ class TaskViewModel @Inject constructor(
 
     fun updateCategoryDropDownState() {
         categoryDropDownExpanded = !categoryDropDownExpanded
-        //currentTaskList = if (currentTaskList[0].isCompleted) pendingTasks else completedTasks
     }
 
     fun updateDatePickerExpandedState() {
@@ -106,51 +102,64 @@ class TaskViewModel @Inject constructor(
     }
 
     fun categoryDropDownOnDismissCallBack() {
-        categoryDropDownExpanded=false
+        categoryDropDownExpanded = false
     }
 
 
-    fun navigateBack() =navigator.navigateBack()
+    fun navigateBack() = navigator.navigateBack()
     fun onDateInputFieldClicked(index: Int) {
 
-            currentEditableDateInputField=index
-            showDatePicker=true
+            currentEditableDateInputField = index
+            showDatePicker = true
     }
 
-    fun onTaskProgressDropDownItemClicked(itemIndex: Int) {
+    fun filterTasksByStatus(itemIndex: Int) {
+
         when(itemIndex){
-            1-> onPendingClicked()
-            2-> onCompletedClicked()
+            1-> { filterTask(TaskStatus.COMPLETED.id) }
+            2-> {filterTask(TaskStatus.IN_PROGRESS.id)}
+            3->{filterTask(TaskStatus.OVER_DUE.id)}
+            4->{filterTask(TaskStatus.TO_DO.id)}
+            5->{filterTask(TaskStatus.REVIEW.id)}
         }
+        categoryDropDownExpanded = false
+
     }
 
-   private fun onPendingClicked() {
-        //currentTaskList= pendingTasks
-        categoryDropDownExpanded=false
-        categorySpinnerText="Pending"
-    }
 
- private   fun onCompletedClicked() {
-        //currentTaskList= completedTasks
-        categoryDropDownExpanded=false
-        categorySpinnerText="Completed"
-    }
 
     fun onDatePickerCancelClicked( ) {
-        showDatePicker=false
+        showDatePicker = false
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     fun onDatePickerOkClicked(datePickerState: DatePickerState, dateInputFieldIndex: Int) {
 
-        if (dateInputFieldIndex==1){
-            dateRange=dateRange.copy(startDateMillis = datePickerState.selectedDateMillis)
-            showDatePicker=false
+        if (dateInputFieldIndex == 1){
+            dateRange = dateRange.copy(startDateMillis = datePickerState.selectedDateMillis)
+            showDatePicker = false
         }
 
-        if (dateInputFieldIndex==2){
-            dateRange=dateRange.copy(endDateMillis = datePickerState.selectedDateMillis)
-            showDatePicker=false
+        if (dateInputFieldIndex == 2){
+            dateRange = dateRange.copy(endDateMillis = datePickerState.selectedDateMillis)
+            showDatePicker = false
+        }
+
+    }
+
+    private fun filterTask(taskStatus:String){
+        categorySpinnerText = taskStatus
+        val filteredTasks = allTasks?.filter {
+            it.status == taskStatus
+        }.orEmpty()
+
+        if (filteredTasks.isEmpty()){
+            _uiStateFlow.value = _uiStateFlow.value.copy(
+                tasks =filteredTasks,
+                emptyTaskContentMessage = ""
+            )
+        }else{
+            _uiStateFlow.value = _uiStateFlow.value.copy(tasks =filteredTasks)
         }
 
     }
@@ -158,15 +167,15 @@ class TaskViewModel @Inject constructor(
     fun fetchMore() {
 
 
-            isFetchingMore=true
+            isFetchingMore = true
             viewModelScope.launch {
                 getTasksUseCase.invoke(firstLoad = false, page = uiStateFlow.value.tasks?.lastIndex!!+1)
                     .collect{
                         when(it){
                             is Result.Success->{
                                 _uiStateFlow.value = _uiStateFlow.value.copy(loading = false,tasks = _uiStateFlow.value.tasks?.plus(it.data))
-                                allTasks=_uiStateFlow.value.tasks
-                                isFetchingMore=false
+                                allTasks = _uiStateFlow.value.tasks
+                                isFetchingMore = false
 
                             }
                             is Result.Error->{
@@ -177,8 +186,8 @@ class TaskViewModel @Inject constructor(
                             }
                             is Result.Exception->{
                                 _uiStateFlow.value = _uiStateFlow.value.copy(loading = false,tasks = null)
-                                isFetchingMore=false
-                                internetUnavailable=true
+                                isFetchingMore = false
+                                internetUnavailable = true
                             }
                         }
                     }
@@ -189,24 +198,21 @@ class TaskViewModel @Inject constructor(
     fun refresh(){
 
         viewModelScope.launch {
-            _uiStateFlow.value = _uiStateFlow.value.copy(loading = true)
+            _uiStateFlow.value = _uiStateFlow.value.copy(connectionError = false, loading = true)
             getTasksUseCase.invoke(firstLoad = true)
                 .collect{
                     when(it){
                         is Result.Success->{
                             _uiStateFlow.value = _uiStateFlow.value.copy(loading = false,tasks = it.data)
                             allTasks= _uiStateFlow.value.tasks
-                            _isRefreshing.emit(false)
 
                         }
                         is Result.Error->{
                             _uiStateFlow.value = _uiStateFlow.value.copy(loading = false,tasks =null)
                             _uiEventFlow.emit(UiEvent.ShowToast("An unexpected error occured while fetchind tasks!!"))
-                            _isRefreshing.emit(false)
                         }
                         is Result.Exception->{
                             _uiStateFlow.value = _uiStateFlow.value.copy(loading = false,tasks = null, connectionError = true)
-                            _isRefreshing.emit(false)
                             //internetUnavailable=true
                         }
                     }
@@ -214,5 +220,25 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    data class UiState(val loading:Boolean=true, val tasks:List<Task>?=null,val connectionError:Boolean=false )
+    fun filterTasksByDate() {
+
+        val filteredTasks = allTasks?.filter {
+            it.timeStampCreated.toEpochMillis() >= dateRange.startDateMillis!! ||
+                    it.timeStampCreated.toEpochMillis() <= dateRange.endDateMillis!!
+        }.orEmpty()
+
+        if (filteredTasks.isEmpty()){
+            _uiStateFlow.value = _uiStateFlow.value.copy(tasks = filteredTasks, emptyTaskContentMessage = "")
+        }else{
+            _uiStateFlow.value = _uiStateFlow.value.copy(tasks = filteredTasks)
+        }
+
+    }
+
+    data class UiState(
+        val loading:Boolean = true,
+        var tasks:List<Task>? = null,
+        val connectionError:Boolean = false,
+        val emptyTaskContentMessage:String = "You haven’t been assigned any tasks yet"
+    )
 }
