@@ -2,7 +2,9 @@ package co.youverify.youhr.presentation.ui.home
 
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.getValue
@@ -14,11 +16,22 @@ import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.domain.model.User
 import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
 import co.youverify.youhr.presentation.LeaveRequest
+import co.youverify.youhr.presentation.Profile
 import co.youverify.youhr.presentation.ui.Navigator
+import co.youverify.youhr.presentation.ui.UiEvent
+import co.youverify.youhr.presentation.ui.leave.LeaveManagementViewModel
+import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
+import co.youverify.youhr.presentation.ui.settings.profile.ProfileViewModel
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -46,6 +59,12 @@ class HomeViewModel @Inject constructor(
     private var _shouldUpdateDrawerState = MutableStateFlow(false)
     var shouldUpdateDrawerState = _shouldUpdateDrawerState.asStateFlow()
         private set
+
+    private val _uiStateFlow = MutableStateFlow(HomePageUiState())
+    val uiStateFlow = _uiStateFlow.asStateFlow()
+
+    private val _uiEventFlow = MutableSharedFlow<UiEvent>()
+    val uiEventFlow = _uiEventFlow.asSharedFlow()
 
 
 
@@ -75,17 +94,79 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getUserProfile(context: Context) {
+    fun getUserProfile(
+        context: Context,
+        settingsViewModel: SettingsViewModel,
+        leaveManagementViewModel: LeaveManagementViewModel
+    ) {
 
         viewModelScope.launch {
             getUserProfileUseCase.invoke(isFirstLogin =false).collect{result->
                 if(result is Result.Success){
                    val profileBitmap=BitmapFactory.decodeStream(context.openFileInput("profile_pic"))
                     user=result.data.copy(displayPictureBitmap =profileBitmap )
+                    settingsViewModel.updateCurrentUser(user)
+                    leaveManagementViewModel.updateUserGender(user?.gender?:"Male")
                 }
 
             }
         }
     }
 
+
+    fun updateUserProfile(context: Context, profileViewModel: ProfileViewModel) {
+
+        var processSuccessful=false
+        viewModelScope.launch {
+
+            // Get the updated user profile from a network call
+            getUserProfileUseCase.invoke(isFirstLogin =true).collect{result->
+                if(result is Result.Success){
+                    //Load the profile pic from the url and cache it into the app internal storage directory
+                    Glide.with(context)
+                        .asBitmap()
+                        .load(result.data.displayPictureUrl)
+                        .override(600,200)
+                        .into(
+                            object : CustomTarget<Bitmap>(){
+                                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                    //val imageSize=resource.allocationByteCount
+                                    context.openFileOutput("profile_pic",Context.MODE_PRIVATE).use {
+                                        resource.compress(Bitmap.CompressFormat.JPEG,100,it)
+                                    }
+
+                                    val profileBitmap=BitmapFactory.decodeStream(context.openFileInput("profile_pic"))
+                                    user=result.data.copy(displayPictureBitmap =profileBitmap )
+
+                                    //notify profileviemodel that profile update was successful
+                                    profileViewModel.setProfileUpdateSuccess(updateSuccessful=true)
+                                    cancel()
+
+                                }
+
+                                override fun onLoadCleared(placeholder: Drawable?) {}
+
+                                override fun onLoadFailed(errorDrawable: Drawable?) {
+                                    profileViewModel.setProfileUpdateSuccess(updateSuccessful=false)
+                                    cancel()
+                                }
+                            }
+                        )
+                }
+
+            }
+        }
+
+    }
+
+    fun goToProfileScreen() {
+        navigator.navigate(toRoute = Profile.route)
+    }
+
+    fun onRefreshTabSection() {
+
+    }
+
 }
+
+data class HomePageUiState(val pagerSectionLoading:Boolean=false,val pagerSectionRefreshing:Boolean=false)

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,12 +25,19 @@ import androidx.compose.material.Surface
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -52,16 +60,18 @@ fun LeaveDetailScreen(
     modifier: Modifier = Modifier,
     leaveDetailExpanded: Boolean,
     onLeaveDetailContentChangeRequested: () -> Unit,
-    onContactInfoContentChangeRequested: () -> Unit,
-    contactInfoExpanded: Boolean,
-    leaveRequest: LeaveRequest
-){
+    //onContactInfoContentChangeRequested: () -> Unit,
+    //contactInfoExpanded: Boolean,
+    leaveRequest: LeaveRequest,
+    onBackArrowClicked:()->Unit,
+
+    ){
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        YouHrTitleBar(title = "Leave Details", modifier = Modifier.padding(top=51.dp, bottom = 37.dp))
+        YouHrTitleBar(title = "Leave Details", modifier = Modifier.padding(top=51.dp, bottom = 37.dp)){onBackArrowClicked()}
         LeaveDetailsExpandable(
             leaveType =leaveRequest.leaveType ,
             startDate = getFormattedLeaveDate(leaveRequest.startDate) ,
@@ -78,25 +88,18 @@ fun LeaveDetailScreen(
                 .fillMaxWidth()
         )
 
-        ContactInfoExpandable(
-            contactName =leaveRequest.contactName ,
-            email =leaveRequest.contactEmail,
-            phoneNumber =leaveRequest.contactNumber,
-            onContentChangeRequested =onContactInfoContentChangeRequested,
-            expanded =contactInfoExpanded ,
-            modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 36.dp)
-                .fillMaxWidth()
-        )
 
         Divider(modifier= Modifier
             .fillMaxWidth()
-            .padding(bottom = 25.dp), thickness = 1.dp, color = deactivatedColorLight)
+            .padding(bottom = 25.dp, top = 25.dp), thickness = 1.dp, color = deactivatedColorLight)
         LeaveStatus(
-            modifier = Modifier.padding(20.dp), lmStatus =leaveRequest.linemanagerStatus, hrStatus =leaveRequest.hrStatus,
+            modifier = Modifier.padding(bottom = 20.dp, start = 20.dp,end=20.dp), lmStatus =leaveRequest.linemanagerStatus, hrStatus =leaveRequest.hrStatus,
             lmName =leaveRequest.linemanagerName, hrComment =leaveRequest.hrComment, lmComment =leaveRequest.linemanagerComment,
             hrModificationDaysAgo = if (leaveRequest.hrApprovalDate=="Not yet") leaveRequest.hrApprovalDate  else leaveRequest.hrApprovalDate.toTimeAgo(),
-            lmModificationDaysAgo = if (leaveRequest.linemanagerApprovalDate=="Not yet") leaveRequest.linemanagerApprovalDate else leaveRequest.linemanagerApprovalDate.toTimeAgo()
+            lmModificationDaysAgo = if (leaveRequest.linemanagerApprovalDate=="Not yet") leaveRequest.linemanagerApprovalDate else leaveRequest.linemanagerApprovalDate.toTimeAgo(),
+            relieverName = leaveRequest.relieverName, relieverComment = leaveRequest.relieverComment,
+            relieverModificationDaysAgo = if (leaveRequest.relieverApprovalDate=="Not yet") leaveRequest.relieverApprovalDate else leaveRequest.relieverApprovalDate.toTimeAgo(),
+            relieverStatus = leaveRequest.relieverStatus
 
             )
     }
@@ -106,14 +109,18 @@ fun LeaveStatus(
     modifier: Modifier = Modifier,
     lmStatus: String,
     hrStatus: String,
+    relieverStatus:String,
     lmName: String,
+    relieverName:String,
     hrComment: String?,
     lmComment: String?,
+    relieverComment:String?,
     hrModificationDaysAgo: String,
-    lmModificationDaysAgo: String
+    lmModificationDaysAgo: String,
+    relieverModificationDaysAgo:String
 ){
 
-    val step2Color=if (lmStatus==LeaveStatus.APPROVED.id) yvColor else deactivatedColorDeep
+    //val step2Color=if (lmStatus==LeaveStatus.APPROVED.id) yvColor else deactivatedColorDeep
 
     Column(modifier=modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(28.dp)) {
         
@@ -123,43 +130,35 @@ fun LeaveStatus(
             modifier= Modifier
                 .padding(start = 1.dp)
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(11.dp),
-                modifier=Modifier.width(24.dp),
-                content = {
-                    StepIndicator(
-                        stepColor = yvColor , stepNumber =1,approved = lmStatus==LeaveStatus.APPROVED.id,
-                        modifier=Modifier
-                    )
-                    Spacer(
-                        modifier= Modifier
-                            .size(2.dp, 70.dp)
-                            .background(
-                                color = if (lmStatus == LeaveStatus.APPROVED.id) yvColor else deactivatedColorDeep,
-                            ),
+            var indicatorHeight by remember{ mutableStateOf(50.dp) }
+            val density=LocalDensity.current
 
-                    )
 
-                    StepIndicator(
-                        stepColor = step2Color , stepNumber =2,approved = hrStatus==LeaveStatus.APPROVED.id,
-                        modifier=Modifier
-                    )
-                }
-            )
+            Indicators(lmStatus = lmStatus, hrStatus = hrStatus, height = indicatorHeight, relieverStatus = relieverStatus)
             
            Column(
                verticalArrangement = Arrangement.spacedBy(54.dp),
-               modifier=Modifier.fillMaxWidth(),
+               modifier=Modifier.fillMaxWidth().onGloballyPositioned {layoutCoordinates ->
+                               indicatorHeight=with(density)  {
+                                   layoutCoordinates.size.height.toDp()
+                               }
+               },
                content = {
+
+                   LeaveStatusCard(
+                       modifier = Modifier, status = relieverStatus, title =relieverName,
+                       designation ="Reliever",
+                       comment = relieverComment,
+                       greyOut=false,
+                       modificationDaysAgo = relieverModificationDaysAgo
+                   )
                    LeaveStatusCard(
                        modifier = Modifier, status = lmStatus, title =lmName,
                        designation ="In-line manager ",
                        comment = lmComment,
-                       greyOut=lmStatus==LeaveStatus.REJECTED.id,
+                       greyOut=false,
                        modificationDaysAgo = lmModificationDaysAgo
                    )
                    LeaveStatusCard(
@@ -169,11 +168,64 @@ fun LeaveStatus(
                        greyOut=lmStatus==LeaveStatus.REJECTED.id,
                        modificationDaysAgo = hrModificationDaysAgo
                    )
+
+
                }
            )
         }
     }
     
+}
+
+@Composable
+fun Indicators(modifier: Modifier = Modifier, lmStatus: String, hrStatus: String,relieverStatus: String,height: Dp){
+
+
+    val step2Color=if (relieverStatus==LeaveStatus.APPROVED.id) yvColor else deactivatedColorDeep
+    val step3Color=if (lmStatus==LeaveStatus.APPROVED.id) yvColor else deactivatedColorDeep
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(11.dp),
+        modifier= modifier
+            .width(24.dp)
+            .height(height),
+        content = {
+            StepIndicator(
+                stepColor = yvColor , stepNumber =1,approved = relieverStatus==LeaveStatus.APPROVED.id,
+                modifier=Modifier
+            )
+            Spacer(
+                modifier= Modifier
+                    .width(2.dp)
+                    .weight(1f)
+                    .background(
+                        color = if (relieverStatus == LeaveStatus.APPROVED.id) yvColor else deactivatedColorDeep,
+                    ),
+
+                )
+
+            StepIndicator(
+                stepColor = step2Color , stepNumber =2,approved = lmStatus==LeaveStatus.APPROVED.id,
+                modifier=Modifier
+            )
+
+            Spacer(
+                modifier= Modifier
+                    .width(2.dp)
+                    .weight(1f)
+                    .background(
+                        color = if (lmStatus == LeaveStatus.APPROVED.id) yvColor else deactivatedColorDeep,
+                    ),
+
+                )
+
+            StepIndicator(
+                stepColor = step3Color , stepNumber =3,approved = hrStatus==LeaveStatus.APPROVED.id,
+                modifier=Modifier
+            )
+        }
+    )
 }
 
 @Composable
@@ -324,7 +376,7 @@ fun ContactInfoExpandable(
                 .fillMaxWidth()
                 .padding(start = 20.dp)) {
             val (titleText, valueText) = createRefs()
-            val guideline = createGuidelineFromAbsoluteRight(0.35f)
+            val guideline = createGuidelineFromAbsoluteRight(0.55f)
             Text(
                 text = "$title:", fontSize = 12.sp, color = bodyTextLightColor,
                 modifier = Modifier.constrainAs(titleText) {
@@ -366,93 +418,126 @@ fun LeaveStatusCard(
         LeaveStatus.APPROVED.id-> leaveColors[1]
         else -> errorMessageColor
     }
-    Row(
-        modifier= Modifier
-            .fillMaxWidth()
-            .background(color = Color(0XFFF2F5F5), shape = RoundedCornerShape(12.dp))
-    ) {
-        Column( modifier = Modifier.padding(start = 11.dp,top=14.dp)) {
+
+        ConstraintLayout(
+            modifier= Modifier
+                .fillMaxWidth()
+                .background(color = Color(0XFFF2F5F5), shape = RoundedCornerShape(12.dp))
+        ) {
+            val (group1,group2,group3)=createRefs()
 
             Column(
-                modifier = Modifier.padding(bottom = 11.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .constrainAs(group1){
+                        start.linkTo(parent.start,11.dp)
+                        top.linkTo(parent.top,14.dp)
+                       //end.linkTo(group3.start,16.dp)
+
+                    },
                 content = {
                     Text(
                         text =title,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
-                        color = if (greyOut) deactivatedColorDeep else bodyTextLightColor
-                    )
+                        color = if (greyOut) deactivatedColorDeep else bodyTextLightColor,
+                    modifier = Modifier.padding(end = 8.dp)
+
+                        )
 
                     Text(
                         text =designation,
                         fontSize = 12.sp,
                         color =if (greyOut) deactivatedColorDeep else bodyTextLightColor,
+                        modifier=Modifier.padding(top = 4.dp, bottom = 13.dp)
                     )
                 }
             )
 
-            if (!comment.isNullOrEmpty())
+            if (!comment.isNullOrEmpty()){
                 Column(
-                modifier = Modifier.padding(top = 9.dp, bottom = 11.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier=Modifier.constrainAs(group2){
+                        //top.linkTo(group1.bottom,20.dp)
+                       // bottom.linkTo(parent.bottom,11.dp)
+                        start.linkTo(group1.start)
+                        end.linkTo(parent.end,12.dp)
+                        top.linkTo(group1.bottom,7.dp)
+                        width= Dimension.fillToConstraints
+                    },
+                    content = {
+                        Text(
+                            text ="Comment-",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (greyOut) deactivatedColorDeep else bodyTextDeepColor,
+                            modifier=Modifier.padding(bottom = 8.dp)
+                        )
+
+                        Text(
+                            text =comment.toString(),
+                            fontSize = 12.sp,
+                            color = if (greyOut) deactivatedColorDeep else bodyTextLightColor,
+                            modifier=Modifier.padding(bottom = 11.dp)
+
+                        )
+                    }
+                )
+            }
+
+
+            Column(
+                modifier = Modifier
+                    .constrainAs(group3){
+                        top.linkTo(parent.top,18.5.dp)
+                        //bottom.linkTo(parent.bottom,13.5.dp)
+                        end.linkTo(parent.end,12.dp)
+                    },
+                verticalArrangement = Arrangement.spacedBy(9.dp),
                 content = {
-                    Text(
-                        text ="Comment-",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = bodyTextDeepColor
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+                        modifier=Modifier.background(color = statusColor.copy(alpha = 0.1f), shape = RoundedCornerShape(4.dp)),
+                        content = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_clock), contentDescription =null,
+                                tint = if (greyOut) deactivatedColorDeep else statusColor,
+                                modifier = Modifier
+                                    //.size(11.dp)
+                                    .padding(start = 12.5.dp, top = 4.dp, bottom = 4.dp)
+                            )
+                            Text(
+                                text = status, fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,color=if (greyOut) deactivatedColorDeep else statusColor,
+                                modifier = Modifier.padding(end=12.dp, top = 4.dp, bottom = 4.dp)
+                            )
+                        }
                     )
 
                     Text(
-                        text =comment.toString(),
-                        fontSize = 12.sp,
-                        color = if (greyOut) deactivatedColorDeep else bodyTextLightColor,
+                        text = modificationDaysAgo, fontSize = 10.sp, color = bodyTextLightColor,
                         modifier= Modifier
-                            .fillMaxWidth()
-                            .padding(end = 12.dp)
+                            .padding(bottom = 13.5.dp)
+                            .align(Alignment.CenterHorizontally),
                     )
                 }
             )
         }
 
+        //Spacer(modifier = modifier.weight(1f))
 
-        Spacer(modifier = modifier.weight(1f))
-
-        Column(
-            modifier = Modifier.padding(top = 18.5.dp, bottom = 13.5.dp,end=12.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp),
-            content = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.5.dp),
-                    modifier=Modifier.background(color = statusColor.copy(alpha = 0.1f), shape = RoundedCornerShape(4.dp)),
-                    content = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_clock), contentDescription =null,
-                            tint = if (greyOut) deactivatedColorDeep else statusColor,
-                            modifier = Modifier
-                                .size(11.dp)
-                                .padding(start = 12.5.dp, top = 4.dp, bottom = 4.dp)
-                        )
-                        Text(
-                            text = status, fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,color=if (greyOut) deactivatedColorDeep else statusColor,
-                            modifier = Modifier.padding(end=12.dp, top = 4.dp, bottom = 4.dp)
-                        )
-                    }
-                )
-
-                Text(
-                    text = modificationDaysAgo, fontSize = 10.sp, color = bodyTextLightColor,
-                    modifier=Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-        )
-
-
-    }
 }
+
+@Composable
+fun VerticalLineBetweenComposables(modifier: Modifier=Modifier) {
+    Box(
+        modifier = modifier
+            .padding(vertical = 32.dp)
+            .fillMaxHeight()
+            .width(1.dp)
+            .background(Color.Red)
+    )
+}
+
 
 @Preview
 @Composable
@@ -462,8 +547,8 @@ fun LeaveStatusCardPreview(){
             LeaveStatusCard(
                 status ="Pending", title ="Famous Echichioya",
                 designation ="In-line manager",
-                comment ="Abeg shey na me go do your work", greyOut =false,
-                modificationDaysAgo = "2 days ago"
+                comment ="Dey play oo. Shey na me go do your work abi?", greyOut =false,
+                modificationDaysAgo = "2023-06-29 00:04:10".toTimeAgo()
             )
         }
     }
@@ -497,7 +582,11 @@ fun LeaveStatusPreview(){
                 lmStatus = "Pending", hrStatus ="Pending",
                 lmName ="Famous Echichioya", hrComment ="", lmComment ="",
                 hrModificationDaysAgo = "1 day ago",
-                lmModificationDaysAgo = "Not yet"
+                lmModificationDaysAgo = "Not yet",
+                relieverStatus = "Pending",
+                relieverName = "Tobi Onasanya",
+                relieverComment = "",
+                relieverModificationDaysAgo = "Not yet"
             )
         }
     }
@@ -511,17 +600,36 @@ fun LeaveDetailScreenPreview(){
             LeaveDetailScreen(
                 leaveDetailExpanded = false,
                 onLeaveDetailContentChangeRequested = {},
-                onContactInfoContentChangeRequested = {},
-                contactInfoExpanded = false,
+                //onContactInfoContentChangeRequested = {},
+                //contactInfoExpanded = false,
                 leaveRequest = LeaveRequest(
-                    id = "", linemanagerStatus = "Approved", hrStatus = "Pending", linemanagerApprovalDate = "",
-                    hrApprovalDate = "", leaveType = "Annual", startDate = "Wed Nov 20 2023", endDate = "Mon Jan 2024",
-                    relieverName = "Tobi Onasanya", hrComment = "Dey play oo. shey na me go do your work",
-                    linemanagerComment = "Enjoy your leave. See me before you proceed", reasonForLeave = "I really need time of.I'm bored of work",
-                    contactName = "Adesoji Olowa", contactNumber = "08037582010", contactEmail = "adesoji@youverify.ci",
-                    linemanagerName = "Timothy Akinyelu", linemanagerEmail = "timothy@youverify.co", status = "",
-                    email = "", leaveDaysRequested = "8"
-                )
+                    id = "",
+                    linemanagerStatus = "Approved",
+                    hrStatus = "Pending",
+                    linemanagerApprovalDate = "",
+                    hrApprovalDate = "",
+                    status = "",
+                    email = "",
+                    leaveType = "Annual",
+                    startDate = "Wed Nov 20 2023",
+                    endDate = "Mon Jan 30 2024",
+                    reasonForLeave = "I really need time of.I'm bored of work",
+                    //contactName = "Adesoji Olowa",
+                    //contactEmail = "adesoji@youverify.ci",
+                    //contactNumber = "08037582010",
+                    relieverName = "Tobi Onasanya",
+                    linemanagerEmail = "timothy@youverify.co",
+                    linemanagerName = "Timothy Akinyelu",
+                    leaveDaysRequested = "8",
+                    linemanagerComment = "Enjoy your leave. See me before you proceed",
+                    hrComment = "Dey play oo. shey na me go do your work",
+                    relieverApprovalDate = "Not yet",
+                    relieverComment = "",
+                    relieverEmail = "ade@gmail.com",
+                    relieverStatus = "Pending",
+                    alternativePhoneNumber = "08088987385"
+                ),
+                onBackArrowClicked = {}
             )
         }
     }

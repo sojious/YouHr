@@ -21,6 +21,11 @@ data class LoginWithPassWordRequest(
     val email: String,
     val password: String
 )
+
+data class ChangePasswordRequest(
+    val password: String,
+    val newPassword: String
+)
 data class LoginWithCodeRequest(
     val email: String,
     val passcode: Int

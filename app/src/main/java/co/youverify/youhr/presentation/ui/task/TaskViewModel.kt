@@ -35,6 +35,9 @@ class TaskViewModel @Inject constructor(
 
     var allTasks: List<Task>? = null
     private set
+
+    var filteredTasks: List<Task>? = null
+        private set
     var internetUnavailable by mutableStateOf(false)
     private set
     var isFetchingMore by mutableStateOf(false)

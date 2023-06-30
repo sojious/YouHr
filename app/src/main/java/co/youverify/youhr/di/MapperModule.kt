@@ -14,6 +14,8 @@ import co.youverify.youhr.data.mapper.DtoToDbLeaveSummaryMapper
 import co.youverify.youhr.data.mapper.DtoToDbProfileMapper
 import co.youverify.youhr.data.mapper.DtoToDbTaskListMapper
 import co.youverify.youhr.data.mapper.DtoToDbTaskMapper
+import co.youverify.youhr.data.mapper.DtoToDomainFilteredUserListMapper
+import co.youverify.youhr.data.mapper.DtoToDomainFilteredUserMapper
 import co.youverify.youhr.data.model.ApiTask
 import dagger.Module
 import dagger.Provides
@@ -73,6 +75,15 @@ object MapperModule {
     @Provides
     @Singleton
     fun provideDbToDomainLeaveSummaryMapper(): DbToDomainLeaveSummaryMapper = DbToDomainLeaveSummaryMapper()
+
+
+    @Provides
+    @Singleton
+    fun provideDtoToDomainFilteredUserMapper(): DtoToDomainFilteredUserMapper = DtoToDomainFilteredUserMapper()
+
+    @Provides
+    @Singleton
+    fun provideDtoDomainFilteredUserListMapper(filteredUserMapper:DtoToDomainFilteredUserMapper): DtoToDomainFilteredUserListMapper = DtoToDomainFilteredUserListMapper(filteredUserMapper)
 
 
 

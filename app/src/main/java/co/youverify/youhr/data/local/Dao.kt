@@ -44,4 +44,8 @@ interface LeaveDao{
     suspend fun getLeaveSummary():DbLeaveSummary?
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveLeaveSummary(summary: DbLeaveSummary)
+
+    @Query("DELETE FROM leave_request")
+    suspend fun clearAllLeaveRequests()
+
 }

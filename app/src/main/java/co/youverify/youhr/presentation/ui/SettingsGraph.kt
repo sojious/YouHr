@@ -1,18 +1,27 @@
 package co.youverify.youhr.presentation.ui
 
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.navigation
+import co.youverify.youhr.presentation.ChangePasscode
+import co.youverify.youhr.presentation.ChangePassword
 import co.youverify.youhr.presentation.Profile
 import co.youverify.youhr.presentation.Settings
 import co.youverify.youhr.presentation.SettingsGraph
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
+import co.youverify.youhr.presentation.ui.settings.ChangePasscodeScreen
+import co.youverify.youhr.presentation.ui.settings.ChangePasswordScreen
 import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
 import co.youverify.youhr.presentation.ui.settings.SettingsScreen
 import co.youverify.youhr.presentation.ui.settings.profile.ProfileScreen
 import co.youverify.youhr.presentation.ui.settings.profile.ProfileViewModel
 import com.google.accompanist.navigation.animation.composable
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.SettingsGraph(
@@ -27,31 +36,63 @@ fun NavGraphBuilder.SettingsGraph(
         composable(route= Settings.route){
             SettingsScreen(
                 profileBitmap = settingsViewModel.currentUser?.displayPictureBitmap,
+                name = settingsViewModel.currentUser?.firstName?:"",
+                email = settingsViewModel.currentUser?.email?:"",
                 onSettingsItemClicked = {index->
                     settingsViewModel.onSettingsItemClicked(index)
                 },
                 onProfilePicClicked = {settingsViewModel.onProfilePicClicked()},
-                email = settingsViewModel.currentUser?.email?:"",
-                name = settingsViewModel.currentUser?.firstName?:"",
                 settingsViewModel = settingsViewModel,
-                homeViewModel=homeViewModel
+                homeViewModel=homeViewModel,
+                loading = settingsViewModel.settingsScreenLoading
 
-            )
+                )
         }
 
 
         composable(route= Profile.route){
+            val uiState by profileViewModel.uiStateFlow.collectAsState()
+            val context= LocalContext.current
             ProfileScreen(
                 user = profileViewModel.currentUser,
                 onBackArrowClicked = {},
-                onEditProfileIconClicked = {},
-                onEditProfileFieldValueChanged = { _, _->},
-                onSaveProfileItemChanges = {},
-                onCancelProfileItemChanges = {},
-                showSuccessDialog = false,
+                onSaveProfileItemChanges = {fieldType,newValue->
+                    profileViewModel.updateProfileField(fieldType,newValue)
+                                           },
                 settingsViewModel =settingsViewModel,
                 profileViewModel=profileViewModel,
-                onSaveChangesButtonClicked = { profileViewModel.updateProfile() }
+                onSaveChangesButtonClicked = { uri->
+                    profileViewModel.updateProfile(uri,homeViewModel,context)
+                                             },
+                profileFieldsValue = profileViewModel.profileFieldValues,
+                uiState = uiState
+            )
+        }
+
+
+        composable(route= ChangePassword.route){
+            //val cts= rememberCoroutineScope()
+            val uiState by settingsViewModel.changePasswordUiStateFlow.collectAsState()
+           ChangePasswordScreen(
+               //fieldsState = settingsViewModel.changePasswordScreenInputFieldsState,
+               //onChangePasswordButtonClicked = { cts.launch { settingsViewModel.changePassword() } },
+               uiState = uiState,
+               onHideDialogRequest = { settingsViewModel.hideSuccessDialogForPasswordChange() },
+               settingsViewModel = settingsViewModel,
+               onBackArrowClicked = {settingsViewModel.onBackArrowClicked()}
+           )
+        }
+
+        composable(route= ChangePasscode.route){
+            val cts= rememberCoroutineScope()
+            val uiState by settingsViewModel.changePasscodeUiStateFlow.collectAsState()
+            ChangePasscodeScreen(
+                //fieldsState = settingsViewModel.changePasscodeScreenInputFieldsState,
+                //onChangePasscodeButtonClicked = {cts.launch { settingsViewModel.changePasscode() }},
+                uiState = uiState,
+                onHideDialogRequest = { settingsViewModel.hideSuccessDialogForPasscodeChange() },
+                settingsViewModel = settingsViewModel,
+                onBackArrowClicked = {settingsViewModel.onBackArrowClicked()}
             )
         }
     }

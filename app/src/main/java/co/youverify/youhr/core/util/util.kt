@@ -4,10 +4,13 @@ import TaskProgressColor
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.icu.util.TimeZone
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.presentation.ui.task.TaskStatus
 import com.github.marlonlom.utilities.timeago.TimeAgo
+import com.google.gson.JsonSyntaxException
+import org.json.JSONObject
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
@@ -44,7 +47,7 @@ fun getFormattedLeaveDate(dateString:String): String {
 
 fun getGreetingMessage():String{
 
-    return when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+    return when (Calendar.getInstance(TimeZone.getDefault()).get(Calendar.HOUR_OF_DAY)) {
         in 0..11 -> "Good Morning"
         in 12..15 -> "Good Afternoon"
         in 16..20 -> "Good Evening"
@@ -52,7 +55,37 @@ fun getGreetingMessage():String{
         else -> "Hello"
     }
 }
-fun String.toTimeAgo(): String { return TimeAgo.using(this.toEpochMillis()) }
+fun String.toTimeAgo(): String {
+    //return TimeAgo.using(this.toEpochMillis())
+
+
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.getDefault())
+    val date = dateFormat.parse(this)
+
+    val seconds = ((Date().time - date.time) / 1000).toInt()
+    var interval = seconds / 31536000
+
+    if (interval > 1) {
+        return "$interval years"
+    }
+    interval = seconds / 2592000
+    if (interval > 1) {
+        return "$interval months"
+    }
+    interval = seconds / 86400
+    if (interval > 1) {
+        return "$interval days"
+    }
+    interval = seconds / 3600
+    if (interval > 1) {
+        return "$interval hours"
+    }
+    interval = seconds / 60
+    if (interval > 1) {
+        return "$interval minutes"
+    }
+    return "$seconds seconds"
+}
 fun Task.getStatus(): TaskStatus {
     return when(status){
         TaskStatus.COMPLETED.id -> TaskStatus.COMPLETED
@@ -131,7 +164,7 @@ fun getFormattedDay(dayString:String): String {
 }
 fun Long.toCardinalDateString():String{
 
-    val calendar = Calendar.getInstance();
+    val calendar = Calendar.getInstance(TimeZone.getDefault());
     calendar.timeInMillis = this;
     calendar.timeZone = timeZone;
 
@@ -155,7 +188,7 @@ fun Long.toCardinalDateString():String{
 
 fun Long.toOrdinalDateString(includeOf:Boolean=true):String{
 
-    val calendar = Calendar.getInstance()
+    val calendar = Calendar.getInstance(TimeZone.getDefault())
     calendar.timeInMillis = this
 
     val month= calendar.get(Calendar.MONTH) + 1 // Note: Month value in Calendar API is 0-based
@@ -247,7 +280,7 @@ fun String.toEpochMillis(): Long {
         return 0; // or handle the parse exception accordingly
     }
 
-    val calendar = Calendar.getInstance();
+    val calendar = Calendar.getInstance(TimeZone.getDefault());
     calendar.time = date;
 
     val epochMillis = calendar.timeInMillis;
@@ -267,14 +300,34 @@ fun String.capitalizeWords():String =
 
 fun Long.toFormattedDateString(pattern: String): String {
 
-
-    val calendar = Calendar.getInstance();
+    val calendar = Calendar.getInstance(TimeZone.getDefault());
     calendar.timeInMillis = this
-
     val formatter = SimpleDateFormat(pattern, Locale.ENGLISH)
     formatter.timeZone = timeZone
 
     return formatter.format(calendar.time)
+}
+
+fun Long.toHrFormattedDateString(): String {
+
+    val calendar = Calendar.getInstance(TimeZone.getDefault());
+    calendar.timeInMillis = this
+    val formattedDay= when(calendar[Calendar.DAY_OF_WEEK]){
+        1->"Sun"
+        2->"Mon"
+        3->"Tue"
+        4->"Wed"
+        5->"Thu"
+        6->"Fri"
+        else->"Sat"
+    }
+
+    val month= getFormattedMonth(calendar[Calendar.MONTH]+1)
+    val dayOfMonth=calendar[Calendar.DAY_OF_MONTH]
+    val year=calendar[Calendar.YEAR]
+
+
+    return "$formattedDay $month $dayOfMonth $year"
 }
 
  suspend fun<T:Any> handleApi(callApi: suspend () -> Response<T>): Result<T> {
@@ -289,7 +342,16 @@ fun Long.toFormattedDateString(pattern: String): String {
             Result.Success(data = body)
         else
             //for a response with error message
-            Result.Error(code=response.code(), message = response.errorBody().toString())
+        {
+            var errorMessage = ""
+            try {
+                val jsOnErrorObject= JSONObject(response.errorBody()?.string()!!)
+                errorMessage=jsOnErrorObject.getString("message")
+            }catch (e:Exception){
+               e.printStackTrace()
+            }
+            Result.Error(code=response.code(), message = errorMessage)
+        }
 
 
        //for exceptions
@@ -300,6 +362,10 @@ fun Long.toFormattedDateString(pattern: String): String {
     }catch (exception:Throwable){
         Result.Exception(e=exception, genericMessage = "Oops..An error occurred from the server")
     }
+   catch (exception:JsonSyntaxException){
+       //Result.Exception(e=exception, genericMessage = "Oops..An error occurred from the server")
+       throw exception
+   }
 
 
 }

@@ -13,12 +13,15 @@ import co.youverify.youhr.core.util.EMPTY_PASSCODE_VALUE
 import co.youverify.youhr.core.util.INPUT_ERROR_CODE
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.data.model.CreateCodeRequest
+import co.youverify.youhr.domain.model.FilteredUser
 import co.youverify.youhr.domain.repository.PreferencesRepository
 import co.youverify.youhr.domain.use_case.CreateCodeUseCase
+import co.youverify.youhr.domain.use_case.FilterAllUserUseCase
 import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
+import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -26,6 +29,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,8 +40,12 @@ class ConfirmCodeViewModel @Inject constructor(
     private val createCodeUseCase: CreateCodeUseCase,
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val preferencesRepository: PreferencesRepository,
+    private val filterAllUserUseCase: FilterAllUserUseCase,
 ) :ViewModel(){
 
+
+    var allUsers:List<FilteredUser> = emptyList()
+    private set
     var activeCodeInputFieldIndex by mutableStateOf(1)
         private set
     //initialize codeinputField variables
@@ -89,7 +97,7 @@ class ConfirmCodeViewModel @Inject constructor(
 
 
 
-    fun createCode(createCodeViewModel: CreateCodeViewModel,context: Context) {
+    fun createCode(createCodeViewModel: CreateCodeViewModel,context: Context,settingsViewModel: SettingsViewModel) {
         //navigator.navigatePopToInclusive(toRoute = CodeCreationSuccess.route, popToRoute = CreateCode.route)
 
         viewModelScope.launch {
@@ -117,14 +125,21 @@ class ConfirmCodeViewModel @Inject constructor(
                 when(networkResult){
 
                    is Result.Success->{
+
+                       //settingsViewModel.setCurrentPasscode(passcode2.toString())
+
+                       val savedPasscode=preferencesRepository.getUserPasscode().first()
+                       if (savedPasscode.isEmpty()) preferencesRepository.saveUserPasscode(passcode2.toString())
                        // Download and save the user profile pic to the app internal storage folder
                        saveUserProfilePic(context)
+                       //Get the list of users
+                       //getAllUser()
                     }
                     is Result.Error->{
 
-                        val authError = if (networkResult.code == INPUT_ERROR_CODE) networkResult.message.toString() else "An unexpected error occurred! try again! "
+                        //val authError = if (networkResult.code == INPUT_ERROR_CODE) networkResult.message.toString() else "An unexpected error occurred! try again! "
                         isErrorCode = true
-                        _uIStateFlow.value = _uIStateFlow.value.copy(loading = false, authenticationError = authError )
+                        _uIStateFlow.value = _uIStateFlow.value.copy(loading = false, authenticationError = networkResult.message?:"An unexpected error occurred! try again! " )
                     }
                     is Result.Exception->{
                         _uIStateFlow.value = _uIStateFlow.value.copy(loading = false)

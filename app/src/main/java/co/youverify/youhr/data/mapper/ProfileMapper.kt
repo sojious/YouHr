@@ -1,7 +1,9 @@
 package co.youverify.youhr.data.mapper
 
 import co.youverify.youhr.data.local.DbUser
+import co.youverify.youhr.data.model.FilterUserDto
 import co.youverify.youhr.data.model.UserProfileResponse
+import co.youverify.youhr.domain.model.FilteredUser
 import co.youverify.youhr.domain.model.User
 
 class DtoToDbProfileMapper:Mapper<UserProfileResponse, DbUser>{
@@ -9,13 +11,13 @@ class DtoToDbProfileMapper:Mapper<UserProfileResponse, DbUser>{
 
         return DbUser(
             id = input.data.id,
-            role = input.data.role?:"user",
-            jobRole = input.data.jobRole?:"NA",
-            status = input.data.status?:"NA",
-            email = input.data.email,
-            firstName = input.data.firstName,
-            lastName = input.data.lastName,
-            password = input.data.password,
+            role = input.data.role?:"",
+            jobRole = input.data.jobRole?:"",
+            status = input.data.status?:"",
+            email = input.data.email?:"",
+            firstName = input.data.firstName?:"",
+            lastName = input.data.lastName?:"",
+            password = input.data.password?:"",
             middleName=input.data.middleName?:"",
             passcode = input.data.passcode?:"",
             address = input.data.address?:"",
@@ -54,6 +56,24 @@ class DbToDomainProfileMapper:Mapper<DbUser, User>{
             displayPictureUrl = input.displayPicture,
             phoneNumber = input.phoneNumber
         )
+    }
+
+}
+
+class DtoToDomainFilteredUserMapper:Mapper<FilterUserDto, FilteredUser>{
+    override fun map(input: FilterUserDto): FilteredUser {
+
+       return FilteredUser(firstName = input.firstName?:"", lastName=input.lastName?:"",email = input.email, id = input.id)
+    }
+
+}
+
+class DtoToDomainFilteredUserListMapper(private val filteredUserMapper: DtoToDomainFilteredUserMapper):Mapper<List<FilterUserDto>, List<FilteredUser>>{
+
+    override fun map(input: List<FilterUserDto>): List<FilteredUser> {
+        return  input.map {
+            filteredUserMapper.map(it)
+        }
     }
 
 }

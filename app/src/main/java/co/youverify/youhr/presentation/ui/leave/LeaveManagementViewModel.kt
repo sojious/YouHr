@@ -8,15 +8,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.core.util.toFormattedDateString
+import co.youverify.youhr.data.model.FilterUserDto
 import co.youverify.youhr.data.model.LeaveApplicationRequest
+import co.youverify.youhr.domain.model.FilteredUser
 import co.youverify.youhr.domain.model.LeaveRequest
 import co.youverify.youhr.domain.model.LeaveSummary
+import co.youverify.youhr.domain.model.User
 import co.youverify.youhr.domain.use_case.CreateLeaveRequestUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveSummaryUseCase
 import co.youverify.youhr.presentation.LeaveDetail
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
+import co.youverify.youhr.presentation.ui.login.ConfirmCodeViewModel
+import co.youverify.youhr.presentation.ui.login.LoginWithCodeViewModel
+import co.youverify.youhr.presentation.ui.login.LoginWithPassWordViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +43,15 @@ class LeaveManagementViewModel @Inject constructor(
 
     var allLeaveRequests:List<LeaveRequest> by mutableStateOf(emptyList())
         private set
+
+     var allUsers:List<FilteredUser> = emptyList()
+        private set
+
+    var userGender ="Male"
+        private set
+
+    var allLineManagers:List<FilteredUser> = emptyList()
+        private set
     var creatingNewLeaveRequest by mutableStateOf(false)
     private set
 
@@ -52,28 +67,29 @@ class LeaveManagementViewModel @Inject constructor(
     private val _uIEventFlow:MutableSharedFlow<UiEvent> = MutableSharedFlow()
     val uIEventFlow=_uIEventFlow.asSharedFlow()
 
-    val leaveApplicationFormState=LeaveApplicationFormState()
-    val stepIndicatorBoxState=StepIndicatorBoxState()
 
 
 
-    fun createNewLeaveRequest(){
+    fun createNewLeaveRequest(leaveApplicationFormState: LeaveApplicationFormState){
 
         creatingNewLeaveRequest=true
         viewModelScope.launch {
             //_uIStateFlow.value=_uIStateFlow.value.copy(creatingNewLeaveRequest = true)
 
             val newLeaveRequest=LeaveApplicationRequest(
-                leaveType = leaveApplicationFormState.selectedLeaveType.id,
+                leaveType = "${leaveApplicationFormState.selectedLeaveType.id} Leave",
                 startDate = leaveApplicationFormState.leaveStartDateMillis?.toFormattedDateString("yyyy-MM-dd")!!,
                 endDate = leaveApplicationFormState.leaveEndDateMillis?.toFormattedDateString("yyyy-MM-dd")!!,
                 reasonForLeave = leaveApplicationFormState.reason,
-                contactName = leaveApplicationFormState.contactName,
-                contactEmail = leaveApplicationFormState.contactEmail,
-                contactNumber = leaveApplicationFormState.phoneNumber,
-                releiverName = leaveApplicationFormState.reliever,
+                //contactName = leaveApplicationFormState.contactName,
+                //contactEmail = leaveApplicationFormState.contactEmail,
+                //contactNumber = leaveApplicationFormState.phoneNumber,
+                relieverName = leaveApplicationFormState.reliever,
                 linemanagerEmail = leaveApplicationFormState.lineManagerEmail,
-                linemanagerName = leaveApplicationFormState.lineManager
+                linemanagerName = leaveApplicationFormState.lineManager,
+                relieverEmail = leaveApplicationFormState.relieverEmail,
+                alternativeNumber = leaveApplicationFormState.alternativePhoneNumber,
+                relieverId =leaveApplicationFormState.relieverId
             )
 
            createLeaveRequestUseCase.invoke(request = newLeaveRequest).collect{newLeaveRequestResult->
@@ -84,7 +100,7 @@ class LeaveManagementViewModel @Inject constructor(
                    }
                    is Result.Error->{
                        creatingNewLeaveRequest = false
-                       _uIEventFlow.emit(UiEvent.ShowToast("An unexpected error occurred!!..Pls try again"))
+                       _uIEventFlow.emit(UiEvent.ShowToast(newLeaveRequestResult.message?:"An unexpected error occurred!!..Pls try again"))
                    }
                    is Result.Exception->{
                       // _uIStateFlow.value=_uIStateFlow.value.copy(creatingNewLeaveRequest = false)
@@ -229,6 +245,21 @@ class LeaveManagementViewModel @Inject constructor(
         navigator.navigateBack()
     }
 
+    fun initializeUsers(
+        loginWithCodeViewModel: LoginWithCodeViewModel,
+        loginWithPassWordViewModel: LoginWithPassWordViewModel
+    ){
+        allUsers = if (loginWithCodeViewModel.allUsers.isNotEmpty()) loginWithCodeViewModel.allUsers
+        else loginWithPassWordViewModel.allUsers
+
+        allLineManagers=if (loginWithCodeViewModel.allLineManagers.isNotEmpty()) loginWithCodeViewModel.allLineManagers
+        else loginWithPassWordViewModel.allLineManagers
+    }
+
+    fun updateUserGender(gender: String) { userGender=gender}
+    fun onBackArrowClicked() {
+        navigator.navigateBack()
+    }
 
 
 }

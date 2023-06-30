@@ -15,6 +15,7 @@ import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.login.*
 import co.youverify.youhr.presentation.ui.login.CreateCodeScreen
 import co.youverify.youhr.presentation.ui.login.CreateCodeViewModel
+import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
 
 import com.google.accompanist.navigation.animation.composable
 
@@ -26,6 +27,7 @@ fun NavGraphBuilder.loginGraph(
     resetPassWordViewModel: ResetPassWordViewModel,
     createCodeViewModel: CreateCodeViewModel,
     confirmCodeViewModel: ConfirmCodeViewModel,
+    settingsViewModel: SettingsViewModel
 
 ){
     navigation(startDestination =InputEmail.route , route =LoginGraph.route ){
@@ -61,7 +63,7 @@ fun NavGraphBuilder.loginGraph(
                 onPasswordValueChanged ={newValue->
                     loginWithPassWordViewModel.updateUserPassword(newValue)
                 } ,
-                onLoginButtonClicked = {loginWithPassWordViewModel.logUserIn()},
+                onLoginButtonClicked = {loginWithPassWordViewModel.logUserIn(settingsViewModel)},
                 onHidePasswordIconClicked = {loginWithPassWordViewModel.togglePasswordVisibility()},
                 onForgotPasswordClicked = { loginWithPassWordViewModel.onForgetPasswordClicked() },
                 uiState = uiState,
@@ -148,25 +150,25 @@ fun NavGraphBuilder.loginGraph(
                     if (codeIndex in 2..5){
                         if (newValue.length==1) {
                             createCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
-                            focusManager.moveFocus(FocusDirection.Next)
+                            //focusManager.moveFocus(FocusDirection.Next)
 
                         }
                         if (newValue.isEmpty()){
                             createCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
-                            focusManager.moveFocus(FocusDirection.Previous)
+                            //focusManager.moveFocus(FocusDirection.Previous)
                         }
                     }
 
                     if(codeIndex==1 && newValue.isEmpty()) return@CreateCodeScreen
                     if(codeIndex==1 && newValue.isNotEmpty()) {
                         createCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
-                        focusManager.moveFocus(FocusDirection.Next)
+                        //focusManager.moveFocus(FocusDirection.Next)
                     }
 
                     if (codeIndex==6 && createCodeViewModel.code6.isNotEmpty()) focusManager.clearFocus()
                     if (codeIndex==6 && createCodeViewModel.code6.isEmpty()) {
                         createCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
-                        focusManager.moveFocus(FocusDirection.Previous)
+                        //focusManager.moveFocus(FocusDirection.Previous)
                     }
 
                 },
@@ -198,7 +200,7 @@ fun NavGraphBuilder.loginGraph(
                 isErrorCode =confirmCodeViewModel.isErrorCode,
                 activeCodeInputFieldIndex = confirmCodeViewModel.activeCodeInputFieldIndex,
                 showSuccessDialog = confirmCodeViewModel.showSuccessDialog,
-                onCreateCodeButtonClicked = { confirmCodeViewModel.createCode(createCodeViewModel, context) },
+                onCreateCodeButtonClicked = { confirmCodeViewModel.createCode(createCodeViewModel, context,settingsViewModel) },
                 onProceedButtonClicked = {confirmCodeViewModel.onProceedButtonClicked()},
                 onCodeValueChanged = {newValue,codeIndex->
                     confirmCodeViewModel.updateCode(newValue,codeIndex)
@@ -206,25 +208,25 @@ fun NavGraphBuilder.loginGraph(
                     if (codeIndex in 2..5){
                         if (newValue.length==1) {
                             confirmCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
-                            focusManager.moveFocus(FocusDirection.Next)
+                            //focusManager.moveFocus(FocusDirection.Next)
 
                         }
                         if (newValue.isEmpty()){
                             confirmCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
-                            focusManager.moveFocus(FocusDirection.Previous)
+                            //focusManager.moveFocus(FocusDirection.Previous)
                         }
                     }
 
                     if(codeIndex==1 && newValue.isEmpty()) return@ConfirmCodeScreen
                     if(codeIndex==1 && newValue.isNotEmpty()) {
                         confirmCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex+1)
-                        focusManager.moveFocus(FocusDirection.Next)
+                        //focusManager.moveFocus(FocusDirection.Next)
                     }
 
                     if (codeIndex==6 && confirmCodeViewModel.code6.isNotEmpty()) focusManager.clearFocus()
                     if (codeIndex==6 && confirmCodeViewModel.code6.isEmpty()) {
                         confirmCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
-                        focusManager.moveFocus(FocusDirection.Previous)
+                        //focusManager.moveFocus(FocusDirection.Previous)
                     }
 
 

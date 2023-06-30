@@ -14,12 +14,17 @@ import co.youverify.youhr.presentation.ui.leave.LeaveDetailScreen
 import co.youverify.youhr.presentation.ui.leave.LeaveManagementScreen
 import co.youverify.youhr.presentation.ui.leave.LeaveManagementViewModel
 import co.youverify.youhr.presentation.ui.leave.LeaveRequestScreen
+import co.youverify.youhr.presentation.ui.login.ConfirmCodeViewModel
+import co.youverify.youhr.presentation.ui.login.LoginWithCodeViewModel
+import co.youverify.youhr.presentation.ui.login.LoginWithPassWordViewModel
 import com.google.accompanist.navigation.animation.composable
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.leaveManagementGraph(
     leaveManagementViewModel:LeaveManagementViewModel,
-    homeViewModel: HomeViewModel
+    homeViewModel: HomeViewModel,
+    loginWithCodeViewModel: LoginWithCodeViewModel,
+    loginWithPassWordViewModel: LoginWithPassWordViewModel
 ){
     navigation(
         startDestination = LeaveManagement.route,
@@ -36,7 +41,8 @@ fun NavGraphBuilder.leaveManagementGraph(
                 homeViewModel = homeViewModel,
                 leaveManagementViewModel = leaveManagementViewModel,
                 onLeaveHistoryItemClicked = {leaveManagementViewModel.displayLeaveDetail(it)},
-                onRefresh = {leaveManagementViewModel.onRefresh()}
+                onRefresh = {leaveManagementViewModel.onRefresh()},
+                userGender = leaveManagementViewModel.userGender
 
             )
         }
@@ -53,20 +59,22 @@ fun NavGraphBuilder.leaveManagementGraph(
             LeaveDetailScreen(
                 leaveDetailExpanded = leaveDetailUiState.leaveDetailExpanded,
                 onLeaveDetailContentChangeRequested = {leaveManagementViewModel.updateLeaveDetailExpanded()},
-                onContactInfoContentChangeRequested = {leaveManagementViewModel.updateContactInfoExpanded()},
-                contactInfoExpanded =leaveDetailUiState.contactInfoExpanded,
-                leaveRequest= currentLeave
+                leaveRequest= currentLeave,
+                onBackArrowClicked = {leaveManagementViewModel.onBackArrowClicked()}
             )
         }
 
         composable(route=LeaveRequest.route){
             LeaveRequestScreen(
-                leaveApplicationFormState =leaveManagementViewModel.leaveApplicationFormState ,
-                stepIndicatorBoxState =leaveManagementViewModel.stepIndicatorBoxState,
-                onSubmit = {leaveManagementViewModel.createNewLeaveRequest()},
+                onSubmit = {leaveManagementViewModel.createNewLeaveRequest(it)},
                 onDialogCloseClicked = {leaveManagementViewModel.onDialogCloseClicked()},
                 showDialog =leaveManagementViewModel.showNewLeaveRequestSuccessDialog,
-                creatingRequest = leaveManagementViewModel.creatingNewLeaveRequest
+                creatingRequest = leaveManagementViewModel.creatingNewLeaveRequest,
+                leaveManagementViewModel = leaveManagementViewModel,
+                loginWithCodeViewModel = loginWithCodeViewModel,
+                loginWithPassWordViewModel = loginWithPassWordViewModel,
+                onBackArrowClicked = {leaveManagementViewModel.onBackArrowClicked()}
+
             )
         }
     }

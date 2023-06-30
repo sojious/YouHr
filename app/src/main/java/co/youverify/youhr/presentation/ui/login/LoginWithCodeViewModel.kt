@@ -6,17 +6,23 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.*
+import co.youverify.youhr.data.model.FilterUserDto
 import co.youverify.youhr.data.model.LoginWithCodeRequest
 import co.youverify.youhr.data.remote.TokenInterceptor
+import co.youverify.youhr.domain.model.FilteredUser
 import co.youverify.youhr.domain.repository.PreferencesRepository
+import co.youverify.youhr.domain.use_case.FilterAllLineManagerUseCase
+import co.youverify.youhr.domain.use_case.FilterAllUserUseCase
 import co.youverify.youhr.domain.use_case.LoginWithCodeUseCase
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
+import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,7 +32,9 @@ class LoginWithCodeViewModel @Inject constructor(
     private val navigator: Navigator,
     val loginWithCodeUseCase: LoginWithCodeUseCase,
     val preferencesRepository: PreferencesRepository,
-    private val tokenInterceptor: TokenInterceptor
+    private val tokenInterceptor: TokenInterceptor,
+    private val filterAllUserUseCase: FilterAllUserUseCase,
+    private val filterAllLineManagerUseCase: FilterAllLineManagerUseCase
     ) : ViewModel(){
 
 
@@ -34,6 +42,11 @@ class LoginWithCodeViewModel @Inject constructor(
 
     //initialize codeinputField variables
 
+    var allUsers: List<FilteredUser> = emptyList()
+    private set
+
+    var allLineManagers: List<FilteredUser> = emptyList()
+        private set
     var activeCodeInputFieldIndex by mutableStateOf(1)
         private set
     var code1 by mutableStateOf("")
@@ -103,7 +116,14 @@ class LoginWithCodeViewModel @Inject constructor(
 
                     is Result.Success->{
 
+                        //settingsViewModel.setCurrentPasscode(passcode.toString())
+
+                        val savedPasscode=preferencesRepository.getUserPasscode().first()
+                        if (savedPasscode.isEmpty()) preferencesRepository.saveUserPasscode(passcode.toString())
+
                         tokenInterceptor.setToken(networkResult.data.data.token)
+                        getAllUser()
+                        getAllLineManager()
                         _uIStateFlow.value = _uIStateFlow.value.copy(loading = false, authenticated = true)
                         _uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
 
@@ -157,6 +177,51 @@ class LoginWithCodeViewModel @Inject constructor(
 
     }
 
+    private suspend fun getAllUser() {
+        filterAllUserUseCase.invoke().collect{result->
+            when(result){
 
+                is Result.Success->{
+                    allUsers = result.data
+                }
+                is Result.Error->{
+
+                    isErrorCode = false
+                    _uIStateFlow.value =_uIStateFlow.value.copy(loading = false)
+                    _uIEventFlow.send(UiEvent.ShowToast(message = "Unexpected error occurred,try again!"))
+
+                }
+                is Result.Exception->{
+                    _uIStateFlow.value = _uIStateFlow.value.copy(loading = false)
+                    isErrorCode = false
+                    _uIEventFlow.send(UiEvent.ShowToast(message = "No internet connection"))
+                }
+            }
+        }
+    }
+
+    private suspend fun getAllLineManager() {
+        filterAllLineManagerUseCase.invoke().collect{result->
+            when(result){
+
+                is Result.Success->{
+                    allLineManagers = result.data
+
+                }
+                is Result.Error->{
+
+                    isErrorCode = false
+                    _uIStateFlow.value =_uIStateFlow.value.copy(loading = false)
+                    _uIEventFlow.send(UiEvent.ShowToast(message = "Unexpected error occurred,try again!"))
+
+                }
+                is Result.Exception->{
+                    _uIStateFlow.value = _uIStateFlow.value.copy(loading = false)
+                    isErrorCode = false
+                    _uIEventFlow.send(UiEvent.ShowToast(message = "No internet connection"))
+                }
+            }
+        }
+    }
 
 }

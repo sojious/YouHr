@@ -31,7 +31,7 @@ fun NavGraphBuilder.BottomNavGraph(
 ){
 
    navigation(startDestination = HomePageGraph.route,route=BottomNavGraph.route){
-       HomePageGraph(homeViewModel,leaveManagementViewModel,pagerState = pagerState,drawerState=drawerState)
+       HomePageGraph(homeViewModel,leaveManagementViewModel,pagerState = pagerState,drawerState=drawerState, settingsViewModel = settingsViewModel, profileViewModel = profileViewModel)
        TaskGraph(taskViewModel=taskViewModel, taskDetailViewModel = taskDetailViewModel)
        SettingsGraph(navController, settingsViewModel = settingsViewModel,homeViewModel=homeViewModel,profileViewModel=profileViewModel)
    }

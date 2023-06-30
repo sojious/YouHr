@@ -3,20 +3,26 @@ package co.youverify.youhr.data
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.data.mapper.DbToDomainProfileMapper
 import co.youverify.youhr.data.mapper.DtoToDbProfileMapper
+import co.youverify.youhr.data.mapper.DtoToDomainFilteredUserListMapper
+import co.youverify.youhr.data.model.FilterUserResponse
+import co.youverify.youhr.data.model.UpdateUserProfileRequest
 import co.youverify.youhr.data.model.UserProfileResponse
 import co.youverify.youhr.data.repository.profile.ProfileLocalDataSource
 import co.youverify.youhr.data.repository.profile.ProfileRemoteDataSource
+import co.youverify.youhr.domain.model.FilteredUser
 import co.youverify.youhr.domain.model.User
 import co.youverify.youhr.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.MultipartBody
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
     private val profileLocalDataSource: ProfileLocalDataSource,
     private val profileRemoteDataSource: ProfileRemoteDataSource,
     private val dtoToDbProfileMapper: DtoToDbProfileMapper,
-    private val dbToDomainProfileMapper: DbToDomainProfileMapper
+    private val dbToDomainProfileMapper: DbToDomainProfileMapper,
+    private val dtoToDomainFilteredUserListMapper: DtoToDomainFilteredUserListMapper
 ):ProfileRepository {
     override suspend fun getUserProfile(isFirstLogin:Boolean): Flow<Result<User>> {
 
@@ -51,4 +57,58 @@ class ProfileRepositoryImpl @Inject constructor(
 
 
     }
+
+    override suspend fun filterAllUser(): Flow<Result<List<FilteredUser>>> {
+        val result = profileRemoteDataSource.filterAllUser()
+      return  when(result){
+            is Result.Success->{
+                flow {
+                    emit(Result.Success(data = dtoToDomainFilteredUserListMapper.map(result.data.data)))
+                }
+            }
+            is Result.Error->{
+                flow {
+                    emit(Result.Error(code = result.code,message = result.message))
+                }
+            }
+            is Result.Exception->{
+                flow {
+                    emit(Result.Exception(e=result.e, genericMessage = result.genericMessage))
+                }
+            }
+        }
+    }
+
+    override suspend fun updateUserProfile(request: UpdateUserProfileRequest): Result<UserProfileResponse> {
+
+         return   profileRemoteDataSource.updateUserProfile(request)
+
+    }
+
+    override suspend fun updateUserProfilePic(imageFile: MultipartBody.Part): Result<UserProfileResponse> {
+        return profileRemoteDataSource.updateUserProfilePic(imageFile)
+
+    }
+
+    override suspend fun filterAllLineManager(): Flow<Result<List<FilteredUser>>> {
+        val result = profileRemoteDataSource.filterAllLineManager()
+        return  when(result){
+            is Result.Success->{
+                flow {
+                    emit(Result.Success(data = dtoToDomainFilteredUserListMapper.map(result.data.data)))
+                }
+            }
+            is Result.Error->{
+                flow {
+                    emit(Result.Error(code = result.code,message = result.message))
+                }
+            }
+            is Result.Exception->{
+                flow {
+                    emit(Result.Exception(e=result.e, genericMessage = result.genericMessage))
+                }
+            }
+        }
+    }
+
 }

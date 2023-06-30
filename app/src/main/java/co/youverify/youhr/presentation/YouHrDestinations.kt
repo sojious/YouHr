@@ -125,5 +125,13 @@ object LeaveDetail:YouHrDestination{
     )
 }
 
+object ChangePassword:YouHrDestination{
+    override val route="changePassword"
+}
+
+object ChangePasscode:YouHrDestination{
+    override val route="changePasscode"
+}
+
 
 

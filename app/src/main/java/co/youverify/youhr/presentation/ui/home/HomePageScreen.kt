@@ -3,9 +3,12 @@ package co.youverify.youhr.presentation.ui.home
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.icu.text.SimpleDateFormat
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,12 +35,17 @@ import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
@@ -46,25 +54,38 @@ import co.youverify.youhr.core.util.capitalizeWords
 import co.youverify.youhr.core.util.getDateRange
 import co.youverify.youhr.core.util.getGreetingMessage
 import co.youverify.youhr.core.util.toOrdinalDateString
+import co.youverify.youhr.core.util.toTimeAgo
+import co.youverify.youhr.data.model.UpdateUserProfileRequest
+import co.youverify.youhr.data.model.UserProfileResponse
+import co.youverify.youhr.data.remote.TokenInterceptor
+import co.youverify.youhr.domain.model.FilteredUser
 import co.youverify.youhr.domain.repository.ProfileRepository
+import co.youverify.youhr.domain.use_case.ChangePasswordUseCase
+import co.youverify.youhr.domain.use_case.CreateCodeUseCase
 import co.youverify.youhr.domain.use_case.CreateLeaveRequestUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveSummaryUseCase
 import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.components.TextAvatar
+import co.youverify.youhr.presentation.ui.leave.AuthRepoMock
 import co.youverify.youhr.presentation.ui.leave.LeaveManagementScreen
 import co.youverify.youhr.presentation.ui.leave.LeaveManagementViewModel
 import co.youverify.youhr.presentation.ui.leave.LeaveRepoMock
+import co.youverify.youhr.presentation.ui.leave.PreferenceRepoMock
+import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
 import co.youverify.youhr.presentation.ui.theme.*
+import coil.compose.AsyncImage
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 import java.util.*
 
 @OptIn(ExperimentalPagerApi::class)
@@ -78,12 +99,14 @@ fun HomePageScreen(
     pagerState: PagerState,
     onTabItemClicked: (Int) -> Unit,
     onSideNavItemClicked: (Int) -> Unit,
+    onProfilePicClicked: () -> Unit,
     activeSideNavItemIndex: Int,
     homeDrawerState: DrawerState,
     onQuickAccessItemClicked: (Int) -> Unit,
     leaveManagementViewModel: LeaveManagementViewModel,
     homeViewModel: HomeViewModel,
-    userName: String
+    userName: String,
+    settingsViewModel: SettingsViewModel
 
 ){
 
@@ -91,7 +114,7 @@ fun HomePageScreen(
     val leaveManagementUiState by leaveManagementViewModel.uIStateFlow.collectAsState()
     val context=LocalContext.current.applicationContext
     LaunchedEffect(key1 = Unit){
-        homeViewModel.getUserProfile(context)
+        homeViewModel.getUserProfile(context,settingsViewModel,leaveManagementViewModel)
     }
 
 
@@ -111,11 +134,11 @@ fun HomePageScreen(
                         onHamburgerClicked = onHamburgerClicked,
                         pagerState = pagerState,
                         onTabClicked =onTabItemClicked,
-                        onQuickAccessItemClicked =onQuickAccessItemClicked
+                        onQuickAccessItemClicked =onQuickAccessItemClicked,
+                        onProfilePicClicked = onProfilePicClicked
                     )
                 }
-                1->{}
-                else->{
+                1->{
                     LeaveManagementScreen(
                         onCreateRequestClicked = {leaveManagementViewModel.onCreateLeaveRequestClicked()},
                         filterDropDownOnDismiss = {leaveManagementViewModel.onDropDownODismissRequested() },
@@ -126,9 +149,10 @@ fun HomePageScreen(
                         homeViewModel = homeViewModel,
                         onLeaveHistoryItemClicked = {leaveManagementViewModel.displayLeaveDetail(it)},
                         leaveManagementViewModel = leaveManagementViewModel,
+                        userGender = leaveManagementViewModel.userGender
                     )
-
                 }
+                else->{}
             }
         }
     )
@@ -273,6 +297,7 @@ fun HomeScreenContent(
     notificationCount: String,
     profileImageBitmap: ImageBitmap,
     onNotificationClicked: (String) -> Unit,
+    onProfilePicClicked: () -> Unit,
     onHamburgerClicked: () -> Unit,
     pagerState: PagerState,
     onTabClicked: (Int) -> Unit,
@@ -286,7 +311,8 @@ fun HomeScreenContent(
             profileImageBitmap =profileImageBitmap,
             onNotificationClicked = onNotificationClicked,
             onHamburgerClicked = onHamburgerClicked,
-            onQuickAccessItemClicked =onQuickAccessItemClicked
+            onQuickAccessItemClicked =onQuickAccessItemClicked,
+            onProfilePicClicked=onProfilePicClicked
         )
 
         Spacer(
@@ -596,6 +622,7 @@ fun TopSection(
     onNotificationClicked: (String) -> Unit,
     onHamburgerClicked: () -> Unit,
     onQuickAccessItemClicked: (Int) -> Unit,
+    onProfilePicClicked: () -> Unit,
 
     ) {
 
@@ -610,7 +637,8 @@ fun TopSection(
             userName = userName,
             badgeText = notificationCount,
             onNotificationIconClicked = onNotificationClicked,
-            onHamburgerIconClicked = onHamburgerClicked
+            onHamburgerIconClicked = onHamburgerClicked,
+            onProfilePicClicked=onProfilePicClicked
         )
 
         QuickAccessSection(
@@ -632,7 +660,8 @@ fun ProfileSection(
     userName: String,
     badgeText: String,
     onNotificationIconClicked: (String) -> Unit,
-    onHamburgerIconClicked: () -> Unit
+    onHamburgerIconClicked: () -> Unit,
+    onProfilePicClicked: () -> Unit
 ) {
 
 
@@ -692,8 +721,8 @@ fun ProfileSection(
 
                 })
                 .clickable { onNotificationIconClicked(badgeText) },
-            badge = {
-                Text(
+             badge = {
+                /*Text(
                     text = "5",
                     modifier= Modifier
                         .size(12.dp)
@@ -701,7 +730,7 @@ fun ProfileSection(
                     fontSize = 8.sp,
                     color = Color.White,
                     textAlign = TextAlign.Center
-                )
+                )*/
                     },
             content = {Image(painter = painterResource(id = R.drawable.notification), contentDescription ="" )}
         )
@@ -714,7 +743,8 @@ fun ProfileSection(
                 .clip(shape = CircleShape)
                 .constrainAs(profileImage, constrainBlock = {
                     end.linkTo(parent.end, 0.dp)
-                }),
+                })
+                .clickable { onProfilePicClicked() },
             bitmap =profileImageBitmap ,
             contentDescription ="",
             contentScale = ContentScale.Crop
@@ -844,6 +874,192 @@ fun QuickAccessItem(
 
 }
 
+@Composable
+fun AnouncementDetailDialog(
+    modifier: Modifier = Modifier,
+    onButtonClicked: () -> Unit,
+    title: String,
+    message: String,
+    announceDisplayPicUrl: String,
+    announcerName: String,
+    timeStampPosted: String
+
+) {
+
+    var animateTrigger by remember { mutableStateOf(false) }
+    LaunchedEffect(key1 = Unit) {
+        launch {
+            delay(200)
+            animateTrigger = true
+        }
+    }
+
+
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false, usePlatformDefaultWidth = false)
+    ) {
+
+        Box {
+
+            AnimatedVisibility(
+                //visible = animateTrigger,
+                visible=true,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Column(
+                    //horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = modifier
+                        .width(305.dp)
+                        .background(color = Color.White, shape = RoundedCornerShape(12.dp))
+                ) {
+
+                    Row(
+                        modifier=Modifier.padding(top=30.dp, start = 30.dp,end=30.dp)
+                    ){
+
+                        AsyncImage(
+                            model=announceDisplayPicUrl,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(id = R.drawable.profile_pic_placeholder),
+                            fallback =  painterResource(id = R.drawable.profile_pic_placeholder)
+                        )
+                        Text(
+                            text = buildAnnotatedString {
+                                append(announcerName)
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Normal, color = bodyTextLightColor)){
+                                    append(" Posted this")
+                                }
+                            },
+                            color = bodyTextDeepColor,
+                            fontSize = 12.sp,
+                            textAlign=TextAlign.Start,
+                            modifier=modifier.padding(horizontal = 21.dp),
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = timeStampPosted.toTimeAgo(),
+                            fontSize = 12.sp, color = bodyTextLightColor
+                        )
+                    }
+
+                    Image(
+                        painter = painterResource(id = R.drawable.placeholder_pic),
+                        contentDescription =null,
+                        modifier = Modifier
+                            .size(81.dp)
+                            .padding(top = 32.dp, bottom = 32.dp).align(Alignment.CenterHorizontally),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Text(
+                        text = title,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = bodyTextDeepColor,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+
+
+                    Text(
+                        text = message,
+                        fontSize = 12.sp,
+                        color = bodyTextLightColor,
+                        modifier = Modifier.padding(start = 30.dp,end=30.dp, bottom=16.dp),
+                        lineHeight = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+
+
+
+                    Button(
+                        onClick = onButtonClicked,
+                        shape= RoundedCornerShape(4.dp),
+                        modifier = modifier
+                            //.padding(horizontal = 16.dp)
+                            .padding(start = 30.dp, end = 30.dp, bottom = 26.dp)
+                            .fillMaxWidth()
+                            .height(40.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                    ) {
+                        Text(
+                            text = "Close",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            lineHeight = 15.6.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+
+}
+
+@Composable
+fun PagerLoaderScreen(modifier: Modifier=Modifier){
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        repeat(6){
+            PagerLoaderItem()
+        }
+    }
+}
+
+
+@Composable
+fun PagerLoaderItem() {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .background(color = pagerLoaderColor, shape = CircleShape)
+        )
+        
+        Column(
+            modifier = Modifier
+                .padding(start = 8.dp, top = 8.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(bottom = 22.dp)
+                    .fillMaxWidth(),
+                content = {
+                    Box(modifier = Modifier
+                        .size(61.5.dp, 8.dp)
+                        .background(color = pagerLoaderColor))
+                    Spacer(modifier = Modifier.weight(1f))
+                    Box(modifier = Modifier
+                        .size(36.dp, 4.dp)
+                        .background(color = pagerLoaderColor)
+                        .align(Alignment.CenterVertically))
+                }
+            )
+
+            Box(modifier = Modifier.fillMaxWidth()
+                .height(6.dp)
+                .background(color = pagerLoaderColor)
+            )
+            Box(modifier = Modifier
+                .size(149.dp, 6.dp)
+                .background(color = pagerLoaderColor).padding(top=18.dp))
+
+
+        }
+    }
+}
 
 @OptIn(ExperimentalPagerApi::class)
 @Preview
@@ -867,7 +1083,7 @@ fun HomePageScreenPreview(){
             val coroutineScope= rememberCoroutineScope()
             HomePageScreen(
                 notificationCount = "5",
-                profilePhotoBitmap = bitmap ,
+                profilePhotoBitmap = bitmap,
                 onNotificationIconClicked = { },
                 onHamburgerClicked = {
                                      coroutineScope.launch {
@@ -883,6 +1099,7 @@ fun HomePageScreenPreview(){
                 onSideNavItemClicked = {
                            clickedIndex=it
                 },
+                onProfilePicClicked = {},
                 activeSideNavItemIndex = clickedIndex,
                 homeDrawerState = drawerState,
                 onQuickAccessItemClicked = {},
@@ -891,14 +1108,52 @@ fun HomePageScreenPreview(){
                     GetLeaveSummaryUseCase(LeaveRepoMock()), CreateLeaveRequestUseCase(LeaveRepoMock())
                 ),
                 homeViewModel = HomeViewModel(Navigator(), GetUserProfileUseCase(ProfileRepoMock())),
-                userName = "Edith"
+                userName = "Edith",
+                settingsViewModel = SettingsViewModel(
+                    Navigator(), ChangePasswordUseCase(AuthRepoMock()),
+                    CreateCodeUseCase(AuthRepoMock(),PreferenceRepoMock()),PreferenceRepoMock(),
+                    TokenInterceptor()
+                ),
+                //profileViewModel = ProfileViewModel(Navigator(), UpdateUserProfileUseCase(ProfileRepoMock()))
             )
         }
 
     }
 }
 
+
 @Preview
+@Composable
+fun AnnouncementDetailDialogPreview(){
+    YouHrTheme {
+        Surface(modifier = Modifier.fillMaxSize()) {
+
+                AnouncementDetailDialog(
+                    onButtonClicked = {},
+                    title = "Say Congratulations!",
+                    message = "Ann Baker is getting married on the 30th of May 2023. Transportation arrangements are being made and will be communicated shortly. In the meantime feel free to wish Ann well as she takes on a new journey in life",
+                    announceDisplayPicUrl ="" ,
+                    announcerName ="Anita Duru" ,
+                    timeStampPosted = "14 days ago"
+                )
+        }
+    }
+}
+
+
+@Preview
+@Composable
+fun PagerLoaderScreenPreview(){
+    YouHrTheme {
+        Surface {
+            PagerLoaderScreen(modifier = Modifier.padding(horizontal = 24.dp))
+        }
+    }
+}
+
+
+
+/*@Preview
 @Composable
 fun QuickAccessSectionPreview(){
     YouHrTheme {
@@ -1014,7 +1269,7 @@ fun SideNavPreview(){
         }
 
     }
-}
+}*/
 
 data class Announcement(val announcer:String, val message:String, val addressee:String, val date: Long)
 
@@ -1032,7 +1287,7 @@ val announcementItemAvatarColors= listOf(
 val sideNavItems= listOf(
     SideNavItem(R.drawable.material_symbols_line_start_square_rounded,"Get Started"),
    // SideNavItem(R.drawable.ic_baseline_home,"Homepage"),
-    SideNavItem(R.drawable.fluent_task_list_square_settings_20_filled,"Resources"),
+    //SideNavItem(R.drawable.fluent_task_list_square_settings_20_filled,"Worktool Management"),
     SideNavItem(R.drawable.clarity_administrator_solid,"Leave Management")
 )
 
@@ -1118,6 +1373,22 @@ fun Modifier.ownTabIndicatorOffset(
 
 class ProfileRepoMock:ProfileRepository{
     override suspend fun getUserProfile(isFirstLogin: Boolean): Flow<Result<co.youverify.youhr.domain.model.User>> { return flow{} }
+    override suspend fun filterAllUser(): Flow<Result<List<FilteredUser>>> {
+        return flow {  }
+    }
+
+    override suspend fun updateUserProfile(request: UpdateUserProfileRequest): Result<UserProfileResponse> {
+        return Result.Error(500,"")
+
+    }
+
+    override suspend fun updateUserProfilePic(imageFile: MultipartBody.Part): Result<UserProfileResponse> {
+        return Result.Error(500,"")
+    }
+
+    override suspend fun filterAllLineManager(): Flow<Result<List<FilteredUser>>> {
+        return flow {  }
+    }
 
 }
 

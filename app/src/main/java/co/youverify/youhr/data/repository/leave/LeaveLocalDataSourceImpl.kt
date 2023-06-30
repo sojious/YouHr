@@ -21,4 +21,8 @@ class LeaveLocalDataSourceImpl @Inject constructor(private val youHrDatabase: Yo
     override suspend fun saveLeaveSummary(summary: DbLeaveSummary) {
         return youHrDatabase.leaveDao().saveLeaveSummary(summary)
     }
+
+    override suspend fun clearAllLeaveRequest() {
+        return youHrDatabase.leaveDao().clearAllLeaveRequests()
+    }
 }

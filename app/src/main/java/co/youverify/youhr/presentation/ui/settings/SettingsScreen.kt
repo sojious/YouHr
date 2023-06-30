@@ -37,10 +37,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.youverify.youhr.R
+import co.youverify.youhr.data.remote.TokenInterceptor
+import co.youverify.youhr.domain.use_case.ChangePasswordUseCase
+import co.youverify.youhr.domain.use_case.CreateCodeUseCase
 import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
 import co.youverify.youhr.presentation.ui.Navigator
+import co.youverify.youhr.presentation.ui.components.LoadingDialog
+import co.youverify.youhr.presentation.ui.components.YouHrTitleBarNoArrow
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.home.ProfileRepoMock
+import co.youverify.youhr.presentation.ui.leave.AuthRepoMock
+import co.youverify.youhr.presentation.ui.leave.PreferenceRepoMock
 import co.youverify.youhr.presentation.ui.theme.YouHrTheme
 import co.youverify.youhr.presentation.ui.theme.bodyTextDeepColor
 import co.youverify.youhr.presentation.ui.theme.bodyTextLightColor
@@ -57,7 +64,8 @@ fun SettingsScreen(
     onSettingsItemClicked: (Int) -> Unit,
     onProfilePicClicked: () -> Unit,
     settingsViewModel: SettingsViewModel,
-    homeViewModel: HomeViewModel
+    homeViewModel: HomeViewModel,
+    loading: Boolean
 ){
 
     LaunchedEffect(key1 = Unit){
@@ -70,22 +78,9 @@ fun SettingsScreen(
             .background(color = Color.White)
     ) {
 
-        Box(
-            modifier = Modifier
-                .padding(top = 32.dp, bottom = 32.dp)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-            content = {
-                Text(
-                    text = "Settings",
-                    color = yvText,
-                    fontSize =16.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 24.sp,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        )
+
+
+        YouHrTitleBarNoArrow(title = "Settings", modifier = Modifier.padding(top = 32.dp, bottom = 32.dp))
 
         UserInfo(
             modifier =Modifier.padding(start = 20.dp),
@@ -103,6 +98,10 @@ fun SettingsScreen(
         )
 
         SettingsList(modifier=Modifier.padding(start = 20.dp, end = 37.dp), onItemClicked = onSettingsItemClicked)
+
+        if (loading){
+            LoadingDialog(message = "Logging you out..")
+        }
     }
 }
 
@@ -112,7 +111,7 @@ fun SettingsList(modifier: Modifier = Modifier, onItemClicked: (Int) -> Unit) {
         modifier=modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        repeat(4){
+        repeat(3){
             SettingsItem(item=items[it], index = it, onItemClicked = onItemClicked)
         }
     }
@@ -181,13 +180,20 @@ fun SettingsScreenPreview(){
                 )
             }
            SettingsScreen(
-               profileBitmap = bitmap ,
-               onSettingsItemClicked ={_->} ,
-               onProfilePicClicked = {},
-               email = "edith@youverify.co",
+               profileBitmap = bitmap,
                name = "Edith",
-               settingsViewModel = SettingsViewModel(Navigator()),
-               homeViewModel = HomeViewModel(Navigator(), GetUserProfileUseCase(ProfileRepoMock()))
+               email = "edith@youverify.co",
+               onSettingsItemClicked ={_->},
+               onProfilePicClicked = {},
+               settingsViewModel = SettingsViewModel(
+                   Navigator(),
+                   ChangePasswordUseCase(AuthRepoMock()),
+                   CreateCodeUseCase(AuthRepoMock(),PreferenceRepoMock()),
+                   PreferenceRepoMock(),
+                   TokenInterceptor()
+               ),
+               homeViewModel = HomeViewModel(Navigator(), GetUserProfileUseCase(ProfileRepoMock())),
+               loading = false
            )
         }
     }
@@ -243,9 +249,9 @@ fun SettingsItemPreview(){
 
 data class Item(val imageResId:Int,val text:String)
 val items= listOf(
-    Item(R.drawable.ic_paddlock,"Security settings"),
-    Item(R.drawable.ic_key,"Account settings"),
-    Item(R.drawable.ic_activity,"Activity & permissions"),
-    Item(R.drawable.ic_support,"Support"),
+    Item(R.drawable.ic_paddlock,"Change password"),
+    Item(R.drawable.ic_key,"Change passcode"),
+    Item(R.drawable.ic_log_out,"Logout"),
+    //Item(R.drawable.ic_support,"Support"),
 
 )

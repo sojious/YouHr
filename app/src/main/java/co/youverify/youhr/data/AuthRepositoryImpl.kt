@@ -34,6 +34,11 @@ class AuthRepositoryImpl  @Inject constructor(private val authRemoteDataSource: 
         emit(networkResult)
     }
 
+    override suspend fun changePassword(changePasswordRequest: ChangePasswordRequest): Flow<Result<GenericResponse>> {
+      return  flow {
+            emit(authRemoteDataSource.changePassword(changePasswordRequest))
+        }
+    }
 
 
 }

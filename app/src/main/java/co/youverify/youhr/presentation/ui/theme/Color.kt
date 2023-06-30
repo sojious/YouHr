@@ -59,5 +59,6 @@ val taskItemFillColor=Color(0X61E9F0F2)
 val taskActivitiesBackGroundColor=Color(0X47999999)
 val taskActivitiesBackGroundColor2= Color(0X1CCCCCCC)
 val taskMessageBoxPlaceHolderColor= Color(0X96666666)
+val pagerLoaderColor=Color(0xFFE6EAF0)
 
 

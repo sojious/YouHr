@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,7 +39,7 @@ fun YouHrTitleBarNoArrow(
             fontWeight = FontWeight.Bold,
             lineHeight = 24.sp,
             textAlign = TextAlign.Center,
-            modifier=Modifier.align(Alignment.Center)
+            modifier=Modifier.width(200.dp).align(Alignment.Center)
 
             )
     }

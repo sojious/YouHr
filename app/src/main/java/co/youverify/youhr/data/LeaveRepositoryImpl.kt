@@ -119,6 +119,7 @@ class LeaveRepositoryImpl @Inject constructor(
             is Result.Success->{
 
                 //Cache the data from the network call to the local database
+                if (leaveLocalDataSource.getLeaveRequests().isNotEmpty()){ leaveLocalDataSource.clearAllLeaveRequest() }
                 leaveLocalDataSource.saveLeaveRequests(
                     dtoToDbLeaveListMapper.map(networkResult.data.data?.docs)
                 )

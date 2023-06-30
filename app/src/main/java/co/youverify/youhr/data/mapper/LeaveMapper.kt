@@ -18,18 +18,20 @@ class DtoToDbLeaveMapper :Mapper<LeaveRequestDto,DbLeaveRequest>{
             startDate = input.startDate,
             endDate = input.endDate,
             reasonForLeave = input.reasonForLeave?:"",
-            contactName = input.contactName,
-            contactEmail = input.contactEmail,
-            contactNumber = input.contactNumber,
-            releiverName = input.releiverName,
-            linemanagerEmail = input.linemanagerEmail,
+            relieverName = input.relieverName?:"",
+            linemanagerEmail = input.linemanagerEmail?:"",
             linemanagerComment = input.linemanagerComment?:"",
             hrComment = input.hrComment?:"",
             leaveDaysRequested = input.leaveDaysRequested,
-            linemanagerName = input.linemanagerName,
+            linemanagerName = input.linemanagerName?:"",
             id = input.id,
-            linemanagerApprovalDate = input.linemanagerApprovalDate?:"",
-            hrApprovalDate = input.hrApprovalDate?:"",
+            linemanagerApprovalDate = input.linemanagerApprovalDate,
+            hrApprovalDate = input.hrApprovalDate,
+            alternativePhoneNumber = input.alternativeNumber?:"",
+            relieverApprovalDate = input.relieverApprovalDate,
+            relieverComment = input.relieverComment?:"",
+            relieverEmail = input.relieverEmail?:"",
+            relieverStatus = input.relieverStatus
         )
     }
 
@@ -45,10 +47,10 @@ class DbToDomainLeaveMapper:Mapper<DbLeaveRequest,LeaveRequest>{
             startDate = input.startDate,
             endDate = input.endDate,
             reasonForLeave = input.reasonForLeave,
-            contactName = input.contactName,
-            contactEmail = input.contactEmail,
-            contactNumber = input.contactNumber,
-            relieverName = input.releiverName,
+            //contactName = input.contactName,
+            //contactEmail = input.contactEmail,
+            //contactNumber = input.contactNumber,
+            relieverName = input.relieverName,
             linemanagerEmail = input.linemanagerEmail,
             linemanagerComment = input.linemanagerComment,
             hrComment = input.hrComment?:"",
@@ -57,6 +59,11 @@ class DbToDomainLeaveMapper:Mapper<DbLeaveRequest,LeaveRequest>{
             id = input.id,
             linemanagerApprovalDate = input.linemanagerApprovalDate,
             hrApprovalDate = input.hrApprovalDate,
+            relieverApprovalDate = input.relieverApprovalDate,
+            relieverComment = input.relieverComment,
+            relieverEmail = input.relieverEmail,
+            relieverStatus = input.relieverStatus,
+            alternativePhoneNumber = input.alternativePhoneNumber
         )
     }
 }

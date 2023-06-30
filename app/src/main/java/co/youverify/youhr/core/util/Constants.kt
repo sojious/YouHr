@@ -7,3 +7,5 @@ const val EMPTY_PASSCODE_VALUE=-1
 const val SERVER_URL="https://portal.dev.hr.youverify.co/"
 const val RESOURCE_NOT_FOUND_ERROR_CODE=404
 const val BAD_REQUEST_ERROR_CODE=400
+const val PROFILE_UPDATE_SUCCESS_MESSAGE="Profile updated successfull!"
+const val PROFILE_PIC_UPDATE_SUCCESS_MESSAGE="image successfully uploaded!"

@@ -8,5 +8,6 @@ interface LeaveLocalDataSource {
    suspend fun saveLeaveRequests(requests: List<DbLeaveRequest>)
    suspend fun getLeaveSummary(): DbLeaveSummary?
    suspend fun saveLeaveSummary(summary: DbLeaveSummary)
+   suspend fun clearAllLeaveRequest()
 
 }

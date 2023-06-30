@@ -19,12 +19,12 @@ data class UserData(
     val isEmployed: Boolean,
     val isConfirmed: Boolean,
     val isPasswordSet: Boolean,
-    val email: String,
+    val email: String?,
     val createdAt: String,
     val lastModifiedAt:String,
-    val firstName: String,
-    val lastName: String,
-    val password: String,
+    val firstName: String?,
+    val lastName: String?,
+    val password: String?,
     val middleName:String?,
     val phoneNumber:String?,
     val passcode: String?,
@@ -46,6 +46,14 @@ data class ServiceDocument(
     val title: String,
     val uploadedAt: String,
     val content: String
+)
+
+data class UpdateUserProfileRequest(
+    val nextofKin:String,
+    val nextofKinContact:String,
+    val address:String,
+    val nextofKinNumber:String,
+    val phoneNumber:String
 )
 
 

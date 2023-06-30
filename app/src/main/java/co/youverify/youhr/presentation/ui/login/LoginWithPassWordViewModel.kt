@@ -4,20 +4,24 @@ package co.youverify.youhr.presentation.ui.login
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.BAD_REQUEST_ERROR_CODE
 import co.youverify.youhr.core.util.INPUT_ERROR_CODE
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.core.util.RESOURCE_NOT_FOUND_ERROR_CODE
+import co.youverify.youhr.data.model.FilterUserDto
 import co.youverify.youhr.data.model.LoginWithPassWordRequest
 import co.youverify.youhr.data.remote.TokenInterceptor
+import co.youverify.youhr.domain.model.FilteredUser
 import co.youverify.youhr.domain.repository.PreferencesRepository
+import co.youverify.youhr.domain.use_case.FilterAllLineManagerUseCase
+import co.youverify.youhr.domain.use_case.FilterAllUserUseCase
 import co.youverify.youhr.domain.use_case.LoginWithPasswordUseCase
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
+import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -27,13 +31,19 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginWithPassWordViewModel @Inject constructor(
     private val navigator: Navigator,
-    private val stateHandle: SavedStateHandle,
     val loginWithPasswordUseCase: LoginWithPasswordUseCase,
     private val preferencesRepository: PreferencesRepository,
-    private val tokenInterceptor: TokenInterceptor
+    private val tokenInterceptor: TokenInterceptor,
+    private val filterAllUserUseCase: FilterAllUserUseCase,
+    val filterAllLineManagerUseCase: FilterAllLineManagerUseCase
     ) : ViewModel(){
 
 
+    var allUsers: List<FilteredUser> = emptyList()
+    private set
+
+    var allLineManagers: List<FilteredUser> = emptyList()
+        private set
     var userPassword by  mutableStateOf("")
     private set
 
@@ -60,7 +70,7 @@ class LoginWithPassWordViewModel @Inject constructor(
     fun togglePasswordVisibility(){
         hideUserPassword=!hideUserPassword
     }
-    fun logUserIn() {
+    fun logUserIn(settingsVm:SettingsViewModel) {
 
         viewModelScope.launch {
 
@@ -71,6 +81,12 @@ class LoginWithPassWordViewModel @Inject constructor(
                 when(networkResult){
 
                     is Result.Success->{
+
+                        //settingsVm.setCurrentPassword(userPassword)
+
+                        val savedPassword=preferencesRepository.getUserPassword().first()
+                        if (savedPassword.isEmpty()) preferencesRepository.saveUserPassword(userPassword)
+
                         val savedEmail=preferencesRepository.getUserEmail().first()
                         if (savedEmail.isEmpty()) preferencesRepository.saveUserEmail(loginRequest.email)
 
@@ -80,6 +96,10 @@ class LoginWithPassWordViewModel @Inject constructor(
 
                         if (tokenInterceptor.getToken().isEmpty())
                             tokenInterceptor.setToken(networkResult.data.data.token)
+
+
+                        getAllUser()
+                        getAllLineManager()
 
                         val savedCodeCreationStatus=preferencesRepository.getUserPasscodeCreationStatus().first()
                         _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
@@ -121,6 +141,53 @@ class LoginWithPassWordViewModel @Inject constructor(
 
     fun onForgetPasswordClicked() { navigator.navigate(toRoute = ResetPassword.route) }
     fun navigateBack() =navigator.navigateBack()
+
+    private suspend fun getAllUser() {
+        filterAllUserUseCase.invoke().collect{result->
+            when(result){
+
+                is Result.Success->{
+                    allUsers = result.data
+                }
+                is Result.Error->{
+
+                    isErrorPassword = false
+                    _uIStateFlow.value =_uIStateFlow.value.copy(loading = false)
+                    _uIEventFlow.send(UiEvent.ShowToast(message = "Unexpected error occurred,try again!"))
+
+                }
+                is Result.Exception->{
+                    _uIStateFlow.value = _uIStateFlow.value.copy(loading = false)
+                    isErrorPassword = false
+                    _uIEventFlow.send(UiEvent.ShowToast(message = "No internet connection"))
+                }
+            }
+        }
+    }
+
+    private suspend fun getAllLineManager() {
+        filterAllLineManagerUseCase.invoke().collect{result->
+            when(result){
+
+                is Result.Success->{
+                    allLineManagers = result.data
+
+                }
+                is Result.Error->{
+
+                    isErrorPassword = false
+                    _uIStateFlow.value =_uIStateFlow.value.copy(loading = false)
+                    _uIEventFlow.send(UiEvent.ShowToast(message = "Unexpected error occurred,try again!"))
+
+                }
+                is Result.Exception->{
+                    _uIStateFlow.value = _uIStateFlow.value.copy(loading = false)
+                    isErrorPassword = false
+                    _uIEventFlow.send(UiEvent.ShowToast(message = "No internet connection"))
+                }
+            }
+        }
+    }
 
 }
 

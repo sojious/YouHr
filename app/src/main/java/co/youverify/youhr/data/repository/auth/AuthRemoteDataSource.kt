@@ -12,4 +12,5 @@ interface AuthRemoteDataSource {
     suspend fun resetPassword(resetPasswordRequest: ResetPasswordRequest): Result<GenericResponse>
 
     suspend fun createCode(createCodeRequest: CreateCodeRequest): Result<GenericResponse>
+    suspend fun changePassword(changePasswordRequest: ChangePasswordRequest): Result<GenericResponse>
 }

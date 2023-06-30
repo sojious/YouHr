@@ -21,6 +21,8 @@ import co.youverify.youhr.presentation.ui.login.LoginWithCodeViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithPassWordViewModel
 import co.youverify.youhr.presentation.ui.login.ResetPassWordViewModel
 import co.youverify.youhr.presentation.ui.login.CreateCodeViewModel
+import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
+import co.youverify.youhr.presentation.ui.settings.profile.ProfileViewModel
 import co.youverify.youhr.presentation.ui.task.TaskViewModel
 
 @Composable
@@ -39,14 +41,17 @@ fun YouHrApp(
     val confirmCodeViewModel:ConfirmCodeViewModel= hiltViewModel()
     val taskViewModel:TaskViewModel= hiltViewModel()
     val leaveManagementViewModel:LeaveManagementViewModel= hiltViewModel()
+    val profileViewModel:ProfileViewModel = hiltViewModel()
+    val settingsViewModel:SettingsViewModel = hiltViewModel()
     val snackBarHostState= remember{ SnackbarHostState() }
     val context= LocalContext.current
 
 
-    createLaunchEffects(
+    CreateLaunchEffects(
         loginWithPassWordViewModel,loginWithCodeViewModel,
         createCodeViewModel,confirmCodeViewModel,resetPassWordViewModel,
-        taskViewModel,leaveManagementViewModel,snackBarHostState,context
+        taskViewModel,leaveManagementViewModel,profileViewModel,settingsViewModel,
+        snackBarHostState,context,
     )
 
 
@@ -70,7 +75,7 @@ fun YouHrApp(
 }
 
 @Composable
-fun createLaunchEffects(
+fun CreateLaunchEffects(
     loginWithPassWordViewModel: LoginWithPassWordViewModel,
     loginWithCodeViewModel: LoginWithCodeViewModel,
     createCodeViewModel: CreateCodeViewModel,
@@ -78,6 +83,8 @@ fun createLaunchEffects(
     resetPassWordViewModel: ResetPassWordViewModel,
     taskViewModel: TaskViewModel,
     leaveManagementViewModel: LeaveManagementViewModel,
+    profileViewModel: ProfileViewModel,
+    settingsViewModel: SettingsViewModel,
     snackBarHostState: SnackbarHostState,
     context: Context
 ) {
@@ -127,6 +134,20 @@ fun createLaunchEffects(
     LaunchedEffect(key1 = true){
 
         leaveManagementViewModel.uIEventFlow.collect {event->
+            handleEvent(event,snackBarHostState,context)
+        }
+    }
+
+    LaunchedEffect(key1 = true){
+
+        profileViewModel.uiEventFlow.collect { event->
+            handleEvent(event,snackBarHostState,context)
+        }
+    }
+
+    LaunchedEffect(key1 = Unit){
+
+        settingsViewModel.uiEventFlow.collect { event->
             handleEvent(event,snackBarHostState,context)
         }
     }

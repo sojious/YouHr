@@ -20,4 +20,8 @@ class AuthRemoteDataSourceImpl @Inject constructor(private val youHrService: You
 
     override suspend fun createCode(createCodeRequest: CreateCodeRequest): Result<GenericResponse> =
         handleApi { youHrService.createCode(createCodeRequest)}
+
+    override suspend fun changePassword(changePasswordRequest: ChangePasswordRequest): Result<GenericResponse> {
+        return handleApi { youHrService.changePassword(changePasswordRequest)}
+    }
 }

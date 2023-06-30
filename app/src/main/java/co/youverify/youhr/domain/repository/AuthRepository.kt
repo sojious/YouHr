@@ -14,5 +14,7 @@ interface AuthRepository {
 
     suspend fun createCode(createCodeRequest: CreateCodeRequest): Flow<Result<GenericResponse>>
 
+    suspend fun changePassword(changePasswordRequest: ChangePasswordRequest): Flow<Result<GenericResponse>>
+
 
 }

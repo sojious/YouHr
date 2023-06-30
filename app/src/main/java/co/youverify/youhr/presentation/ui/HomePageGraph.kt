@@ -12,6 +12,8 @@ import co.youverify.youhr.presentation.HomePageGraph
 import co.youverify.youhr.presentation.ui.home.HomePageScreen
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.leave.LeaveManagementViewModel
+import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
+import co.youverify.youhr.presentation.ui.settings.profile.ProfileViewModel
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
@@ -21,8 +23,10 @@ import kotlinx.coroutines.launch
 fun NavGraphBuilder.HomePageGraph(
     homePageViewModel: HomeViewModel,
     leaveManagementViewModel: LeaveManagementViewModel,
+    profileViewModel: ProfileViewModel,
     pagerState: PagerState,
     drawerState: DrawerState,
+    settingsViewModel: SettingsViewModel
 ){
 
     navigation(startDestination = Home.route , route =HomePageGraph.route ){
@@ -55,7 +59,10 @@ fun NavGraphBuilder.HomePageGraph(
                 onQuickAccessItemClicked = {homePageViewModel.onQuickAccessItemClicked(it)},
                 leaveManagementViewModel =leaveManagementViewModel,
                 homeViewModel =homePageViewModel,
-                userName = homePageViewModel.user?.firstName?:""
+                userName = homePageViewModel.user?.firstName?:"",
+                onProfilePicClicked = {homePageViewModel.goToProfileScreen()},
+                settingsViewModel = settingsViewModel
+                //profileViewModel = profileViewModel
             )
         }
     }

@@ -38,7 +38,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
@@ -72,7 +71,6 @@ import co.youverify.youhr.presentation.ui.theme.deactivatedColorDeep
 import co.youverify.youhr.presentation.ui.theme.errorMessageColor
 import co.youverify.youhr.presentation.ui.theme.primaryColor
 import co.youverify.youhr.presentation.ui.theme.taskItemBorderColor
-import co.youverify.youhr.presentation.ui.theme.yvColor
 import co.youverify.youhr.presentation.ui.theme.yvColor1
 import co.youverify.youhr.presentation.ui.theme.yvText
 import kotlinx.coroutines.flow.Flow
@@ -88,6 +86,7 @@ fun LeaveManagementScreen(
     onFilterDropDownItemClicked: (Int) -> Unit,
     uiState: LeaveManagementUiState,
     homeViewModel: HomeViewModel,
+    userGender:String,
     leaveManagementViewModel: LeaveManagementViewModel,
     onLeaveHistoryItemClicked: (Int) -> Unit,
     onRefresh: () -> Unit
@@ -138,7 +137,8 @@ fun LeaveManagementScreen(
                     filterText = uiState.filterText,
                     onLeaveHistoryItemClicked = onLeaveHistoryItemClicked,
                     filteredList=uiState.filteredList,
-                    leaveSummary=uiState.leaveSummary
+                    leaveSummary=uiState.leaveSummary,
+                    userGender=userGender
                 )
             }
 
@@ -172,10 +172,11 @@ fun AnalyticsAndHistorySection(
     filterText: String,
     onLeaveHistoryItemClicked: (Int) -> Unit,
     filteredList: List<LeaveRequest>,
-    leaveSummary: LeaveSummary
+    leaveSummary: LeaveSummary,
+    userGender: String
 ) {
     Column(modifier.fillMaxSize()) {
-        LeaveSummarySection(modifier=Modifier.padding(start = 20.dp),leaveSummary=leaveSummary)
+        LeaveSummarySection(modifier=Modifier.padding(start = 20.dp),leaveSummary=leaveSummary,userGender=userGender)
         Divider(modifier= Modifier
             .fillMaxWidth()
             .padding(top = 37.dp, bottom = 24.dp), thickness = 1.dp, color = deactivatedColorDeep)
@@ -188,7 +189,7 @@ fun AnalyticsAndHistorySection(
             onFilterDropDownClicked = onFilterDropDownClicked,
             filterText = filterText,
             onLeaveHistoryItemClicked = onLeaveHistoryItemClicked,
-            filteredList=filteredList
+            filteredList=filteredList,
         )
     }
 
@@ -204,7 +205,7 @@ fun HistorySection(
     onFilterDropDownClicked: () -> Unit,
     filterText: String,
     onLeaveHistoryItemClicked: (Int) -> Unit,
-    filteredList: List<LeaveRequest>
+    filteredList: List<LeaveRequest>,
 ) {
     if (isEmpty){
         EmptyState()
@@ -372,7 +373,11 @@ fun LeaveHistoryItem(
 }
 
 @Composable
-fun LeaveSummarySection(modifier: Modifier = Modifier, leaveSummary: LeaveSummary){
+fun LeaveSummarySection(
+    modifier: Modifier = Modifier,
+    leaveSummary: LeaveSummary,
+    userGender: String
+){
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -382,12 +387,7 @@ fun LeaveSummarySection(modifier: Modifier = Modifier, leaveSummary: LeaveSummar
 
             .background(color = Color.White)
             .border(width = 0.5.dp, color = Color(0XFFF1F2F5), shape = RoundedCornerShape(8.dp))
-            .shadow(
-                elevation = 10.dp,
-                spotColor = yvColor.copy(alpha = 0.03f),
-                ambientColor = yvColor.copy(alpha = 0.03f)
-            ),
-        //horizontalArrangement = Arrangement.spacedBy(12.dp)
+
     ) {
         LeaveSummaryItem(
             itemTintColor = leaveColors[0],
@@ -397,12 +397,6 @@ fun LeaveSummarySection(modifier: Modifier = Modifier, leaveSummary: LeaveSummar
             modifier = Modifier.padding(start = 12.dp)
         )
 
-        LeaveSummaryItem(
-            itemTintColor = leaveColors[1],
-            leaveType = "Bereavement Leave",
-            totalLeaveDays =20,
-            usedLeaveDays = leaveSummary.bereavementLeaveTaken
-        )
 
         Spacer(modifier = Modifier
             .size(0.5.dp, 42.5.dp)
@@ -410,9 +404,9 @@ fun LeaveSummarySection(modifier: Modifier = Modifier, leaveSummary: LeaveSummar
             .padding()
             .align(Alignment.CenterVertically))
         LeaveSummaryItem(
-            itemTintColor = leaveColors[2],
+            itemTintColor = leaveColors[1],
             leaveType = "Casual",
-            totalLeaveDays =20,
+            totalLeaveDays =5,
             usedLeaveDays = leaveSummary.casualLeaveTaken
         )
         Spacer(modifier = Modifier
@@ -421,15 +415,15 @@ fun LeaveSummarySection(modifier: Modifier = Modifier, leaveSummary: LeaveSummar
             .padding()
             .align(Alignment.CenterVertically))
 
-        Spacer(modifier = Modifier
+        /*Spacer(modifier = Modifier
             .size(0.5.dp, 42.5.dp)
             .background(color = deactivatedColorDeep)
             .padding()
-            .align(Alignment.CenterVertically))
+            .align(Alignment.CenterVertically))*/
         LeaveSummaryItem(
-            itemTintColor = leaveColors[3],
+            itemTintColor = leaveColors[2],
             leaveType = "Compassionate Leave",
-            totalLeaveDays =20,
+            totalLeaveDays =5,
             usedLeaveDays = leaveSummary.compassionateLeaveTaken
         )
         Spacer(modifier = Modifier
@@ -439,9 +433,9 @@ fun LeaveSummarySection(modifier: Modifier = Modifier, leaveSummary: LeaveSummar
             .align(Alignment.CenterVertically))
 
         LeaveSummaryItem(
-            itemTintColor = leaveColors[4],
+            itemTintColor = leaveColors[3],
             leaveType = "Parental Leave",
-            totalLeaveDays =20,
+            totalLeaveDays =if (userGender=="Male") 10 else 60,
             usedLeaveDays = leaveSummary.parentalLeaveTaken
         )
         Spacer(modifier = Modifier
@@ -451,9 +445,9 @@ fun LeaveSummarySection(modifier: Modifier = Modifier, leaveSummary: LeaveSummar
             .align(Alignment.CenterVertically))
 
         LeaveSummaryItem(
-            itemTintColor = leaveColors[5],
+            itemTintColor = leaveColors[4],
             leaveType = "Sick Leave",
-            totalLeaveDays =20,
+            totalLeaveDays =5,
             usedLeaveDays = leaveSummary.sickLeaveTaken
         )
         Spacer(modifier = Modifier
@@ -463,7 +457,7 @@ fun LeaveSummarySection(modifier: Modifier = Modifier, leaveSummary: LeaveSummar
             .align(Alignment.CenterVertically))
 
         LeaveSummaryItem(
-            itemTintColor = leaveColors[6],
+            itemTintColor = leaveColors[5],
             leaveType = "Study Leave",
             totalLeaveDays =20,
             usedLeaveDays = leaveSummary.studyLeaveTaken
@@ -782,7 +776,8 @@ fun LeaveOverViewScreenPreview(){
                     GetLeaveSummaryUseCase(LeaveRepoMock()), CreateLeaveRequestUseCase(LeaveRepoMock())
                 ),
                 onLeaveHistoryItemClicked = {},
-                onRefresh = {}
+                onRefresh = {},
+                userGender = "Male"
             )
         }
     }

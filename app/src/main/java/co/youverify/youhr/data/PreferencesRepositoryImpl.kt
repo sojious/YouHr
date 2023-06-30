@@ -75,4 +75,36 @@ class PreferencesRepositoryImpl @Inject constructor(private val preferencesDataS
             mutablePreferences[PreferenceKeys.CREATED_CODE] = passcodeCreated
         }
     }
+
+    override suspend fun saveUserPassword(userPassword: String) {
+        preferencesDataStore.edit { mutablePreferences->
+            mutablePreferences[PreferenceKeys.USER_PASSWORD] = userPassword
+        }
+    }
+
+    override fun getUserPassword(): Flow<String> {
+        return  preferencesDataStore.data
+            .catch {exception->
+                //if (exception is IOException) emptyPreferences() else throw exception
+                throw exception
+            }.map {preferences->
+                preferences[PreferenceKeys.USER_PASSWORD]?:""
+            }
+    }
+
+    override suspend fun saveUserPasscode(userPasscode: String) {
+        preferencesDataStore.edit { mutablePreferences->
+            mutablePreferences[PreferenceKeys.USER_PASSCODE] = userPasscode
+        }
+    }
+
+    override fun getUserPasscode(): Flow<String> {
+        return  preferencesDataStore.data
+            .catch {exception->
+                //if (exception is IOException) emptyPreferences() else throw exception
+                throw exception
+            }.map {preferences->
+                preferences[PreferenceKeys.USER_PASSCODE]?:""
+            }
+    }
 }

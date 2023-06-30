@@ -20,4 +20,10 @@ interface PreferencesRepository {
     suspend  fun getUserPasscodeCreationStatus(): Flow<Boolean>
 
     suspend  fun setUserPasscodeCreationStatus(passcodeCreated:Boolean)
+
+    suspend fun saveUserPassword(userPassword:String)
+    fun getUserPassword(): Flow<String>
+
+    suspend fun saveUserPasscode(userPasscode:String)
+    fun getUserPasscode(): Flow<String>
 }

@@ -10,4 +10,5 @@ interface LeaveRemoteDataSource {
     suspend fun getLeaveRequests(): Result<LeaveRequestsResponse>
     suspend fun getLeaveSummary(): Result<LeaveSummaryResponse>
     suspend fun createLeaveRequest(request: LeaveApplicationRequest): Result<LeaveApplicationResponse>
+
 }
