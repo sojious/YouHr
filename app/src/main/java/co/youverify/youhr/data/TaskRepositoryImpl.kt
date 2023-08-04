@@ -57,6 +57,10 @@ class TaskRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun clearTasks() {
+        taskLocalDataSource.clearTasks()
+    }
+
     private suspend fun getPaginatedTask(page: Int): Result<List<Task>> {
         val result: Result<List<Task>>
         val getRemoteTaskResult = taskRemoteDataSource.getTasks(page = page)

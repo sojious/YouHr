@@ -41,7 +41,7 @@ class LoginWithCodeUseCase @Inject constructor(
          //if the user haven't created a code, emit an Error
          if (!hasPasscode)
              return flow {
-                 emit(Result.Error(code = INPUT_ERROR_CODE, message = "Login with your password and create a code first!") )
+                 emit(Result.Error(code = INPUT_ERROR_CODE, message = "You haven't set up a passcode!\nKindly login with your password") )
              }
 
 

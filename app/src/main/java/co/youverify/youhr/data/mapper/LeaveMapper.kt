@@ -2,8 +2,10 @@ package co.youverify.youhr.data.mapper
 
 import co.youverify.youhr.data.local.DbLeaveRequest
 import co.youverify.youhr.data.local.DbLeaveSummary
+import co.youverify.youhr.data.model.EmployeeOnLeaveDto
 import co.youverify.youhr.data.model.LeaveRequestDto
 import co.youverify.youhr.data.model.LeaveSummaryDto
+import co.youverify.youhr.domain.model.EmployeeOnLeave
 import co.youverify.youhr.domain.model.LeaveRequest
 import co.youverify.youhr.domain.model.LeaveSummary
 
@@ -68,10 +70,33 @@ class DbToDomainLeaveMapper:Mapper<DbLeaveRequest,LeaveRequest>{
     }
 }
 
+
+class DtoToDomainEmployeeOnLeaveMapper:Mapper<EmployeeOnLeaveDto,EmployeeOnLeave>{
+    override fun map(input: EmployeeOnLeaveDto): EmployeeOnLeave {
+        return EmployeeOnLeave(
+            name = input.name,
+            jobRole = input.jobRole?:"Unspecified",
+            relieverName = input.relieverName,
+            startDateString = input.startDate,
+            endDateString = input.endDate,
+            displayPicture = input.displayPicture?:""
+        )
+    }
+}
+
+class DtoToDomainEmployeeOnLeaveListMapper(val mapper: DtoToDomainEmployeeOnLeaveMapper):NullableInputListMapper<EmployeeOnLeaveDto,EmployeeOnLeave>{
+    override fun map(input: List<EmployeeOnLeaveDto>?): List<EmployeeOnLeave> {
+       return input?.map {
+            mapper.map(it)
+        }.orEmpty()
+    }
+
+}
+
 class DtoToDbLeaveSummaryMapper :Mapper<LeaveSummaryDto,DbLeaveSummary>{
     override fun map(input: LeaveSummaryDto): DbLeaveSummary {
         return DbLeaveSummary(
-            id = input.id,
+            //id = input.id,
             annualLeaveTaken = input.annaulLeaveTaken,
             bereavementLeaveTaken = input.bereavementLeaveTaken,
             casualLeaveTaken = input.casualLeaveTaken,

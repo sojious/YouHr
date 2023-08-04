@@ -181,8 +181,8 @@ fun SuccessDialog(
                         shape= RoundedCornerShape(4.dp),
                         modifier = modifier
                             //.padding(horizontal = 16.dp)
-                            .padding(start = 69.dp,end=69.dp, bottom = 39.dp)
-                            .fillMaxWidth().height(42.dp),
+                            .padding(bottom = 39.dp)
+                            .height(42.dp).align(Alignment.CenterHorizontally),
                         colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
                     ) {
                         androidx.compose.material.Text(

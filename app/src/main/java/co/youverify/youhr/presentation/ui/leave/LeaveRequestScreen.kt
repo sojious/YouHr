@@ -56,6 +56,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -82,6 +83,7 @@ import co.youverify.youhr.domain.use_case.FilterAllLineManagerUseCase
 import co.youverify.youhr.domain.use_case.FilterAllUserUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveSummaryUseCase
+import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
 import co.youverify.youhr.domain.use_case.LoginWithCodeUseCase
 import co.youverify.youhr.domain.use_case.LoginWithPasswordUseCase
 import co.youverify.youhr.presentation.ui.Navigator
@@ -103,6 +105,7 @@ import co.youverify.youhr.presentation.ui.theme.textFieldTitle
 import co.youverify.youhr.presentation.ui.theme.yvColor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -376,9 +379,9 @@ fun LeaveInfo(formState: LeaveApplicationFormState,modifier: Modifier=Modifier) 
             ApplicationSummaryItem(title = "Start Date", value = formState.leaveStartDateMillis?.toHrFormattedDateString()?:"")
             ApplicationSummaryItem(title = "End Date", value = formState.leaveEndDateMillis?.toHrFormattedDateString()?:"")
             ApplicationSummaryItem(title = "Line Manager", value = formState.lineManager)
-            ApplicationSummaryItem(title = "Line Manager's Email ", value = formState.lineManagerEmail)
+            ApplicationSummaryItem(title = "Line Manager's Email ", value = formState.lineManagerEmail.replaceFirstChar { it.uppercase() })
             ApplicationSummaryItem(title = "Reliever", value = formState.reliever)
-            ApplicationSummaryItem(title = "Reliever's Email", value = formState.relieverEmail)
+            ApplicationSummaryItem(title = "Reliever's Email", value = formState.relieverEmail.replaceFirstChar { it.uppercase() })
             ApplicationSummaryItem(title = "Alternative Phone Number", value = formState.alternativePhoneNumber)
             ApplicationSummaryItem(title = "Reason", value = formState.reason)
         }
@@ -506,7 +509,7 @@ fun LeaveRequestTextField(
     fieldValue: String,
     onFieldValueChanged: (String) -> Unit,
     enableMultiline:Boolean,
-    type:InputFieldType
+    type:InputFieldType,
 
 ){
 
@@ -950,13 +953,15 @@ fun SearchableDropDown(
                         PreferenceRepoMock(),
                         TokenInterceptor(),
                         FilterAllUserUseCase(ProfileRepoMock()),
-                        FilterAllLineManagerUseCase(ProfileRepoMock())
+                        FilterAllLineManagerUseCase(ProfileRepoMock()),
+                        GetUserProfileUseCase(ProfileRepoMock())
                     ),
                     loginWithPassWordViewModel = LoginWithPassWordViewModel(
                             Navigator(),LoginWithPasswordUseCase(AuthRepoMock(),PreferenceRepoMock()),
                             PreferenceRepoMock(),TokenInterceptor(),FilterAllUserUseCase(ProfileRepoMock()),
-                            FilterAllLineManagerUseCase(ProfileRepoMock()),
-                        ),
+                            FilterAllLineManagerUseCase(ProfileRepoMock()),                        GetUserProfileUseCase(ProfileRepoMock())
+
+                    ),
                     onBackArrowClicked = {}
                     )
 
@@ -1142,8 +1147,9 @@ fun SearchableDropDown(
         }
 
         fun updateReason(newValue: String) {
-            reason = newValue
-        }
+            if (newValue.length<=250){ reason = newValue }
+
+            }
 
 
         fun updateRelieverEmail(newValue: String) {
@@ -1151,7 +1157,7 @@ fun SearchableDropDown(
         }
 
         fun updateAlternativePhoneNumber(newValue: String) {
-            alternativePhoneNumber = newValue
+            if (newValue.length<=11){ alternativePhoneNumber = newValue }
         }
 
         fun onDateFieldClicked(index: Int) {
@@ -1220,6 +1226,14 @@ fun SearchableDropDown(
         override suspend fun getUserPasscodeCreationStatus(): Flow<Boolean> { return flow {} }
 
         override suspend fun setUserPasscodeCreationStatus(passcodeCreated: Boolean) {}
+        override suspend fun getLogOutStatus(): Flow<Boolean> {
+            return flow{}
+        }
+
+        override suspend fun setLogOutStatus(loggedOut: Boolean) {
+            TODO("Not yet implemented")
+        }
+
         override suspend fun saveUserPassword(userPassword: String) {}
 
         override fun getUserPassword(): Flow<String> { return flow {} }

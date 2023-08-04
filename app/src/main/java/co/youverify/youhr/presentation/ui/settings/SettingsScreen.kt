@@ -40,13 +40,20 @@ import co.youverify.youhr.R
 import co.youverify.youhr.data.remote.TokenInterceptor
 import co.youverify.youhr.domain.use_case.ChangePasswordUseCase
 import co.youverify.youhr.domain.use_case.CreateCodeUseCase
+import co.youverify.youhr.domain.use_case.GetAllAnnouncementUseCase
+import co.youverify.youhr.domain.use_case.GetEmployeesOnLeaveUseCase
+import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
+import co.youverify.youhr.domain.use_case.GetTasksUseCase
 import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
+import co.youverify.youhr.domain.use_case.LoginWithPasswordUseCase
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.components.LoadingDialog
 import co.youverify.youhr.presentation.ui.components.YouHrTitleBarNoArrow
+import co.youverify.youhr.presentation.ui.home.AnnouncementRepoMock
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.home.ProfileRepoMock
 import co.youverify.youhr.presentation.ui.leave.AuthRepoMock
+import co.youverify.youhr.presentation.ui.leave.LeaveRepoMock
 import co.youverify.youhr.presentation.ui.leave.PreferenceRepoMock
 import co.youverify.youhr.presentation.ui.theme.YouHrTheme
 import co.youverify.youhr.presentation.ui.theme.bodyTextDeepColor
@@ -189,10 +196,16 @@ fun SettingsScreenPreview(){
                    Navigator(),
                    ChangePasswordUseCase(AuthRepoMock()),
                    CreateCodeUseCase(AuthRepoMock(),PreferenceRepoMock()),
+                   LoginWithPasswordUseCase(AuthRepoMock(),PreferenceRepoMock()),
                    PreferenceRepoMock(),
-                   TokenInterceptor()
+                   GetLeaveRequestsUseCase(LeaveRepoMock()),
+                   GetTasksUseCase(TasKRepoMock()),
+                   TokenInterceptor(),
                ),
-               homeViewModel = HomeViewModel(Navigator(), GetUserProfileUseCase(ProfileRepoMock())),
+               homeViewModel = HomeViewModel(
+                   Navigator(),// GetUserProfileUseCase(ProfileRepoMock()),
+                   GetAllAnnouncementUseCase(AnnouncementRepoMock()), GetEmployeesOnLeaveUseCase(LeaveRepoMock())
+               ),
                loading = false
            )
         }

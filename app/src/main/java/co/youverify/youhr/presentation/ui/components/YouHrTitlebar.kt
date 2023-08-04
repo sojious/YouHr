@@ -75,8 +75,7 @@ fun YouHrTitleBar(
             lineHeight = 24.sp,
             textAlign = TextAlign.Center,
             modifier=Modifier.constrainAs(titleText){
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
+                centerHorizontallyTo(parent)
                 top.linkTo(parent.top)
                width= Dimension.value(200.dp)
             },

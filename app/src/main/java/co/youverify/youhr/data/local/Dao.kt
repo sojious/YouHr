@@ -48,4 +48,7 @@ interface LeaveDao{
     @Query("DELETE FROM leave_request")
     suspend fun clearAllLeaveRequests()
 
+    @Query("DELETE FROM leave_summary")
+    suspend fun clearAllLeaveSummary()
+
 }

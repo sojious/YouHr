@@ -4,6 +4,7 @@ import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.data.mapper.DbToDomainProfileMapper
 import co.youverify.youhr.data.mapper.DtoToDbProfileMapper
 import co.youverify.youhr.data.mapper.DtoToDomainFilteredUserListMapper
+import co.youverify.youhr.data.mapper.DtoToDomainProfileMapper
 import co.youverify.youhr.data.model.FilterUserResponse
 import co.youverify.youhr.data.model.UpdateUserProfileRequest
 import co.youverify.youhr.data.model.UserProfileResponse
@@ -18,22 +19,27 @@ import okhttp3.MultipartBody
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
-    private val profileLocalDataSource: ProfileLocalDataSource,
+    //private val profileLocalDataSource: ProfileLocalDataSource,
     private val profileRemoteDataSource: ProfileRemoteDataSource,
-    private val dtoToDbProfileMapper: DtoToDbProfileMapper,
-    private val dbToDomainProfileMapper: DbToDomainProfileMapper,
+    //private val dtoToDbProfileMapper: DtoToDbProfileMapper,
+    //private val dbToDomainProfileMapper: DbToDomainProfileMapper,
+    private val dtoToDomainProfileMapper: DtoToDomainProfileMapper,
     private val dtoToDomainFilteredUserListMapper: DtoToDomainFilteredUserListMapper
 ):ProfileRepository {
-    override suspend fun getUserProfile(isFirstLogin:Boolean): Flow<Result<User>> {
+    override suspend fun getUserProfile(): Flow<Result<User>> {
 
         //If the user just logged for the first time get their profile info from a network call otherwise from the local database
-        if (isFirstLogin){
+
             val networkResult:Result<UserProfileResponse> = profileRemoteDataSource.getUserProfile()
             return when(networkResult){
                 is Result.Success->{
-                    profileLocalDataSource.saveUser(dtoToDbProfileMapper.map(networkResult.data))
+                    //profileLocalDataSource.saveUser(dtoToDbProfileMapper.map(networkResult.data))
                     flow {
-                        emit(Result.Success(dbToDomainProfileMapper.map(profileLocalDataSource.getUser())))
+                        //emit(Result.Success(dbToDomainProfileMapper.map(profileLocalDataSource.getUser())))
+
+                        emit(Result.Success(dtoToDomainProfileMapper.map(networkResult.data)))
+
+
                     }
                 }
 
@@ -49,11 +55,13 @@ class ProfileRepositoryImpl @Inject constructor(
                     }
                 }
             }
-        }else{
-            return flow {
-                emit(Result.Success(dbToDomainProfileMapper.map(profileLocalDataSource.getUser())))
-            }
-        }
+
+
+        //else{
+            //return flow {
+                //emit(Result.Success(dbToDomainProfileMapper.map(profileLocalDataSource.getUser())))
+            //}
+        //}
 
 
     }

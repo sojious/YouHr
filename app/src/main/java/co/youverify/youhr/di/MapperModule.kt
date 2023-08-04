@@ -14,8 +14,13 @@ import co.youverify.youhr.data.mapper.DtoToDbLeaveSummaryMapper
 import co.youverify.youhr.data.mapper.DtoToDbProfileMapper
 import co.youverify.youhr.data.mapper.DtoToDbTaskListMapper
 import co.youverify.youhr.data.mapper.DtoToDbTaskMapper
+import co.youverify.youhr.data.mapper.DtoToDomainAnnouncementListMapper
+import co.youverify.youhr.data.mapper.DtoToDomainAnnouncementMapper
+import co.youverify.youhr.data.mapper.DtoToDomainEmployeeOnLeaveListMapper
+import co.youverify.youhr.data.mapper.DtoToDomainEmployeeOnLeaveMapper
 import co.youverify.youhr.data.mapper.DtoToDomainFilteredUserListMapper
 import co.youverify.youhr.data.mapper.DtoToDomainFilteredUserMapper
+import co.youverify.youhr.data.mapper.DtoToDomainProfileMapper
 import co.youverify.youhr.data.model.ApiTask
 import dagger.Module
 import dagger.Provides
@@ -30,6 +35,10 @@ object MapperModule {
     @Provides
     @Singleton
     fun provideDtoToDbTaskMapper(): DtoToDbTaskMapper = DtoToDbTaskMapper()
+
+    @Provides
+    @Singleton
+    fun provideDtoToDomainProfileMapper(): DtoToDomainProfileMapper = DtoToDomainProfileMapper()
 
     @Provides
     @Singleton
@@ -80,6 +89,21 @@ object MapperModule {
     @Provides
     @Singleton
     fun provideDtoToDomainFilteredUserMapper(): DtoToDomainFilteredUserMapper = DtoToDomainFilteredUserMapper()
+
+    @Provides
+    @Singleton
+    fun provideDtoToDomainAnnouncementMapper(): DtoToDomainAnnouncementMapper = DtoToDomainAnnouncementMapper()
+
+    @Provides
+    @Singleton
+    fun provideDtoToDomainEmployeeOnLeaveMapper(): DtoToDomainEmployeeOnLeaveMapper = DtoToDomainEmployeeOnLeaveMapper()
+
+    @Provides
+    @Singleton
+    fun provideDtoToDomainEmployeeOnLeaveListMapper(mapper: DtoToDomainEmployeeOnLeaveMapper): DtoToDomainEmployeeOnLeaveListMapper = DtoToDomainEmployeeOnLeaveListMapper(mapper)
+    @Provides
+    @Singleton
+    fun provideDtoToDomainAnnouncementListMapper(mapper: DtoToDomainAnnouncementMapper): DtoToDomainAnnouncementListMapper = DtoToDomainAnnouncementListMapper(mapper)
 
     @Provides
     @Singleton

@@ -44,7 +44,6 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
 import co.youverify.youhr.core.util.getFormattedLeaveDate
-import co.youverify.youhr.core.util.toEpochMillis
 import co.youverify.youhr.core.util.toTimeAgo
 import co.youverify.youhr.domain.model.LeaveRequest
 import co.youverify.youhr.presentation.ui.components.YouHrTitleBar
@@ -55,6 +54,8 @@ import co.youverify.youhr.presentation.ui.theme.deactivatedColorDeep
 import co.youverify.youhr.presentation.ui.theme.deactivatedColorLight
 import co.youverify.youhr.presentation.ui.theme.errorMessageColor
 import co.youverify.youhr.presentation.ui.theme.yvColor
+import java.util.Locale
+
 @Composable
 fun LeaveDetailScreen(
     modifier: Modifier = Modifier,
@@ -95,10 +96,10 @@ fun LeaveDetailScreen(
         LeaveStatus(
             modifier = Modifier.padding(bottom = 20.dp, start = 20.dp,end=20.dp), lmStatus =leaveRequest.linemanagerStatus, hrStatus =leaveRequest.hrStatus,
             lmName =leaveRequest.linemanagerName, hrComment =leaveRequest.hrComment, lmComment =leaveRequest.linemanagerComment,
-            hrModificationDaysAgo = if (leaveRequest.hrApprovalDate=="Not yet") leaveRequest.hrApprovalDate  else leaveRequest.hrApprovalDate.toTimeAgo(),
-            lmModificationDaysAgo = if (leaveRequest.linemanagerApprovalDate=="Not yet") leaveRequest.linemanagerApprovalDate else leaveRequest.linemanagerApprovalDate.toTimeAgo(),
+            hrModificationDaysAgo = if (leaveRequest.hrApprovalDate=="Not yet") leaveRequest.hrApprovalDate  else leaveRequest.hrApprovalDate.toTimeAgo(isApprovalDate=true),
+            lmModificationDaysAgo = if (leaveRequest.linemanagerApprovalDate=="Not yet") leaveRequest.linemanagerApprovalDate else leaveRequest.linemanagerApprovalDate.toTimeAgo(isApprovalDate=true),
             relieverName = leaveRequest.relieverName, relieverComment = leaveRequest.relieverComment,
-            relieverModificationDaysAgo = if (leaveRequest.relieverApprovalDate=="Not yet") leaveRequest.relieverApprovalDate else leaveRequest.relieverApprovalDate.toTimeAgo(),
+            relieverModificationDaysAgo = if (leaveRequest.relieverApprovalDate=="Not yet") leaveRequest.relieverApprovalDate else leaveRequest.relieverApprovalDate.toTimeAgo(isApprovalDate=true),
             relieverStatus = leaveRequest.relieverStatus
 
             )
@@ -156,7 +157,7 @@ fun LeaveStatus(
                    )
                    LeaveStatusCard(
                        modifier = Modifier, status = lmStatus, title =lmName,
-                       designation ="In-line manager ",
+                       designation ="Line manager ",
                        comment = lmComment,
                        greyOut=false,
                        modificationDaysAgo = lmModificationDaysAgo
@@ -301,7 +302,7 @@ fun LeaveDetailsExpandable(
                     SummaryItem(title = "Start Date", value = startDate)
                     SummaryItem(title = "End Date", value = endDate)
                     SummaryItem(title = "Line Manager", value = lm)
-                    SummaryItem(title = "Line Manager's Email", value = lmEmail)
+                    SummaryItem(title = "Line Manager's Email", value = lmEmail.replaceFirstChar { it.uppercase() })
                     SummaryItem(title = "Days Requested", value = "$leaveDays Days")
                     SummaryItem(title = "Reliever", value = reliever)
                     SummaryItem(title = "Reason", value = reason)}
@@ -548,7 +549,7 @@ fun LeaveStatusCardPreview(){
                 status ="Pending", title ="Famous Echichioya",
                 designation ="In-line manager",
                 comment ="Dey play oo. Shey na me go do your work abi?", greyOut =false,
-                modificationDaysAgo = "2023-06-29 00:04:10".toTimeAgo()
+                modificationDaysAgo = "2023-06-30 15:41:34".toTimeAgo(isApprovalDate=true)
             )
         }
     }

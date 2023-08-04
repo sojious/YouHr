@@ -21,6 +21,7 @@ import co.youverify.youhr.R
 import co.youverify.youhr.core.util.getColor
 import co.youverify.youhr.core.util.getStatus
 import co.youverify.youhr.core.util.toCardinalDateFormat
+import co.youverify.youhr.core.util.toCardinalDateFormat2
 import co.youverify.youhr.core.util.toTimeAgo
 import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.presentation.ui.components.MultiColoredText
@@ -41,29 +42,33 @@ fun TaskDetailScreen(
     //val task= pendingTasks[0]// should be gotten from the database using the id
 
     //val currentTask=currentTask[taskId]
-    val scrollState= rememberScrollState()
-    Column(modifier= modifier
-        .fillMaxSize()
-        .verticalScroll(scrollState)) {
+   // val scrollState= rememberScrollState()
+    Column(modifier= modifier.fillMaxSize())
+         {
         YouHrTitleBar(
             modifier = Modifier.padding(top=45.dp),
             title = currentTask.title,
             onBackArrowClicked = onBackArrowClicked,
         )
-        Divider(thickness = 0.2.dp, color = codeInputUnfocused, modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 22.dp))
-        AssigneeInfo(task=currentTask, modifier = Modifier.padding(start = 20.dp,end=20.dp,bottom=20.dp))
-        TaskProgress(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=20.dp))
-        TaskDescription(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=23.dp))
-        AttachmentList(task = currentTask,modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=23.dp))
-        TaskActivitiesSection(task=currentTask)
-        Divider(thickness = 1.dp, color = taskActivitiesBackGroundColor, modifier = Modifier.fillMaxWidth())
-        TaskMessageBox(
-            textFieldValue =taskMessage,
-            onTextFieldValueChanged =onTaskMessageChanged,
-            onSendMessageButtonClicked =onSendMessageButtonClicked
-        )
+             Divider(
+                 thickness = 0.2.dp, color = codeInputUnfocused,
+                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 22.dp)
+             )
+       Column(modifier=Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+       ) {
+
+           AssigneeInfo(task=currentTask, modifier = Modifier.padding(start = 20.dp,end=20.dp,bottom=20.dp))
+           TaskProgress(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=20.dp))
+           TaskDescription(task=currentTask, modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=23.dp))
+           AttachmentList(task = currentTask,modifier = Modifier.padding(start = 21.dp,end=21.dp,bottom=23.dp))
+           TaskActivitiesSection(task=currentTask)
+           Divider(thickness = 1.dp, color = taskActivitiesBackGroundColor, modifier = Modifier.fillMaxWidth())
+           TaskMessageBox(
+               textFieldValue =taskMessage,
+               onTextFieldValueChanged =onTaskMessageChanged,
+               onSendMessageButtonClicked =onSendMessageButtonClicked
+           )
+       }
     }
 }
 
@@ -87,7 +92,7 @@ fun TaskProgress(task: Task, modifier: Modifier) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .height(21.dp)
-                .background(color  = taskColor.copy(alpha = 0.1f), shape = RoundedCornerShape(10.dp))
+                .background(color = taskColor.copy(alpha = 0.1f), shape = RoundedCornerShape(10.dp))
         ) {
 
 
@@ -204,7 +209,7 @@ fun AssigneeInfo(modifier: Modifier=Modifier, task: Task) {
 
 
                Text(
-                   text = task.dueDate.toCardinalDateFormat(),
+                   text = task.dueDate.toCardinalDateFormat2(),
                    fontSize = 10.sp,
                    color = bodyTextLightColor,
                )
@@ -527,6 +532,7 @@ enum class FileType{
 }
 enum class TaskStatus(val id:String){
 
+    ALL("All"),
     IN_PROGRESS("In progress"),
     COMPLETED("Completed"),
     TO_DO("To-do"),

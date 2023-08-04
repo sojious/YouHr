@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class GetUserProfileUseCase @Inject constructor(private val profileRepository: ProfileRepository) {
-    suspend fun invoke(isFirstLogin:Boolean): Flow<Result<User>> {
-        return profileRepository.getUserProfile(isFirstLogin)
+    suspend fun invoke(): Flow<Result<User>> {
+        return profileRepository.getUserProfile()
     }
 }

@@ -1,7 +1,6 @@
 package co.youverify.youhr.presentation.ui.settings.profile
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -63,12 +62,16 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.content.FileProvider
 import co.youverify.youhr.BuildConfig
 import co.youverify.youhr.R
+import co.youverify.youhr.core.util.toDobFormat
 import co.youverify.youhr.core.util.toEpochMillis
 import co.youverify.youhr.core.util.toFormattedDateString
 import co.youverify.youhr.data.remote.TokenInterceptor
 import co.youverify.youhr.domain.model.User
 import co.youverify.youhr.domain.use_case.ChangePasswordUseCase
 import co.youverify.youhr.domain.use_case.CreateCodeUseCase
+import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
+import co.youverify.youhr.domain.use_case.GetTasksUseCase
+import co.youverify.youhr.domain.use_case.LoginWithPasswordUseCase
 import co.youverify.youhr.domain.use_case.UpdateUserProfileUseCase
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.components.ActionButton
@@ -77,8 +80,10 @@ import co.youverify.youhr.presentation.ui.components.ProfileEditBottomSheet
 import co.youverify.youhr.presentation.ui.components.YouHrTitleBar
 import co.youverify.youhr.presentation.ui.home.ProfileRepoMock
 import co.youverify.youhr.presentation.ui.leave.AuthRepoMock
+import co.youverify.youhr.presentation.ui.leave.LeaveRepoMock
 import co.youverify.youhr.presentation.ui.leave.PreferenceRepoMock
 import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
+import co.youverify.youhr.presentation.ui.settings.TasKRepoMock
 import co.youverify.youhr.presentation.ui.theme.YouHrTheme
 import co.youverify.youhr.presentation.ui.theme.backGroundColor
 import co.youverify.youhr.presentation.ui.theme.bodyTextDeepColor
@@ -162,13 +167,11 @@ fun ProfileScreen(
 
 
     Column(
-        modifier
-            .fillMaxSize()
-            .verticalScroll(state = rememberScrollState())
+        modifier.fillMaxSize()
    ) {
        YouHrTitleBar(
            title = "My Profile",
-           modifier = Modifier.padding(top = 32.dp, bottom = 43.dp,start = 24.42.dp),
+           modifier = Modifier.padding(top = 32.dp, bottom = 43.dp),
            onBackArrowClicked = {onBackArrowClicked()}
        )
        ProfileImageSection(
@@ -181,15 +184,15 @@ fun ProfileScreen(
        ProfileInfoList(
            modifier =Modifier.padding(top=16.dp, start = 21.dp, end = 21.dp),
            bottomSheetState =editProfileSheetState,
-           onSaveButtonClicked = onSaveProfileItemChanges,
-           user=user,
+           onSaveButtonClicked = onSaveChangesButtonClicked,
+           user =user,
            values =profileFieldsValue
        )
        
-       ActionButton(
+       /*ActionButton(
            text = "Save Changes", modifier = Modifier.padding(top = 50.dp, bottom = 24.dp, start = 20.dp, end = 20.dp),
            onButtonClicked = {onSaveChangesButtonClicked(profileFieldsValue.displayImageUri)}
-       )
+       )*/
 
 
 
@@ -245,12 +248,14 @@ fun ProfileInfoList(
     modifier: Modifier = Modifier,
     user: User?,
     bottomSheetState: SheetState,
-    onSaveButtonClicked: (EditableFieldType,String) -> Unit,
+    onSaveButtonClicked: (Uri?) -> Unit,
     values: ProfileFieldsValue,
 
     ) {
     Column(
-        modifier.fillMaxSize(),
+        modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         ProfileInfoItem(
@@ -283,7 +288,7 @@ fun ProfileInfoList(
 
         ProfileInfoItem(
             fieldTitle ="Date Of Birth",
-            fieldValue =user?.dob?.toEpochMillis()?.toFormattedDateString("dd/MM/yyyy")?:"",
+            fieldValue =user?.dob?.toDobFormat()?:"",
             editable =false,
             sheetState = bottomSheetState,
            // onSavedButtonClicked = onSaveButtonClicked,
@@ -354,6 +359,11 @@ fun ProfileInfoList(
             sheetState = bottomSheetState,
             //onSavedButtonClicked = onSaveButtonClicked,
             values=values
+        )
+
+        ActionButton(
+            text = "Save Changes", modifier = Modifier.padding(top = 26.dp, bottom = 24.dp),
+            onButtonClicked = {onSaveButtonClicked(values.displayImageUri)}
         )
     }
 }
@@ -670,7 +680,7 @@ fun ProfileScreenPreview(){
             ProfileScreen(
                 user = User(
                     firstName = "Edit", email = "Edith@youverify.co", role = "Project Manager",
-                    dob = "12/12/1997", gender = "Female", address = "No 12, Akintola str Yaba Lagos",
+                    dob = "Fri Aug 07 1998 00:00:00 GMT+0000 (Coordinated Universal Time)", gender = "Female", address = "No 12, Akintola str Yaba Lagos",
                     nextOfKin = "Yvonne Johnson", nextOfKinNumber = "08149502340", passcode = "", password = "",
                     middleName = "", lastName = "Ibeh", status = "", jobRole = "Product Manager", nextOfKinContact = "",
                     displayPictureBitmap = bitmap, displayPictureUrl = "", id = "", phoneNumber = "08037582010"
@@ -680,7 +690,10 @@ fun ProfileScreenPreview(){
                 settingsViewModel = SettingsViewModel(
                     Navigator(), ChangePasswordUseCase(AuthRepoMock()),
                     CreateCodeUseCase(AuthRepoMock(),PreferenceRepoMock()),
+                    LoginWithPasswordUseCase(AuthRepoMock(),PreferenceRepoMock()),
                     PreferenceRepoMock(),
+                    GetLeaveRequestsUseCase(LeaveRepoMock()),
+                    GetTasksUseCase(TasKRepoMock()),
                     TokenInterceptor()
                 ),
                 onSaveChangesButtonClicked = {},
@@ -725,7 +738,7 @@ fun ProfileInfoListPreview(){
                   address = "", role = "", status = "", lastName = ""
               ),
                bottomSheetState = rememberModalBottomSheetState(),
-               onSaveButtonClicked = {_,_->},
+               onSaveButtonClicked = {},
                values = ProfileFieldsValue(),
            )
        }

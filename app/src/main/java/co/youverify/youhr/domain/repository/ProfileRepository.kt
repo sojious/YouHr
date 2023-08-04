@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import okhttp3.MultipartBody
 
 interface ProfileRepository {
-    suspend fun getUserProfile(isFirstLogin:Boolean): Flow<Result<User>>
+    suspend fun getUserProfile(): Flow<Result<User>>
     //suspend fun setUserProfile(): Flow<Result<User>>
     suspend fun filterAllUser(): Flow<Result<List<FilteredUser>>>
 

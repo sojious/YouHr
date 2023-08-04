@@ -191,17 +191,57 @@ fun CodeInputFieldPreview(){
 
 
 data class CodeInputBoxUiState(
-    val input1:String,
-    val input2:String,
-    val input3:String,
-    val input4:String,
+    val initialValue1:String="",
+    val initialValue2:String="",
+    val initialValue3:String="",
+    val initialValue4:String="",
+    val initialValue5:String="",
+    val initialValue6:String="",
     ){
 
-    var text1 by mutableStateOf(input1)
-    var text2 by mutableStateOf(input2)
-    var text3 by mutableStateOf(input3)
-    var text4 by mutableStateOf(input4)
-    val inputs= arrayOf(text1,text2,text3,text4)
+    var codeValue1 by mutableStateOf(initialValue1)
+    private set
+    var codeValue2 by mutableStateOf(initialValue2)
+        private set
+    var codeValue3 by mutableStateOf(initialValue3)
+        private set
+    var codeValue4 by mutableStateOf(initialValue4)
+        private set
+    var codeValue5 by mutableStateOf(initialValue5)
+        private set
+    var codeValue6 by mutableStateOf(initialValue6)
+        private set
+    var isErrorCode by mutableStateOf(false)
+    private set
+
+    var activeCodeInputFieldIndex by mutableStateOf(1)
+        private set
+    fun updateCode(newValue:String, index:Int){
+
+        if (isErrorCode) isErrorCode = false
+
+        if(newValue.length == 1 || newValue.isEmpty()){
+            when(index){
+                1->codeValue1 = newValue
+                2->codeValue2 = newValue
+                3->codeValue3 =newValue
+                4->codeValue4 = newValue
+                5->codeValue5 = newValue
+                6->codeValue6 = newValue
+
+            }
+        }
+
+       
+    }
+
+    fun updateIsErrorCode(newValue: Boolean){
+       // isErrorCode=newValue
+    }
+
+    fun updateActiveCodeInputFieldIndex(newActiveIndex: Int) {
+
+    }
 }
 
 data class CodeInputFieldState(val code:String,val borderColor:Color){

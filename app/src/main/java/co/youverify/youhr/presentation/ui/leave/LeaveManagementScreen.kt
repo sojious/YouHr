@@ -46,15 +46,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.paging.PagingData
 import co.youverify.youhr.R
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.core.util.getLeavePeriod
 import co.youverify.youhr.data.model.LeaveApplicationRequest
 import co.youverify.youhr.data.model.LeaveApplicationResponse
+import co.youverify.youhr.domain.model.EmployeeOnLeave
 import co.youverify.youhr.domain.model.LeaveRequest
 import co.youverify.youhr.domain.model.LeaveSummary
 import co.youverify.youhr.domain.repository.LeaveRepository
 import co.youverify.youhr.domain.use_case.CreateLeaveRequestUseCase
+import co.youverify.youhr.domain.use_case.GetAllAnnouncementUseCase
+import co.youverify.youhr.domain.use_case.GetEmployeesOnLeaveUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveSummaryUseCase
 import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
@@ -62,6 +66,7 @@ import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.components.ConnectionErrorScreen
 import co.youverify.youhr.presentation.ui.components.YouHrTitleBar
 import co.youverify.youhr.presentation.ui.components.shimmerEffect
+import co.youverify.youhr.presentation.ui.home.AnnouncementRepoMock
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.home.ProfileRepoMock
 import co.youverify.youhr.presentation.ui.theme.YouHrTheme
@@ -770,7 +775,10 @@ fun LeaveOverViewScreenPreview(){
                 onFilterDropDownClicked = {},
                 onFilterDropDownItemClicked = {},
                 uiState = LeaveManagementUiState(loading = false),
-                homeViewModel = HomeViewModel(Navigator(), GetUserProfileUseCase(ProfileRepoMock())),
+                homeViewModel = HomeViewModel(Navigator(), //GetUserProfileUseCase(ProfileRepoMock()),
+                GetAllAnnouncementUseCase(AnnouncementRepoMock()),
+                    GetEmployeesOnLeaveUseCase(LeaveRepoMock())
+                ),
                 leaveManagementViewModel = LeaveManagementViewModel(
                     Navigator(), GetLeaveRequestsUseCase(LeaveRepoMock()),
                     GetLeaveSummaryUseCase(LeaveRepoMock()), CreateLeaveRequestUseCase(LeaveRepoMock())
@@ -792,6 +800,40 @@ fun EmptyStatePreview(){
     }
 }
 
+
+@Preview
+@Composable
+fun LeaveSummaryItemPreview(){
+    YouHrTheme {
+        Surface {
+            LeaveSummaryItem(
+                itemTintColor = Color.Red,
+                leaveType = "Annual Leave",
+                totalLeaveDays =20 ,
+                usedLeaveDays = 7
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun LeaveHistoryPreview(){
+    YouHrTheme {
+        Surface {
+            LeaveHistoryItem(
+                type = "Compassionate Leave",
+                reliever ="Oluwayemisi Balogun" ,
+                period ="5th Jul - 6th Jul 2023" ,
+                status = "Pending",
+                onLeaveHistoryItemClicked = {},
+                index = 1
+            )
+        }
+    }
+}
+
+
 class LeaveRepoMock:LeaveRepository{
     override suspend fun getLeaveRequests(isFirstLoad: Boolean): Flow<Result<List<LeaveRequest>>> {
         return flow{}
@@ -808,23 +850,16 @@ class LeaveRepoMock:LeaveRepository{
         return flow{}
     }
 
-}
-
-
-@Preview
-@Composable
-fun LeaveSummaryItemPreview(){
-    YouHrTheme {
-        Surface {
-            LeaveSummaryItem(
-                itemTintColor = Color.Red,
-                leaveType = "Annual Leave",
-                totalLeaveDays =20 ,
-                usedLeaveDays = 7
-            )
-        }
+    override suspend fun getEmployeesOnLeave(): Flow<PagingData<EmployeeOnLeave>> {
+        return flow{}
     }
+
+    override suspend fun clearLeaveData() {
+
+    }
+
 }
+
 val leaveColors= listOf(
     Color(0XFFFF993C),
     Color(0XFF4C7A40),

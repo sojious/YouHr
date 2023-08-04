@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -38,7 +37,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     val navigator: Navigator,
-    private val updateUserProfileUseCase: UpdateUserProfileUseCase
+    private val updateUserProfileUseCase: UpdateUserProfileUseCase,
 ):ViewModel() {
 
 
@@ -56,7 +55,7 @@ class ProfileViewModel @Inject constructor(
     private val _uiEventFlow = MutableSharedFlow<UiEvent>()
     val uiEventFlow  = _uiEventFlow.asSharedFlow()
 
-    fun updateProfile(imageUri: Uri?, homeViewModel: HomeViewModel, context: Context) {
+    fun updateProfile(imageUri: Uri?, homeViewModel: HomeViewModel,profileViewModel: ProfileViewModel, context: Context) {
 
         viewModelScope.launch {
 
@@ -111,7 +110,7 @@ class ProfileViewModel @Inject constructor(
 
                             if (profileUpdateSuccessful && profilePicUpdateSuccessful){
 
-                                homeViewModel.updateUserProfile(context,this@ProfileViewModel)
+                                homeViewModel.updateUserProfile(userData=updateProfileResult.data.data,context=context, profileViewModel = profileViewModel)
                                    // _uiStateFlow.value=_uiStateFlow.value.copy(loading = false,profileUpdateSuccessful=true)
                                 //_uiStateFlow.value=_uiStateFlow.value.copy(loading = false)
                                 //_uiEventFlow.emit(UiEvent.ShowToast("An error occurred..check your internet connection and try again"))
@@ -194,6 +193,10 @@ class ProfileViewModel @Inject constructor(
           }
         }
 
+    }
+
+    fun onBackArrowClicked() {
+        navigator.navigateBack()
     }
 }
 

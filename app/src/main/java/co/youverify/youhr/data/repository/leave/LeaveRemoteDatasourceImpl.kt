@@ -3,6 +3,7 @@ package co.youverify.youhr.data.repository.leave
 import co.youverify.youhr.data.model.LeaveRequestsResponse
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.core.util.handleApi
+import co.youverify.youhr.data.model.EmployeeOnLeaveResponse
 import co.youverify.youhr.data.model.LeaveApplicationRequest
 import co.youverify.youhr.data.model.LeaveApplicationResponse
 import co.youverify.youhr.data.model.LeaveSummaryResponse
@@ -20,6 +21,10 @@ class LeaveRemoteDatasourceImpl @Inject constructor(private val youHrService: Yo
 
     override suspend fun createLeaveRequest(request:LeaveApplicationRequest): Result<LeaveApplicationResponse> {
         return handleApi { youHrService.createLeaveRequest(request) }
+    }
+
+    override suspend fun getEmployeesOnLeave(): Result<EmployeeOnLeaveResponse> {
+        return handleApi { youHrService.getEmployeesOnLeave() }
     }
 
 }

@@ -1,17 +1,22 @@
 package co.youverify.youhr.data
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.data.mapper.DbToDomainLeaveListMapper
 import co.youverify.youhr.data.mapper.DbToDomainLeaveSummaryMapper
 import co.youverify.youhr.data.mapper.DtoToDbLeaveListMapper
 import co.youverify.youhr.data.mapper.DtoToDbLeaveSummaryMapper
+import co.youverify.youhr.data.mapper.DtoToDomainEmployeeOnLeaveListMapper
 import co.youverify.youhr.data.model.LeaveApplicationRequest
 import co.youverify.youhr.data.model.LeaveApplicationResponse
+import co.youverify.youhr.data.repository.leave.EmployeeOnLeavePagingSource
 import co.youverify.youhr.data.repository.leave.LeaveLocalDataSource
 import co.youverify.youhr.data.repository.leave.LeaveRemoteDataSource
+import co.youverify.youhr.domain.model.EmployeeOnLeave
 import co.youverify.youhr.domain.model.LeaveRequest
 import co.youverify.youhr.domain.model.LeaveSummary
-import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.domain.repository.LeaveRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -23,7 +28,8 @@ class LeaveRepositoryImpl @Inject constructor(
     private val dtoToDbLeaveListMapper: DtoToDbLeaveListMapper,
     private val dbToDomainLeaveListMapper: DbToDomainLeaveListMapper,
     private val dtoToDbLeaveSummaryMapper: DtoToDbLeaveSummaryMapper,
-    private val dbToDomainLeaveSummaryMapper: DbToDomainLeaveSummaryMapper
+    private val dbToDomainLeaveSummaryMapper: DbToDomainLeaveSummaryMapper,
+    private val dtoToDomainEmployeeOnLeaveListMapper: DtoToDomainEmployeeOnLeaveListMapper
 ):LeaveRepository {
 
 
@@ -41,6 +47,17 @@ class LeaveRepositoryImpl @Inject constructor(
             emit(leaveRemoteDataSource.createLeaveRequest(request))
         }
     }
+
+    override suspend fun getEmployeesOnLeave(): Flow<PagingData<EmployeeOnLeave>> {
+        return Pager(
+            config = PagingConfig(pageSize = 20),
+            pagingSourceFactory = {
+                EmployeeOnLeavePagingSource(leaveRemoteDataSource,dtoToDomainEmployeeOnLeaveListMapper)
+            }
+        ).flow
+    }
+
+    override suspend fun clearLeaveData() { leaveLocalDataSource.clearAllLeaveData() }
 
     private suspend fun getLeaveSummary(): Flow<Result<LeaveSummary>> {
 
@@ -119,7 +136,7 @@ class LeaveRepositoryImpl @Inject constructor(
             is Result.Success->{
 
                 //Cache the data from the network call to the local database
-                if (leaveLocalDataSource.getLeaveRequests().isNotEmpty()){ leaveLocalDataSource.clearAllLeaveRequest() }
+                if (leaveLocalDataSource.getLeaveRequests().isNotEmpty()){ leaveLocalDataSource.clearAllLeaveData() }
                 leaveLocalDataSource.saveLeaveRequests(
                     dtoToDbLeaveListMapper.map(networkResult.data.data?.docs)
                 )

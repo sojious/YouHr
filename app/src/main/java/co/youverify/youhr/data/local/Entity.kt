@@ -75,7 +75,7 @@ data class DbLeaveRequest(
 @Entity(tableName = "leave_summary")
 data class DbLeaveSummary (
     @PrimaryKey
-    val id: String,
+    val id: Int=0,
     val annualLeaveTaken: Int,
     val casualLeaveTaken: Int,
     val sickLeaveTaken: Int,

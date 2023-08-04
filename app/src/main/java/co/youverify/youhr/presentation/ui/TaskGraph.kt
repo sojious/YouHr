@@ -2,7 +2,6 @@ package co.youverify.youhr.presentation.ui
 
 import TaskListScreen
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,35 +20,34 @@ fun NavGraphBuilder.TaskGraph(taskViewModel: TaskViewModel,taskDetailViewModel: 
 
         composable(route= TaskList.route){
 
-            val uiState=taskViewModel.uiStateFlow.collectAsState()
+            val uiState by taskViewModel.uIStateFlow.collectAsState()
            TaskListScreen(
                uiState =uiState,
-               listState = rememberLazyListState(),
-               categoryDropDownExpanded = taskViewModel.categoryDropDownExpanded,
-               showDatePicker =taskViewModel.showDatePicker,
+               //listState = rememberLazyListState(),
+               //categoryDropDownExpanded = taskViewModel.categoryDropDownExpanded,
+               //showDatePicker =taskViewModel.showDatePicker,
                onDatePickerOkClicked = { datePickerState, dateInputFieldIndex->
                    taskViewModel.onDatePickerOkClicked(datePickerState,dateInputFieldIndex)
                                        },
                onCategoryFilterClicked = { taskViewModel.updateCategoryDropDownState() },
                categoryDropDownOnDismissCallBack = {taskViewModel.categoryDropDownOnDismissCallBack()},
-               onTaskItemClicked = {
-                   taskViewModel.showTaskDetail(it)
-               },
-               categorySpinnerText = taskViewModel.categorySpinnerText,
+               onTaskItemClicked = { taskViewModel.showTaskDetail(it) },
+               //categorySpinnerText = taskViewModel.categorySpinnerText,
                dateRange = taskViewModel.dateRange,
                onDateInputFieldClicked = { index->
                    taskViewModel.onDateInputFieldClicked(index)
                },
-               onTaskProgressDropDownItemClicked = { itemIndex ->
-                   taskViewModel.filterTasksByStatus(itemIndex)
+               onTaskProgressDropDownItemClicked = { taskStatus ->
+                   taskViewModel.filterTasksByStatus(taskStatus)
                },
-               currentEditableDateInputField = taskViewModel.currentEditableDateInputField,
+               //currentEditableDateInputField = taskViewModel.currentEditableDateInputField,
                onDatePickerCancelClicked = {taskViewModel.onDatePickerCancelClicked()},
                fetchMore = {taskViewModel.fetchMore()},
-               isFetchingMore = taskViewModel.isFetchingMore,
-               onRefresh = { taskViewModel.refresh() },
-               getTaskOnFirstLoad = {taskViewModel.getTaskFirstLoad()},
-               onDateFilterBottomSheetConfirmClicked = {taskViewModel.filterTasksByDate()}
+               //isFetchingMore = taskViewModel.isFetchingMore,
+               onRetry = { taskViewModel.getTaskFirstLoad() },
+               //getTaskOnFirstLoad = {taskViewModel.getTaskFirstLoad()},
+               onDateFilterBottomSheetConfirmClicked = {taskViewModel.filterTasksByDate()},
+               getTaskOnFirstLoad = {taskViewModel.getTaskFirstLoad()}
            )
         }
 
@@ -59,7 +57,7 @@ fun NavGraphBuilder.TaskGraph(taskViewModel: TaskViewModel,taskDetailViewModel: 
         ){navBackStackEntry->
 
             val taskId=navBackStackEntry.arguments?.getInt(TaskDetail.taskIdArg)
-            val task=taskViewModel.allTasks?.get(taskId!!)!!
+            val task= taskViewModel.allTasks[taskId!!]
             TaskDetailScreen(
                 taskMessage =taskDetailViewModel.taskMessage,
                 onTaskMessageChanged = {taskDetailViewModel.updateTaskMessage(it)},

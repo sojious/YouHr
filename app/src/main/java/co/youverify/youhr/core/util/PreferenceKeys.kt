@@ -10,4 +10,5 @@ object PreferenceKeys {
     val FIRST_RUN= booleanPreferencesKey(name = "first_run")
     val CREATED_CODE= booleanPreferencesKey(name = "created_code")
     val USER_TOKEN= stringPreferencesKey(name = "user_token")
+    val LOGGED_OUT= booleanPreferencesKey(name = "logged_out")
 }

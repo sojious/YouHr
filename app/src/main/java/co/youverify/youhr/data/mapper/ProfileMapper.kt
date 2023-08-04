@@ -33,6 +33,33 @@ class DtoToDbProfileMapper:Mapper<UserProfileResponse, DbUser>{
 
 }
 
+class DtoToDomainProfileMapper:Mapper<UserProfileResponse, User>{
+    override fun map(input: UserProfileResponse): User {
+
+        return User(
+            id = input.data.id,
+            role = input.data.role?:"",
+            jobRole = input.data.jobRole?:"",
+            status = input.data.status?:"",
+            email = input.data.email?:"",
+            firstName = input.data.firstName?:"",
+            lastName = input.data.lastName?:"",
+            password = input.data.password?:"",
+            middleName=input.data.middleName?:"",
+            passcode = input.data.passcode?:"",
+            address = input.data.address?:"",
+            dob = input.data.dob?:"",
+            gender = input.data.gender?:"",
+            nextOfKin = input.data.nextofKin?:"",
+            nextOfKinContact = input.data.nextofKinContact?:"",
+            nextOfKinNumber = input.data.nextofKinNumber?:"",
+            displayPictureUrl = input.data.displayPicture?:"",
+            phoneNumber = input.data.phoneNumber?:""
+        )
+    }
+
+}
+
 class DbToDomainProfileMapper:Mapper<DbUser, User>{
     override fun map(input: DbUser): User {
 

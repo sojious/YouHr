@@ -44,6 +44,9 @@ interface YouHrService {
     @GET("employee-service/v1/employee/leave/leavesummary")
     suspend fun getLeaveSummary():Response<LeaveSummaryResponse>
 
+    @GET("employee-service/v1/employee/leave/employeeonleave")
+    suspend fun getEmployeesOnLeave():Response<EmployeeOnLeaveResponse>
+
     @POST("employee-service/v1/employee/leave/request")
     suspend fun createLeaveRequest(@Body applicationRequest: LeaveApplicationRequest):Response<LeaveApplicationResponse>
 
@@ -59,6 +62,10 @@ interface YouHrService {
     @Multipart
     @POST("employee-service/v1/employee/uploadpic")
     suspend fun updateDisplayPic(@Part imageFile: MultipartBody.Part): Response<UserProfileResponse>
+
+
+    @GET("employee-service/v1/employee/announcement")
+    suspend fun getAllAnnouncement(): Response<AnnouncementListResponse>
 
 
 }

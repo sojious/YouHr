@@ -14,6 +14,7 @@ import co.youverify.youhr.core.util.INPUT_ERROR_CODE
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.data.model.CreateCodeRequest
 import co.youverify.youhr.domain.model.FilteredUser
+import co.youverify.youhr.domain.model.User
 import co.youverify.youhr.domain.repository.PreferencesRepository
 import co.youverify.youhr.domain.use_case.CreateCodeUseCase
 import co.youverify.youhr.domain.use_case.FilterAllUserUseCase
@@ -21,6 +22,7 @@ import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
+import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -97,7 +99,7 @@ class ConfirmCodeViewModel @Inject constructor(
 
 
 
-    fun createCode(createCodeViewModel: CreateCodeViewModel,context: Context,settingsViewModel: SettingsViewModel) {
+    fun createCode(createCodeViewModel: CreateCodeViewModel,context: Context,homeViewModel: HomeViewModel) {
         //navigator.navigatePopToInclusive(toRoute = CodeCreationSuccess.route, popToRoute = CreateCode.route)
 
         viewModelScope.launch {
@@ -131,7 +133,7 @@ class ConfirmCodeViewModel @Inject constructor(
                        val savedPasscode=preferencesRepository.getUserPasscode().first()
                        if (savedPasscode.isEmpty()) preferencesRepository.saveUserPasscode(passcode2.toString())
                        // Download and save the user profile pic to the app internal storage folder
-                       saveUserProfilePic(context)
+                       saveUserProfile(context,homeViewModel)
                        //Get the list of users
                        //getAllUser()
                     }
@@ -152,8 +154,8 @@ class ConfirmCodeViewModel @Inject constructor(
 
     }
 
-    private suspend fun saveUserProfilePic(context: Context) {
-        getUserProfileUseCase.invoke(isFirstLogin =true).collect{result->
+    private suspend fun saveUserProfile(context: Context,homeViewModel: HomeViewModel) {
+        getUserProfileUseCase.invoke().collect{result->
             when(result){
 
                 is Result.Success->{
@@ -161,18 +163,22 @@ class ConfirmCodeViewModel @Inject constructor(
                     Glide.with(context)
                         .asBitmap()
                         .load(result.data.displayPictureUrl)
+                        .override(600,200)
                         .into(
                             object : CustomTarget<Bitmap>(){
                                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                                     //val imageSize=resource.allocationByteCount
-                                    context.openFileOutput("profile_pic",Context.MODE_PRIVATE).use {
-                                        resource.compress(Bitmap.CompressFormat.JPEG,100,it)
-                                    }
+                                    //context.openFileOutput("profile_pic",Context.MODE_PRIVATE).use {
+                                        //resource.compress(Bitmap.CompressFormat.JPEG,100,it)
+                                    //}
+
+                                    homeViewModel.setCurrentUser(result.data.copy(displayPictureBitmap = resource))
 
                                     viewModelScope.launch {
                                         preferencesRepository.setUserPasscodeCreationStatus(passcodeCreated = true)
                                         _uIStateFlow.value = _uIStateFlow.value.copy(loading = false,authenticated = true)
                                         showSuccessDialog = true
+                                        clearCodeValues()
                                     }
 
                                 }
@@ -208,6 +214,8 @@ class ConfirmCodeViewModel @Inject constructor(
         }
     }
 
+
+
     fun onLoginRedirectClicked(){
 
         navigator.navigatePopToInclusive(toRoute = LoginWithCode.route, popToRoute = CodeCreationSuccess.route)
@@ -241,6 +249,16 @@ class ConfirmCodeViewModel @Inject constructor(
         if(codeInputFieldIndex == 6 && code6.isEmpty())
             activeCodeInputFieldIndex -= 1
 
+    }
+
+    private fun clearCodeValues(){
+        code1 = ""
+        code2 = ""
+        code3 = ""
+        code4 = ""
+        code5 = ""
+        code6 = ""
+        activeCodeInputFieldIndex=1
     }
 
 

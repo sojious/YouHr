@@ -1,7 +1,7 @@
 # YouHr - Youverify Employee Management Tool
 
 ## Overview
-This HR App is an internal tool developed by Youverify to efficiently manage and organize employee-related tasks and information. It provides a user-friendly interface and essential features for handling various HR processes seamlessly.
+This HR App is an internal tool developed by [Youverify](https://youverify.co/) to efficiently manage and organize employee-related tasks and information. It provides a user-friendly interface and essential features for handling various HR processes seamlessly.
 
 ## Features
 1. **Authentication:**
@@ -24,14 +24,15 @@ This HR App is an internal tool developed by Youverify to efficiently manage and
    - HR administrators can access and manage employee profiles, ensuring accurate records.
 
 ## Technologies Used
-- Frontend: [Jetpack Compose]
-- Backend: [Node.js]
-- Database: [Room(Local)]
+- Frontend: Jetpack Compose
+- Backend: Node.js
+- Database: Room(Local)
+- Networking: Retrofit
+- Dependency Injection : Dagger Hilt
+- Paging: Jetpack Paging 3 Library
+- Architecture: Clean Architecture with MVVM
 
-
-## License
-This HR App is licensed under [Specify the license used, e.g., MIT License]. See [LICENSE.md](link-to-LICENSE.md) for more details.
 
 ## Contact
-For any questions or inquiries related to this HR App, please contact [Adesoji Olowa] at [soj.ykn@gmail.com].
+For any questions or inquiries related to this HR App, please contact Adesoji Olowa at [soj.ykn@gmail.com].
 

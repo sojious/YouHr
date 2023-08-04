@@ -11,8 +11,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import co.youverify.youhr.R
@@ -41,6 +38,7 @@ import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.presentation.ui.components.ActionButton
 import co.youverify.youhr.presentation.ui.components.ConnectionErrorScreen
 import co.youverify.youhr.presentation.ui.components.shimmerEffect
+import co.youverify.youhr.presentation.ui.task.TaskListUiState
 import co.youverify.youhr.presentation.ui.task.TaskStatus
 import co.youverify.youhr.presentation.ui.task.TaskViewModel
 import co.youverify.youhr.presentation.ui.theme.*
@@ -52,23 +50,24 @@ import java.util.*
 @Composable
 fun TaskListScreen(
     modifier: Modifier = Modifier,
-    uiState: State<TaskViewModel.UiState>,
-    listState: LazyListState,
-    categoryDropDownExpanded: Boolean,
-    showDatePicker: Boolean,
+    uiState: TaskListUiState,
+    //listState: LazyListState,
+    //categoryDropDownExpanded: Boolean,
+    //showDatePicker: Boolean,
     onDatePickerOkClicked: (DatePickerState, Int) -> Unit,
+    onDatePickerCancelClicked: () -> Unit,
     onCategoryFilterClicked: () -> Unit,
     categoryDropDownOnDismissCallBack: () -> Unit,
     onTaskItemClicked: (Int) -> Unit,
-    categorySpinnerText: String,
+    //categorySpinnerText: String,
     dateRange: DateRange,
     onDateInputFieldClicked: (Int) -> Unit,
-    onTaskProgressDropDownItemClicked: (Int) -> Unit,
-    currentEditableDateInputField: Int,
-    onDatePickerCancelClicked: () -> Unit,
+    onTaskProgressDropDownItemClicked: (TaskStatus) -> Unit,
+    //currentEditableDateInputField: Int,
+
     fetchMore: () -> Unit,
-    isFetchingMore: Boolean,
-    onRefresh:()->Unit,
+    //isFetchingMore: Boolean,
+    onRetry:()->Unit,
     getTaskOnFirstLoad:()->Unit,
     onDateFilterBottomSheetConfirmClicked:()->Unit
 
@@ -81,15 +80,19 @@ fun TaskListScreen(
         yearRange = IntRange(start = 2023, endInclusive = 2023)
     )*/
 
+    LaunchedEffect(key1 = Unit){
+        getTaskOnFirstLoad()
+    }
+
     val myDatePickerState= rememberDatePickerState()
     val  bottomSheetState= rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val coroutineScope= rememberCoroutineScope()
     //val pullRefreshState= rememberPullRefreshState(refreshing = isRefreshing, onRefresh = { onRefresh() })
 
 
-    LaunchedEffect(key1 = Unit){
+    /*LaunchedEffect(key1 = Unit){
         getTaskOnFirstLoad()
-    }
+    }*/
 
     Box(modifier = modifier) {
         Column(
@@ -98,11 +101,11 @@ fun TaskListScreen(
             content = {
                 TopSection(
                     title = "My Tasks",
-                    categoryExpanded =categoryDropDownExpanded,
+                    categoryExpanded =uiState.categoryDropdownExpanded,
                     onCategoryFilterClicked =onCategoryFilterClicked,
                     categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
-                    categorySpinnerText = categorySpinnerText,
-                    filteringDisabled =uiState.value.tasks.isNullOrEmpty(),
+                    categorySpinnerText = uiState.filterText,
+                    //filteringDisabled =uiState.value.tasks.isNullOrEmpty(),
                     dateRange =dateRange,
                     onTaskProgressDropDownItemClicked = onTaskProgressDropDownItemClicked,
                     bottomSheetState =bottomSheetState
@@ -114,27 +117,29 @@ fun TaskListScreen(
 
 
 
-                        if (uiState.value.loading){
+                        if (uiState.loading){
                             ShimmerList()
                         }
-                       else if(uiState.value.connectionError){
-                           ConnectionErrorScreen(
-                            description = "Ooops, your connection seems off...",
-                            //resolution = "Keep calm and swipe down to try again",
-                           onRetryButtonClicked = {onRefresh()}
-                           )
+                       else if(uiState.internetConnectionError){
+                           ConnectionErrorScreen(description = "Ooops, your connection seems off...", onRetryButtonClicked = {onRetry()})
                        }
-                            else if(uiState.value.tasks?.isEmpty()==true && !uiState.value.loading){
-                                EmptyStateContent(contentMessage = uiState.value.emptyTaskContentMessage)
-                            }
+                        else if(uiState.taskListIsEmpty){
+                            EmptyStateContent(contentMessage = uiState.emptyTaskContentMessage)
+                        }
+
+                        else if(uiState.unexpectedError){
+                            ConnectionErrorScreen(description = "Ooops..An unexpected error occurred while connecting to the sever!", onRetryButtonClicked = {onRetry()})
+                        }
+
                        //else if (!uiState.value.loading && uiState.value.tasks==null){ return}
-                       else if(uiState.value.tasks?.isNotEmpty()==true && !uiState.value.loading) {
+                       else  {
                             TaskList(
-                                tasks = uiState.value.tasks!!,
-                                listState =listState,
+                                //tasks = uiState.value.tasks!!,
+                                //listState =listState,
                                 onTaskItemClicked =onTaskItemClicked,
                                 fetchMore = fetchMore,
-                                isFetchingMore = isFetchingMore
+                                //isFetchingMore = isFetchingMore,
+                                 uiState=uiState
                             )
                         }
 
@@ -144,12 +149,12 @@ fun TaskListScreen(
             }
         )
 
-        if (showDatePicker)
+        if (uiState.showDatePicker)
             BottomSheetDatePicker(
                 state =myDatePickerState,
                 onOkButtonClicked = onDatePickerOkClicked,
                 onCancelButtonClicked = onDatePickerCancelClicked,
-                currentIndex=currentEditableDateInputField,
+                currentIndex=uiState.currentEditableDateInputField,
                 bottomSheetState=bottomSheetState,
                 coroutineScope = coroutineScope,
                 modifier = Modifier.align(Alignment.Center)
@@ -303,7 +308,10 @@ fun DateRangeInputBottomSheetContent(
                 modifier = Modifier
                     .padding(top = 28.dp, start = 20.dp, end = 20.dp, bottom = 30.dp)
                     .fillMaxWidth(),
-                onButtonClicked = {onConfirmClicked()}
+                onButtonClicked = {
+                    onConfirmClicked()
+                    coroutineScope.launch { sheetState.hide() }
+                }
             )
 
         }
@@ -339,7 +347,8 @@ fun DateInputField(
                         onClick(index)
                     }
 
-                }.fillMaxWidth(),
+                }
+                .fillMaxWidth(),
             trailingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_calendar_2),
@@ -362,14 +371,14 @@ fun TopSection(
     categoryExpanded: Boolean,
     categoryDropDownOnDismissCallBack: () -> Unit,
     categorySpinnerText: String,
-    filteringDisabled: Boolean,
+    //filteringDisabled: Boolean,
     dateRange: DateRange,
-    onTaskProgressDropDownItemClicked: (Int) -> Unit,
+    onTaskProgressDropDownItemClicked: (TaskStatus) -> Unit,
     bottomSheetState: SheetState,
     onCategoryFilterClicked: () -> Unit,
 ) {
 
-    val coroutineScpoe= rememberCoroutineScope()
+    //val coroutineScpoe= rememberCoroutineScope()
     ConstraintLayout(modifier = modifier
         .padding(top = 36.dp)
         .fillMaxWidth()) {
@@ -394,7 +403,7 @@ fun TopSection(
                 bottom.linkTo(parent.bottom,16.dp)
             },
             dateRange=dateRange,
-            dateFilterDisabled =filteringDisabled,
+            //dateFilterDisabled =filteringDisabled,
             bottomSheetState=bottomSheetState,
         )
 
@@ -404,11 +413,11 @@ fun TopSection(
                 start.linkTo(titleText.start)
                 bottom.linkTo(parent.bottom,16.dp)
             },
-            onClick=onCategoryFilterClicked,
+            onClick =onCategoryFilterClicked,
             categoryDropDownOnDismissCallBack = categoryDropDownOnDismissCallBack,
-            dropDownExpanded=categoryExpanded,
+            dropDownExpanded =categoryExpanded,
             spinnerText = categorySpinnerText,
-            categoryFilterDisabled=filteringDisabled,
+            //categoryFilterDisabled=filteringDisabled,
             onDropDownMenuItemClicked = onTaskProgressDropDownItemClicked
         )
 
@@ -418,13 +427,14 @@ fun TopSection(
 @Composable
 fun TaskList(
     modifier: Modifier = Modifier,
-    tasks: List<Task>,
-    listState: LazyListState,
+    //tasks: List<Task>,
+    //listState: LazyListState,
     onTaskItemClicked: (Int) -> Unit,
-    isFetchingMore:Boolean,
-    fetchMore:()->Unit
+    //isFetchingMore: Boolean,
+    fetchMore: () -> Unit,
+    uiState: TaskListUiState
 ) {
-
+    val listState= rememberLazyListState()
     LazyColumn(modifier = modifier
         .fillMaxSize()
         .padding(top = 16.dp),
@@ -434,7 +444,7 @@ fun TaskList(
 
 
 
-        itemsIndexed(items = tasks){index,task->
+        itemsIndexed(items = uiState.filteredList){index,task->
 
 
             TaskItem(
@@ -446,10 +456,16 @@ fun TaskList(
 
         }
 
-        if(isFetchingMore){ item{ CircularProgressIndicator(strokeWidth = 1.dp)} }
+        if(uiState.isFetchingMore){
+            item{
+                Box(contentAlignment = Alignment.Center){CircularProgressIndicator(strokeWidth = 1.dp)}
+            }
+        }
     }
 
-    listState.OnBottomReached(lastTask = tasks.last(), loadMore = fetchMore)
+    if (uiState.filteredList.isNotEmpty()){
+        listState.OnBottomReached(lastTask = uiState.filteredList.last(), loadMore = fetchMore)
+    }
 }
 
 @Composable
@@ -457,30 +473,28 @@ fun CategoryFilter(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     categoryDropDownOnDismissCallBack: () -> Unit,
-    onDropDownMenuItemClicked:(Int)->Unit,
+    onDropDownMenuItemClicked: (TaskStatus) -> Unit,
     dropDownExpanded: Boolean,
     spinnerText: String,
-    categoryFilterDisabled: Boolean
+    //categoryFilterDisabled: Boolean
 ) {
 
 
-    val contentColor=if (!categoryFilterDisabled) primaryColor else deactivatedColorDeep
+    //val contentColor=if (!categoryFilterDisabled) primaryColor else deactivatedColorDeep
 
     Row(
         modifier = modifier
             .height(28.dp)
             .background(color = Color.White, shape = RoundedCornerShape(8.dp))
             .border(width = 1.dp, color = deactivatedColorDeep, shape = RoundedCornerShape(8.dp))
-            .clickable(enabled = !categoryFilterDisabled) {
-                onClick()
-            }
+            .clickable { onClick() }
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_drop_down_indicator), contentDescription =null ,
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .padding(start = 12.dp),
-            tint = contentColor
+            tint = primaryColor
             )
         
         Text(
@@ -491,7 +505,7 @@ fun CategoryFilter(
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .padding(start = 14.dp),
-            color=contentColor
+            color= primaryColor
         )
 
 
@@ -503,7 +517,7 @@ fun CategoryFilter(
                 modifier= Modifier
                     .align(Alignment.CenterVertically)
                     .padding(start = 16.6.dp, end = 11.74.dp),
-                tint = contentColor
+                tint = primaryColor
 
             )
 
@@ -513,24 +527,43 @@ fun CategoryFilter(
             onDismissRequest = { categoryDropDownOnDismissCallBack()},
             modifier =Modifier.background(color= Color.White, shape = RoundedCornerShape(4.dp))
         ) {
+
             DropdownMenuItem(
-                text = { Text(text = "Completed", fontSize = 12.sp, color = primaryColor)},
-                onClick = { onDropDownMenuItemClicked(1) },
+                text = { Text(text = TaskStatus.ALL.id, fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(TaskStatus.ALL) },
                 leadingIcon = {
                     Box(
-                        modifier=Modifier.size(6.dp).background(
-                            color = TaskProgressColor.COMPLETED.value,
-                            shape = CircleShape
-                        )
+                        modifier= Modifier
+                            .size(6.dp)
+                            .background(
+                                color = TaskProgressColor.ALL.value,
+                                shape = CircleShape
+                            )
+                    )
+                }
+            )
+
+            DropdownMenuItem(
+                text = { Text(text = TaskStatus.COMPLETED.id, fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(TaskStatus.COMPLETED) },
+                leadingIcon = {
+                    Box(
+                        modifier= Modifier
+                            .size(6.dp)
+                            .background(
+                                color = TaskProgressColor.COMPLETED.value,
+                                shape = CircleShape
+                            )
                     )
                 }
             )
             DropdownMenuItem(
-                text = { Text(text = "In-Progress", fontSize = 12.sp, color = primaryColor)},
-                onClick = { onDropDownMenuItemClicked(2) },
+                text = { Text(text = TaskStatus.IN_PROGRESS.id, fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(TaskStatus.IN_PROGRESS) },
                 leadingIcon = {
                     Box(
-                        modifier=Modifier.size(6.dp)
+                        modifier= Modifier
+                            .size(6.dp)
                             .background(
                                 color = TaskProgressColor.IN_PROGRESS.value,
                                 shape = CircleShape
@@ -540,11 +573,12 @@ fun CategoryFilter(
             )
 
             DropdownMenuItem(
-                text = { Text(text = "Over-due", fontSize = 12.sp, color = primaryColor)},
-                onClick = { onDropDownMenuItemClicked(3) },
+                text = { Text(text = TaskStatus.OVER_DUE.id, fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(TaskStatus.OVER_DUE) },
                 leadingIcon = {
                     Box(
-                        modifier=Modifier.size(6.dp)
+                        modifier= Modifier
+                            .size(6.dp)
                             .background(
                                 color = TaskProgressColor.OVERDUE.value,
                                 shape = CircleShape
@@ -553,11 +587,12 @@ fun CategoryFilter(
                 }
             )
             DropdownMenuItem(
-                text = { Text(text = "To-do", fontSize = 12.sp, color = primaryColor)},
-                onClick = { onDropDownMenuItemClicked(4) },
+                text = { Text(text = TaskStatus.TO_DO.id, fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(TaskStatus.TO_DO) },
                 leadingIcon = {
                     Box(
-                        modifier=Modifier.size(6.dp)
+                        modifier= Modifier
+                            .size(6.dp)
                             .background(
                                 color = TaskProgressColor.TO_DO.value,
                                 shape = CircleShape
@@ -567,11 +602,12 @@ fun CategoryFilter(
             )
 
             DropdownMenuItem(
-                text = { Text(text = "Review", fontSize = 12.sp, color = primaryColor)},
-                onClick = { onDropDownMenuItemClicked(5) },
+                text = { Text(text =TaskStatus.REVIEW.id, fontSize = 12.sp, color = primaryColor)},
+                onClick = { onDropDownMenuItemClicked(TaskStatus.REVIEW) },
                 leadingIcon = {
                     Box(
-                        modifier=Modifier.size(6.dp)
+                        modifier= Modifier
+                            .size(6.dp)
                             .background(
                                 color = TaskProgressColor.REVIEW.value,
                                 shape = CircleShape
@@ -588,14 +624,14 @@ fun CategoryFilter(
 @Composable
 fun DateFilter(
     modifier: Modifier = Modifier,
-    dateFilterDisabled: Boolean,
+    //dateFilterDisabled: Boolean,
     dateRange: DateRange,
     bottomSheetState: SheetState,
 
 ) {
 
     val coroutineScope= rememberCoroutineScope()
-    val contentColor=if (!dateFilterDisabled) primaryColor else deactivatedColorDeep
+    //val contentColor=if (!dateFilterDisabled) primaryColor else deactivatedColorDeep
     val showDefaultFilterText= dateRange.startDateMillis==null || dateRange.endDateMillis==null
     val filterText=if (showDefaultFilterText) "Filter by date" else getDateRange(dateRange.startDateMillis!!,dateRange.endDateMillis!!)
 
@@ -604,7 +640,7 @@ fun DateFilter(
             .height(28.dp)
             .background(color = Color.White, shape = RoundedCornerShape(8.dp))
             .border(width = 1.dp, color = deactivatedColorDeep, shape = RoundedCornerShape(8.dp))
-            .clickable(enabled = !dateFilterDisabled) {
+            .clickable {
                 coroutineScope.launch { bottomSheetState.show() }
             }
     ) {
@@ -615,7 +651,7 @@ fun DateFilter(
             modifier= Modifier
                 .align(Alignment.CenterVertically)
                 .padding(start = 7.33.dp),
-            tint = contentColor
+            tint = primaryColor
         )
 
         Text(
@@ -626,7 +662,7 @@ fun DateFilter(
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .padding(start = 14.dp),
-            color = contentColor
+            color = primaryColor
         )
 
 
@@ -636,7 +672,7 @@ fun DateFilter(
                 modifier= Modifier
                     .align(Alignment.CenterVertically)
                     .padding(start = 14.dp, end = 10.dp),
-                tint = contentColor
+                tint = primaryColor
             )
 
     }
@@ -844,27 +880,28 @@ fun ShimmerList(
 fun TaskListScreenPreview(){
     YouHrTheme {
         Surface {
-            val uiState =remember { mutableStateOf(TaskViewModel.UiState(tasks = pendingTasks)) }
+            val uiState by remember { mutableStateOf(TaskListUiState()) }
             TaskListScreen(
                 uiState =uiState,
-                listState = rememberLazyListState(),
-                categoryDropDownExpanded = false,
-                showDatePicker = false,
+                //listState = rememberLazyListState(),
+                //categoryDropDownExpanded = false,
+                //showDatePicker = false,
                 onDatePickerOkClicked = { _, _->},
                 onCategoryFilterClicked = {},
                 categoryDropDownOnDismissCallBack = {},
                 onTaskItemClicked = {},
-                categorySpinnerText = "Pending",
+                //categorySpinnerText = "Pending",
                 dateRange = DateRange(),
                 onDateInputFieldClicked = { _->},
                 onTaskProgressDropDownItemClicked = {},
-                currentEditableDateInputField = 0,
+                //currentEditableDateInputField = 0,
                 onDatePickerCancelClicked = {},
                 fetchMore = {},
-                isFetchingMore = true,
-                getTaskOnFirstLoad = {},
-                onRefresh = {},
-                onDateFilterBottomSheetConfirmClicked = {}
+                //isFetchingMore = true,
+                //getTaskOnFirstLoad = {},
+                onRetry = {},
+                onDateFilterBottomSheetConfirmClicked = {},
+                getTaskOnFirstLoad = {}
             )
         }
 
@@ -909,7 +946,7 @@ fun DateFilterPreview(){
     YouHrTheme {
         Surface {
             DateFilter(
-                dateFilterDisabled = false,
+                //dateFilterDisabled = false,
                 dateRange = DateRange(),
                 bottomSheetState = rememberModalBottomSheetState()
             )
@@ -929,7 +966,7 @@ fun CategoryFilterPreview(){
                 categoryDropDownOnDismissCallBack = {},
                 dropDownExpanded =false ,
                 spinnerText ="Pending" ,
-                categoryFilterDisabled =false,
+                //categoryFilterDisabled =false,
                 onDropDownMenuItemClicked = {_->}
             )
         }
@@ -1052,10 +1089,10 @@ fun ShimmerTaskItem(){
             modifier = Modifier
                 .fillMaxSize()
                 //.border(
-                  //  width = 1.dp,
-                   // color = Color.White,
-                   // shape = RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
-               // )
+                //  width = 1.dp,
+                // color = Color.White,
+                // shape = RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
+                // )
                 //.background(color = Color(0XFFF7F7F9))
                 //.background(Color.White)
                 .shimmerEffect()
@@ -1069,31 +1106,37 @@ fun ShimmerTaskItem(){
 
 
                 Box(
-                    modifier = Modifier.constrainAs(clockIcon){
-                        start.linkTo(parent.start)
-                        top.linkTo(parent.top,9.33.dp)
-                    }.size(13.dp)
+                    modifier = Modifier
+                        .constrainAs(clockIcon) {
+                            start.linkTo(parent.start)
+                            top.linkTo(parent.top, 9.33.dp)
+                        }
+                        .size(13.dp)
                         .background(color = taskItemBorderColor, shape = CircleShape)
                 )
 
                 Box(
-                    modifier = Modifier.constrainAs(dueDateText){
-                        start.linkTo(clockIcon.end,9.33.dp)
-                        top.linkTo(clockIcon.top)
-                    }.size(112.dp,12.dp)
+                    modifier = Modifier
+                        .constrainAs(dueDateText) {
+                            start.linkTo(clockIcon.end, 9.33.dp)
+                            top.linkTo(clockIcon.top)
+                        }
+                        .size(112.dp, 12.dp)
                         .background(color = taskItemBorderColor),
 
                 )
 
 
                 Box(
-                    modifier = Modifier.constrainAs(descriptionText){
-                        start.linkTo(clockIcon.start)
-                        top.linkTo(dueDateText.bottom,8.dp)
-                        bottom.linkTo(parent.bottom,8.dp)
-                        end.linkTo(progressIndicatorBox.start,60.dp)
-                        //width= Dimension.fillToConstraints
-                    }.size(200.dp,14.dp)
+                    modifier = Modifier
+                        .constrainAs(descriptionText) {
+                            start.linkTo(clockIcon.start)
+                            top.linkTo(dueDateText.bottom, 8.dp)
+                            bottom.linkTo(parent.bottom, 8.dp)
+                            end.linkTo(progressIndicatorBox.start, 60.dp)
+                            //width= Dimension.fillToConstraints
+                        }
+                        .size(200.dp, 14.dp)
                         .background(color = taskItemBorderColor)
                 )
 
@@ -1101,8 +1144,8 @@ fun ShimmerTaskItem(){
 
                     modifier = Modifier
 
-                        .size(45.dp,13.dp)
-                        .background(color = taskItemBorderColor,shape = RoundedCornerShape(10.dp))
+                        .size(45.dp, 13.dp)
+                        .background(color = taskItemBorderColor, shape = RoundedCornerShape(10.dp))
                         .constrainAs(progressIndicatorBox) {
                             end.linkTo(parent.end, 15.dp)
                             top.linkTo(parent.top, 14.dp)
@@ -1155,7 +1198,7 @@ val pendingTasks= listOf(co.youverify.youhr.domain.model.Task(
     hasNextPage = false,
     page = 1,
     attachedDocs = listOf(AttachedDoc("company_policy.pdf",url="")),
-    dueDate = "2023-06-23",
+    dueDate = "2023-09-20 08:30",
     timeStampCreated = "2023-04-28T06:40:50.808Z"
 ))
 
@@ -1182,6 +1225,7 @@ val taskItemSpacerColors= listOf(
 )
 
 enum class TaskProgressColor(val value:Color){
+    ALL(Color.Transparent),
     IN_PROGRESS(Color(0XFFDAA419)),
     COMPLETED(Color(0XFF4C7A40)),
     OVERDUE(Color(0XFFFF5454)),

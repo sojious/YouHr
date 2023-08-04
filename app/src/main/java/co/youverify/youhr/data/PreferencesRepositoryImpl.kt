@@ -76,6 +76,22 @@ class PreferencesRepositoryImpl @Inject constructor(private val preferencesDataS
         }
     }
 
+    override suspend fun getLogOutStatus(): Flow<Boolean> {
+        return  preferencesDataStore.data
+            .catch {exception->
+                //if (exception is IOException) emptyPreferences() else throw exception
+                throw exception
+            }.map {preferences->
+                preferences[PreferenceKeys.LOGGED_OUT]?:false
+            }
+    }
+
+    override suspend fun setLogOutStatus(loggedOut: Boolean) {
+        preferencesDataStore.edit {mutablePreferences ->
+            mutablePreferences[PreferenceKeys.LOGGED_OUT] = loggedOut
+        }
+    }
+
     override suspend fun saveUserPassword(userPassword: String) {
         preferencesDataStore.edit { mutablePreferences->
             mutablePreferences[PreferenceKeys.USER_PASSWORD] = userPassword

@@ -4,24 +4,27 @@ import TaskProgressColor
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.icu.util.TimeZone
-import android.util.Log
+import android.text.format.DateUtils
 import androidx.compose.ui.graphics.Color
 import co.youverify.youhr.domain.model.Task
 import co.youverify.youhr.presentation.ui.task.TaskStatus
-import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.google.gson.JsonSyntaxException
 import org.json.JSONObject
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
 import java.text.ParseException
-import java.util.Date
 import java.util.Locale
 
 
 val timeZone: TimeZone =TimeZone.getTimeZone("Africa/Lagos")
 
-
+private const val SECOND = 1
+private const val MINUTE = 60 * SECOND
+private const val HOUR = 60 * MINUTE
+private const val DAY = 24 * HOUR
+private const val MONTH = 30 * DAY
+private const val YEAR = 12 * MONTH
 
 fun getLeavePeriod(startDate:String,endDate:String): String {
     val split1=startDate.split(' ')
@@ -39,6 +42,32 @@ fun getLeavePeriod(startDate:String,endDate:String): String {
     else "$formattedStartDay $startMonth $startYear - $formattedEndDay $endMonth $endYear"
 
 }
+
+
+fun String.toDobFormat(): String {
+    if (this.isEmpty()) return "N/A"
+    val split1=this.split(' ')
+    val month = split1[1]
+    val year = split1[3]
+    val day = split1[2]
+    val numericMonth=when(month){
+          "Jan"-> "01"
+          "Feb"-> "02"
+          "Mar"-> "03"
+          "Apr"-> "04"
+          "May"-> "05"
+          "Jun"-> "06"
+          "Jul"-> "07"
+          "Aug"-> "08"
+          "Sep"-> "09"
+          "Oct"-> "10"
+          "Nov"-> "11"
+
+        else -> "12"
+    }
+
+    return "$day/$numericMonth/$year"
+}
 fun getFormattedLeaveDate(dateString:String): String {
     val split=dateString.split(' ')
     return "${split[0]} ${split[1]} ${split[2]} ${split[3]}"
@@ -55,36 +84,26 @@ fun getGreetingMessage():String{
         else -> "Hello"
     }
 }
-fun String.toTimeAgo(): String {
-    //return TimeAgo.using(this.toEpochMillis())
+fun String.toTimeAgo(isApprovalDate: Boolean=false): String {
+    val time=this.toEpochMillis(isApprovalDate)
 
-
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.getDefault())
-    val date = dateFormat.parse(this)
-
-    val seconds = ((Date().time - date.time) / 1000).toInt()
-    var interval = seconds / 31536000
-
-    if (interval > 1) {
-        return "$interval years"
+    val now = System.currentTimeMillis()
+    val diff: Long = now - time
+    return if (diff < DateUtils.WEEK_IN_MILLIS) {
+        if (diff <= 1000) "just now" else DateUtils.getRelativeTimeSpanString(
+            time, now, DateUtils.MINUTE_IN_MILLIS,
+            DateUtils.FORMAT_ABBREV_RELATIVE
+        ).toString()
+    } else if (diff <= 4 * DateUtils.WEEK_IN_MILLIS) {
+        val week = (diff / DateUtils.WEEK_IN_MILLIS).toInt()
+        if (week > 1) "$week weeks ago" else "$week week ago"
+    } else if (diff < DateUtils.YEAR_IN_MILLIS) {
+        val month = (diff / (4 * DateUtils.WEEK_IN_MILLIS)).toInt()
+        if (month > 1) "$month months ago" else "$month month ago"
+    } else {
+        val year = (diff / DateUtils.YEAR_IN_MILLIS).toInt()
+        if (year > 1) "$year years ago" else "$year year ago"
     }
-    interval = seconds / 2592000
-    if (interval > 1) {
-        return "$interval months"
-    }
-    interval = seconds / 86400
-    if (interval > 1) {
-        return "$interval days"
-    }
-    interval = seconds / 3600
-    if (interval > 1) {
-        return "$interval hours"
-    }
-    interval = seconds / 60
-    if (interval > 1) {
-        return "$interval minutes"
-    }
-    return "$seconds seconds"
 }
 fun Task.getStatus(): TaskStatus {
     return when(status){
@@ -126,8 +145,9 @@ fun String.toCardinalDateFormat(): String {
 }
 
 fun String.toCardinalDateFormat2(): String {
-    val split=split('-')
-    val month=when(split[1]){
+    val split1=split(' ')
+    val split2=split1[0].split('-')
+    val month=when(split2[1]){
         "01" -> "Jan"
         "02" -> "Feb"
         "03" -> "Mar"
@@ -143,9 +163,9 @@ fun String.toCardinalDateFormat2(): String {
         else -> "Dec"
     }
 
-        val formattedDay= getFormattedDay(split[2])
+        val formattedDay= getFormattedDay(split2[2])
 
-    return "$formattedDay $month ${split[0]}"
+    return "$formattedDay $month ${split2[0]}"
 }
 
 fun getFormattedDay(dayString:String): String {
@@ -165,8 +185,8 @@ fun getFormattedDay(dayString:String): String {
 fun Long.toCardinalDateString():String{
 
     val calendar = Calendar.getInstance(TimeZone.getDefault());
-    calendar.timeInMillis = this;
-    calendar.timeZone = timeZone;
+    calendar.timeInMillis = this
+    calendar.timeZone = timeZone
 
     val month = calendar.get(Calendar.MONTH) + 1; // Note: Month value in Calendar API is 0-based
     val year = calendar.get(Calendar.YEAR);
@@ -219,19 +239,19 @@ fun Long.toOrdinalDateString(includeOf:Boolean=true):String{
 private fun getFormattedMonth(month: Int, capitalize: Boolean=false):String{
     val monthString=when (month) {
 
-        1 -> "jan"
+        1 -> "Jan"
         2 -> "feb"
-        3 -> "mar"
-        4 -> "apr"
-        5 -> "may"
-        6 -> "jun"
-        7 -> "jul"
-        8 -> "aug"
-        9 -> "sep"
-        10 -> "oct"
-        11 -> "nov"
+        3 -> "Mar"
+        4 -> "Apr"
+        5 -> "May"
+        6 -> "Jun"
+        7 -> "Jul"
+        8 -> "Aug"
+        9 -> "Sep"
+        10 -> "Oct"
+        11 -> "Nov"
 
-        else -> "dec"
+        else -> "Dec"
     }
     return if (capitalize) monthString.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() } else monthString
 }
@@ -267,25 +287,30 @@ fun getDateRange(startDateMillis:Long, endDateMillis:Long):String{
 
 
 
-fun String.toEpochMillis(): Long {
+fun String.toEpochMillis(isApprovalDate: Boolean=false): Long {
 
-    val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.getDefault());
-    formatter.timeZone = timeZone
+    val formatter =
+        if (isApprovalDate) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.getDefault())
+    else
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",Locale.getDefault())
 
-    val date:Date;
+    formatter.timeZone = TimeZone.getTimeZone("GMT")
+
+    val time:Long
     try {
-        date = formatter.parse(this);
+        time = formatter.parse(this).time
     } catch (e: ParseException) {
-        e.printStackTrace();
+        e.printStackTrace()
         return 0; // or handle the parse exception accordingly
     }
 
-    val calendar = Calendar.getInstance(TimeZone.getDefault());
-    calendar.time = date;
+    //val calendar = Calendar.getInstance()
+   // calendar.timeZone= timeZone
+    //calendar.time = date;
 
-    val epochMillis = calendar.timeInMillis;
+    //val epochMillis = calendar.timeInMillis;
 
-    return epochMillis;
+    return time
 
 }
 
@@ -329,6 +354,8 @@ fun Long.toHrFormattedDateString(): String {
 
     return "$formattedDay $month $dayOfMonth $year"
 }
+
+
 
  suspend fun<T:Any> handleApi(callApi: suspend () -> Response<T>): Result<T> {
 

@@ -8,19 +8,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.core.util.toFormattedDateString
-import co.youverify.youhr.data.model.FilterUserDto
 import co.youverify.youhr.data.model.LeaveApplicationRequest
 import co.youverify.youhr.domain.model.FilteredUser
 import co.youverify.youhr.domain.model.LeaveRequest
 import co.youverify.youhr.domain.model.LeaveSummary
-import co.youverify.youhr.domain.model.User
 import co.youverify.youhr.domain.use_case.CreateLeaveRequestUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
 import co.youverify.youhr.domain.use_case.GetLeaveSummaryUseCase
 import co.youverify.youhr.presentation.LeaveDetail
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
-import co.youverify.youhr.presentation.ui.login.ConfirmCodeViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithCodeViewModel
 import co.youverify.youhr.presentation.ui.login.LoginWithPassWordViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -275,7 +272,7 @@ data class LeaveManagementUiState(
     var filteredList: List<LeaveRequest> = emptyList(),
     val leaveSummary: LeaveSummary = LeaveSummary(
         0,0,0, 0,
-        0,0,0,""
+        0,0,0,0
     )
 )
 

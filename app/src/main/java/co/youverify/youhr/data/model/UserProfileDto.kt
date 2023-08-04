@@ -1,6 +1,5 @@
 package co.youverify.youhr.data.model
 
-import java.util.Date
 
 
 

@@ -1,6 +1,9 @@
 package co.youverify.youhr.presentation.ui.login
 
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,15 +17,22 @@ import co.youverify.youhr.data.model.FilterUserDto
 import co.youverify.youhr.data.model.LoginWithPassWordRequest
 import co.youverify.youhr.data.remote.TokenInterceptor
 import co.youverify.youhr.domain.model.FilteredUser
+import co.youverify.youhr.domain.model.User
 import co.youverify.youhr.domain.repository.PreferencesRepository
 import co.youverify.youhr.domain.use_case.FilterAllLineManagerUseCase
 import co.youverify.youhr.domain.use_case.FilterAllUserUseCase
+import co.youverify.youhr.domain.use_case.GetUserProfileUseCase
 import co.youverify.youhr.domain.use_case.LoginWithPasswordUseCase
 import co.youverify.youhr.presentation.*
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
+import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -35,7 +45,8 @@ class LoginWithPassWordViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val tokenInterceptor: TokenInterceptor,
     private val filterAllUserUseCase: FilterAllUserUseCase,
-    val filterAllLineManagerUseCase: FilterAllLineManagerUseCase
+    private val filterAllLineManagerUseCase: FilterAllLineManagerUseCase,
+    private val getUserProfileUseCase: GetUserProfileUseCase
     ) : ViewModel(){
 
 
@@ -70,7 +81,7 @@ class LoginWithPassWordViewModel @Inject constructor(
     fun togglePasswordVisibility(){
         hideUserPassword=!hideUserPassword
     }
-    fun logUserIn(settingsVm:SettingsViewModel) {
+    fun logUserIn(homeViewModel: HomeViewModel,context: Context) {
 
         viewModelScope.launch {
 
@@ -84,11 +95,13 @@ class LoginWithPassWordViewModel @Inject constructor(
 
                         //settingsVm.setCurrentPassword(userPassword)
 
+                        val userIsLoggedOut=preferencesRepository.getLogOutStatus().first()
+
                         val savedPassword=preferencesRepository.getUserPassword().first()
                         if (savedPassword.isEmpty()) preferencesRepository.saveUserPassword(userPassword)
 
-                        val savedEmail=preferencesRepository.getUserEmail().first()
-                        if (savedEmail.isEmpty()) preferencesRepository.saveUserEmail(loginRequest.email)
+                        //val savedEmail=preferencesRepository.getUserEmail().first()
+                        //if (savedEmail.isEmpty()) preferencesRepository.saveUserEmail(loginRequest.email)
 
                         val savedToken=preferencesRepository.getUserToken().first()
                         if (savedToken.isEmpty()) preferencesRepository.saveUserToken(networkResult.data.data.token)
@@ -98,22 +111,47 @@ class LoginWithPassWordViewModel @Inject constructor(
                             tokenInterceptor.setToken(networkResult.data.data.token)
 
 
+
                         getAllUser()
                         getAllLineManager()
 
-                        val savedCodeCreationStatus=preferencesRepository.getUserPasscodeCreationStatus().first()
-                        _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
-                        _uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
 
-                        //if user alrealdy created a code, go to home screen else go to createcode screen
-                        if (savedCodeCreationStatus&& navigator.userPasswordReset)
-                            navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = InputEmail.route)
+                        if (userIsLoggedOut){
+                            preferencesRepository.setLogOutStatus(loggedOut = false)
+                            preferencesRepository.setUserPasscodeCreationStatus(passcodeCreated = true)
+                            //_uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
+                            //_uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
+                           // navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = InputEmail.route)
+                            saveUserProfile(homeViewModel,context,BottomNavGraph.route,InputEmail.route,networkResult.data.message)
+                        }else{
+                            //navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginWithPassword.route)
+                            val savedCodeCreationStatus=preferencesRepository.getUserPasscodeCreationStatus().first()
+                            if (userPassword.isNotEmpty()){userPassword=""}
+                            //_uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
+                            //_uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
 
-                        if (savedCodeCreationStatus && !navigator.userPasswordReset)
-                            navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginWithCode.route)
+                            //if user alrealdy created a code, go to home screen else go to createcode screen
+                            if (savedCodeCreationStatus&& navigator.userPasswordReset){
+                                //navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = InputEmail.route)
+                                saveUserProfile(homeViewModel,context,BottomNavGraph.route,InputEmail.route,networkResult.data.message)
+                            }
 
-                        if (!savedCodeCreationStatus)
-                            navigator.navigatePopToInclusive(toRoute = CreateCode.route, popToRoute = InputEmail.route)
+
+                            if (savedCodeCreationStatus && !navigator.userPasswordReset){
+                                 //navigator.navigatePopToInclusive(toRoute = BottomNavGraph.route, popToRoute = LoginWithCode.route)
+                                saveUserProfile(homeViewModel,context,BottomNavGraph.route,LoginWithCode.route,networkResult.data.message)
+                            }
+
+
+                            if (!savedCodeCreationStatus){
+                                _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
+                                _uIEventFlow.send(UiEvent.ShowToast(message = networkResult.data.message))
+                                navigator.navigatePopToInclusive(toRoute = CreateCode.route, popToRoute = InputEmail.route)
+                            }
+
+                        }
+
+
                     }
 
                     is Result.Error->{
@@ -121,7 +159,7 @@ class LoginWithPassWordViewModel @Inject constructor(
                             INPUT_ERROR_CODE->networkResult.message.toString()
                             RESOURCE_NOT_FOUND_ERROR_CODE -> "Invalid Email!"
                             BAD_REQUEST_ERROR_CODE ->"Wrong Password!"
-                            else-> "oop!,Something went wrong, try again"
+                            else-> networkResult.message?:"oop!,Something went wrong, try again"
                         }
 
                         isErrorPassword=true
@@ -187,6 +225,70 @@ class LoginWithPassWordViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private suspend fun saveUserProfile(
+        homeViewModel: HomeViewModel,
+        context: Context,
+        navigateToRoute:String,
+        popToRoute:String,
+        loginSuccessMessage:String
+    ) {
+        val result= getUserProfileUseCase.invoke().first()
+        //var fetchedUser:User?=null
+        when(result){
+
+            is Result.Success->{
+
+                Glide.with(context)
+                    .asBitmap()
+                    .load(result.data.displayPictureUrl)
+                    .override(600,200)
+                    .into(
+                        object : CustomTarget<Bitmap>(){
+                            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                //val imageSize=resource.allocationByteCount
+                                //context.openFileOutput("profile_pic", Context.MODE_PRIVATE).use {
+                                // resource.compress(Bitmap.CompressFormat.JPEG,100,it)
+                                //}
+                                homeViewModel.setCurrentUser(result.data.copy(displayPictureBitmap = resource))
+                                //fetchedUser=result.data
+                                viewModelScope.launch {
+                                    _uIStateFlow.value=_uIStateFlow.value.copy(loading = false,authenticated = true)
+                                    _uIEventFlow.send(UiEvent.ShowToast(message = loginSuccessMessage))
+                                    navigator.navigatePopToInclusive(toRoute = navigateToRoute, popToRoute = popToRoute)
+                                }
+
+                            }
+
+                            override fun onLoadCleared(placeholder: Drawable?) {}
+
+                            override fun onLoadFailed(errorDrawable: Drawable?) {
+                                _uIStateFlow.value = _uIStateFlow.value.copy(loading = false)
+                                viewModelScope.launch {
+                                    _uIEventFlow.send(UiEvent.ShowToast(message = "No internet connection"))
+                                }
+                            }
+                        }
+                    )
+
+            }
+            is Result.Error->{
+
+                //isErrorCode = false
+                _uIStateFlow.value =_uIStateFlow.value.copy(loading = false)
+                _uIEventFlow.send(UiEvent.ShowToast(message = "Unexpected error occurred,try again!"))
+
+            }
+            is Result.Exception->{
+                _uIStateFlow.value = _uIStateFlow.value.copy(loading = false)
+                //isErrorCode = false
+                _uIEventFlow.send(UiEvent.ShowToast(message = "No internet connection"))
+            }
+
+
+        }
+       // return fetchedUser
     }
 
 }

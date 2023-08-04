@@ -40,6 +40,7 @@ data class Pagination(
     val perPage: Int,
     val prevPage: Int?,
     val serialNo: Int,
+    val offset: Int?,
     val totalDocs: Int,
     val totalPages: Int
 )

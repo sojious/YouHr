@@ -101,7 +101,8 @@ fun YouHrNavHost(
             resetPasswordViewModel,
             createCodeViewModel,
             confirmCodeViewModel,
-            settingsViewModel
+            settingsViewModel,
+            homeViewModel
         )
 
         BottomNavGraph(
@@ -113,7 +114,8 @@ fun YouHrNavHost(
             taskDetailViewModel = taskDetailViewModel,
             settingsViewModel=settingsViewModel,
             leaveManagementViewModel=leaveManagementViewModel,
-            profileViewModel = profileViewModel
+            profileViewModel = profileViewModel,
+            inputEmailViewModel = inputEmailViewModel
         )
 
         leaveManagementGraph(

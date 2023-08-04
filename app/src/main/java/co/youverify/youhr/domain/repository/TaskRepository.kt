@@ -8,4 +8,5 @@ interface TaskRepository {
     suspend fun getAssignedTaskFirstLoad(): Flow<Result<List<Task>>>
     suspend fun getAssignedTasksPaginated(page:Int): Flow<Result<List<Task>>>
     suspend fun refreshTasks(): Flow<Result<List<Task>>>
+    suspend fun clearTasks()
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
 import co.youverify.youhr.presentation.*
+import co.youverify.youhr.presentation.ui.home.HomeViewModel
 import co.youverify.youhr.presentation.ui.login.*
 import co.youverify.youhr.presentation.ui.login.CreateCodeScreen
 import co.youverify.youhr.presentation.ui.login.CreateCodeViewModel
@@ -27,7 +28,8 @@ fun NavGraphBuilder.loginGraph(
     resetPassWordViewModel: ResetPassWordViewModel,
     createCodeViewModel: CreateCodeViewModel,
     confirmCodeViewModel: ConfirmCodeViewModel,
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
+    homeViewModel: HomeViewModel
 
 ){
     navigation(startDestination =InputEmail.route , route =LoginGraph.route ){
@@ -55,6 +57,7 @@ fun NavGraphBuilder.loginGraph(
             //set the email from the LoginWithEmail screen
             loginWithPassWordViewModel.userEmail= inputEmailViewModel.userEmail
             val uiState by loginWithPassWordViewModel.uIStatFlow.collectAsState()
+            val context= LocalContext.current
 
             LoginWithPasswordScreen(
                 passwordValue =loginWithPassWordViewModel.userPassword,
@@ -63,7 +66,7 @@ fun NavGraphBuilder.loginGraph(
                 onPasswordValueChanged ={newValue->
                     loginWithPassWordViewModel.updateUserPassword(newValue)
                 } ,
-                onLoginButtonClicked = {loginWithPassWordViewModel.logUserIn(settingsViewModel)},
+                onLoginButtonClicked = {loginWithPassWordViewModel.logUserIn(homeViewModel,context)},
                 onHidePasswordIconClicked = {loginWithPassWordViewModel.togglePasswordVisibility()},
                 onForgotPasswordClicked = { loginWithPassWordViewModel.onForgetPasswordClicked() },
                 uiState = uiState,
@@ -75,6 +78,7 @@ fun NavGraphBuilder.loginGraph(
 
             val focusManager= LocalFocusManager.current
             val uiState by loginWithCodeViewModel.uIStatFlow.collectAsState()
+            val context=LocalContext.current
 
             LoginWithCodeScreen(
                 codeValue1 = loginWithCodeViewModel.code1,
@@ -110,7 +114,7 @@ fun NavGraphBuilder.loginGraph(
 
                     if (codeIndex==6 && loginWithCodeViewModel.code6.isNotEmpty()) {
                         focusManager.clearFocus()
-                        loginWithCodeViewModel.logUserIn()
+                        loginWithCodeViewModel.logUserIn(homeViewModel, context  )
                     }
                     if (codeIndex==6 && loginWithCodeViewModel.code6.isEmpty()) {
                         loginWithCodeViewModel.updateActiveCodeInputFieldIndex(codeIndex-1)
@@ -200,7 +204,7 @@ fun NavGraphBuilder.loginGraph(
                 isErrorCode =confirmCodeViewModel.isErrorCode,
                 activeCodeInputFieldIndex = confirmCodeViewModel.activeCodeInputFieldIndex,
                 showSuccessDialog = confirmCodeViewModel.showSuccessDialog,
-                onCreateCodeButtonClicked = { confirmCodeViewModel.createCode(createCodeViewModel, context,settingsViewModel) },
+                onCreateCodeButtonClicked = { confirmCodeViewModel.createCode(createCodeViewModel, context,homeViewModel) },
                 onProceedButtonClicked = {confirmCodeViewModel.onProceedButtonClicked()},
                 onCodeValueChanged = {newValue,codeIndex->
                     confirmCodeViewModel.updateCode(newValue,codeIndex)

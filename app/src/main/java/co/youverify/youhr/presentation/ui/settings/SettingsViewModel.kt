@@ -8,11 +8,19 @@ import androidx.lifecycle.viewModelScope
 import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.data.model.ChangePasswordRequest
 import co.youverify.youhr.data.model.CreateCodeRequest
+import co.youverify.youhr.data.model.LoginWithCodeRequest
+import co.youverify.youhr.data.model.LoginWithPassWordRequest
 import co.youverify.youhr.data.remote.TokenInterceptor
 import co.youverify.youhr.domain.model.User
+import co.youverify.youhr.domain.repository.LeaveRepository
 import co.youverify.youhr.domain.repository.PreferencesRepository
+import co.youverify.youhr.domain.repository.TaskRepository
 import co.youverify.youhr.domain.use_case.ChangePasswordUseCase
 import co.youverify.youhr.domain.use_case.CreateCodeUseCase
+import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
+import co.youverify.youhr.domain.use_case.GetTasksUseCase
+import co.youverify.youhr.domain.use_case.LoginWithCodeUseCase
+import co.youverify.youhr.domain.use_case.LoginWithPasswordUseCase
 import co.youverify.youhr.presentation.ChangePasscode
 import co.youverify.youhr.presentation.ChangePassword
 import co.youverify.youhr.presentation.Home
@@ -20,8 +28,9 @@ import co.youverify.youhr.presentation.InputEmail
 import co.youverify.youhr.presentation.Profile
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.UiEvent
+import co.youverify.youhr.presentation.ui.home.HomeViewModel
+import co.youverify.youhr.presentation.ui.login.InputEmailViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +45,10 @@ class SettingsViewModel @Inject constructor(
     val navigator: Navigator,
     private val changePasswordUseCase: ChangePasswordUseCase,
     private val createCodeUseCase: CreateCodeUseCase,
-    val preferencesRepository: PreferencesRepository,
+    private val loginWithPasswordUseCase: LoginWithPasswordUseCase,
+    private val preferencesRepository: PreferencesRepository,
+    private val getLeaveRequestsUseCase: GetLeaveRequestsUseCase,
+    private val getTasksUseCase: GetTasksUseCase,
     val tokenInterceptor: TokenInterceptor
 ):ViewModel() {
 
@@ -65,13 +77,13 @@ class SettingsViewModel @Inject constructor(
     private val _uiEventFlow = MutableSharedFlow<UiEvent>()
      val uiEventFlow = _uiEventFlow.asSharedFlow()
 
-    fun onSettingsItemClicked(index: Int) {
+    fun onSettingsItemClicked(index: Int,inputEmailViewModel: InputEmailViewModel) {
         if (index==1) navigator.navigate(ChangePassword.route)
         if (index==2) navigator.navigate(ChangePasscode.route)
-        if (index==3) {logOut()}
+        if (index==3) {logOut(inputEmailViewModel)}
     }
 
-    private fun logOut() {
+    private fun logOut(inputEmailViewModel: InputEmailViewModel) {
         viewModelScope.launch {
             settingsScreenLoading=true
             preferencesRepository.saveUserEmail("")
@@ -80,7 +92,12 @@ class SettingsViewModel @Inject constructor(
             preferencesRepository.setUserPasscodeCreationStatus(false)
             preferencesRepository.saveUserPasscode("")
             preferencesRepository.saveUserPassword("")
+            preferencesRepository.setLogOutStatus(loggedOut = true)
             settingsScreenLoading=false
+            getLeaveRequestsUseCase.invoke(clearLeaveData = true, isFirstLoad = false).first()
+            getTasksUseCase.invoke(clearTasks = true, firstLoad = false).first()
+            inputEmailViewModel.updateUserEmail("")
+            //homeViewModel.resetCurrentUser()
             navigator.navigatePopToInclusive(toRoute = InputEmail.route, popToRoute = Home.route)
         }
     }
@@ -94,46 +111,77 @@ class SettingsViewModel @Inject constructor(
     }
 
     suspend fun changePassword(changePasswordScreenInputFieldsState: ChangePasswordInputFieldsState) {
-        val regex="""^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}$""".toRegex()
-        val savedPassword=preferencesRepository.getUserPassword().first()
+        //val regex="""^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}$""".toRegex()
 
-        if (changePasswordScreenInputFieldsState.newPasswordValue != changePasswordScreenInputFieldsState.confirmPasswordValue){
-            changePasswordScreenInputFieldsState.updateIsConfirmPasswordError(true)
-        }else if (changePasswordScreenInputFieldsState.oldPasswordValue!=savedPassword){
+        viewModelScope.launch {
+            _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = true, success = false)
+
+            val savedPassword=preferencesRepository.getUserPassword().first()
+
+            if (savedPassword.isEmpty()){
+               // _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = true, success = false)
+
+                val userEmail= preferencesRepository.getUserEmail().first()
+                loginWithPasswordUseCase.invoke(
+                    loginWithPassWordRequest = LoginWithPassWordRequest(userEmail,changePasswordScreenInputFieldsState.oldPasswordValue)
+                ).collect{
+                   when(it){
+                       is Result.Success->{
+                           proceedToChangePassword(
+                               changePasswordScreenInputFieldsState=changePasswordScreenInputFieldsState,
+                               savedPassword = changePasswordScreenInputFieldsState.oldPasswordValue
+                           )
+                       }
+                       is Result.Error->{
+                           _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
+                           changePasswordScreenInputFieldsState.updateIsOldPasswordError(true)
+                       }
+                       is Result.Exception->{
+                           _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
+                           _uiEventFlow.emit(UiEvent.ShowToast("Connection error!..check your internet connection"))
+                       }
+                   }
+                }
+            }else{
+                proceedToChangePassword(
+                    changePasswordScreenInputFieldsState=changePasswordScreenInputFieldsState,
+                    savedPassword = savedPassword
+                )
+            }
+
+        }
+    }
+
+    private suspend fun proceedToChangePassword(changePasswordScreenInputFieldsState:ChangePasswordInputFieldsState, savedPassword:String) {
+        if (changePasswordScreenInputFieldsState.oldPasswordValue!=savedPassword){
+            _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
             changePasswordScreenInputFieldsState.updateIsOldPasswordError(true)
         }
         else{
-            viewModelScope.launch {
 
-                if (!regex.matches(changePasswordScreenInputFieldsState.newPasswordValue)){
-                    _uiEventFlow.emit(UiEvent.ShowToast("New password does not meet requirements!"))
-                    return@launch
-                }
+            //_changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = true, success = false)
+            val changePasswordRequest=ChangePasswordRequest(
+                password = changePasswordScreenInputFieldsState.oldPasswordValue,
+                newPassword = changePasswordScreenInputFieldsState.newPasswordValue
+            )
+            changePasswordUseCase.invoke(changePasswordRequest).collect{changePasswordResult->
+                when(changePasswordResult){
+                    is Result.Success->{
 
-                _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = true, success = false)
-                val changePasswordRequest=ChangePasswordRequest(
-                    password = changePasswordScreenInputFieldsState.oldPasswordValue,
-                    newPassword = changePasswordScreenInputFieldsState.newPasswordValue
-                )
-                changePasswordUseCase.invoke(changePasswordRequest).collect{changePasswordResult->
-                    when(changePasswordResult){
-                        is Result.Success->{
+                        preferencesRepository.saveUserPassword(changePasswordScreenInputFieldsState.newPasswordValue)
+                        _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false,success = true)
+                        delay(3000)
+                        navigator.navigateBack()
+                        //changePasswordScreenInputFieldsState.clearFields()
+                    }
+                    is Result.Error->{
+                        _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
+                        _uiEventFlow.emit(UiEvent.ShowToast(changePasswordResult.message?:"An unexpected error occurred!"))
+                    }
+                    is Result.Exception->{
+                        _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
+                        _uiEventFlow.emit(UiEvent.ShowToast("Connection error!..check your internet connection"))
 
-                            preferencesRepository.saveUserPassword(changePasswordScreenInputFieldsState.newPasswordValue)
-                            _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false,success = true)
-                            delay(3000)
-                            navigator.navigateBack()
-                            //changePasswordScreenInputFieldsState.clearFields()
-                        }
-                        is Result.Error->{
-                            _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
-                            _uiEventFlow.emit(UiEvent.ShowToast(changePasswordResult.message?:"An unexpected error occurred!"))
-                        }
-                        is Result.Exception->{
-                            _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
-                            _uiEventFlow.emit(UiEvent.ShowToast("Connection error!..check your internet connection"))
-
-                        }
                     }
                 }
             }
@@ -142,51 +190,79 @@ class SettingsViewModel @Inject constructor(
 
     fun hideSuccessDialogForPasswordChange() {_changePasswordUiStateFlow.value = _changePasswordUiStateFlow.value.copy(success = false) }
     fun hideSuccessDialogForPasscodeChange() {_changePasscodeUiStateFlow.value = _changePasscodeUiStateFlow.value.copy(success = false) }
-    suspend fun changePasscode(changePasscodeScreenInputFieldsState:ChangePasscodeInputFieldsState) {
+     fun changePasscode(changePasscodeScreenInputFieldsState:ChangePasscodeInputFieldsState) {
 
-        val savedPasscode=preferencesRepository.getUserPasscode().first()
-        if (changePasscodeScreenInputFieldsState.newPasscodeValue != changePasscodeScreenInputFieldsState.confirmPasscodeValue){
-            changePasscodeScreenInputFieldsState.updateIsConfirmPasscodeError(true)
-        } else if (changePasscodeScreenInputFieldsState.oldPasscodeValue!=savedPasscode){
-            changePasscodeScreenInputFieldsState.updateIsOldPasscodeError(true)
-        }
-        else{
-            viewModelScope.launch {
+        viewModelScope.launch {
+            _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = true,success = false)
+            if (!changePasscodeUiStateFlow.value.showOldPasscodeField){
+                //_changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = true, success = false)
 
-                if (
-                    changePasscodeScreenInputFieldsState.newPasscodeValue.trim().length!=6
-                    ||changePasscodeScreenInputFieldsState.confirmPasscodeValue.trim().length!=6
-                ){
-                    _uiEventFlow.emit(UiEvent.ShowToast("New passcode does not meet requirements!"))
-                    return@launch
-                }
-
-                _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = true,success = false)
-                val changePasscodeRequest=CreateCodeRequest(
-                    passcode = changePasscodeScreenInputFieldsState.newPasscodeValue.toInt(),
-                )
-                createCodeUseCase.invoke(changePasscodeRequest, passcode1 = changePasscodeScreenInputFieldsState.newPasscodeValue.toInt()).collect{changePasscodeResult->
-                    when(changePasscodeResult){
+                //val userPasscode= changePasscodeScreenInputFieldsState.newPasscodeValue
+                //val userEmail= preferencesRepository.getUserEmail().first()
+                createCodeUseCase.invoke(
+                    CreateCodeRequest(passcode = changePasscodeScreenInputFieldsState.newPasscodeValue.toInt()),
+                    passcode1 = changePasscodeScreenInputFieldsState.newPasscodeValue.toInt()
+                ).collect{
+                    when(it){
                         is Result.Success->{
                             preferencesRepository.saveUserPasscode(changePasscodeScreenInputFieldsState.newPasscodeValue)
                             _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = false,success = true)
                             delay(3000)
                             navigator.navigateBack()
-                            //changePasscodeScreenInputFieldsState.clearFields()
                         }
                         is Result.Error->{
-                            _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = false)
-                            _uiEventFlow.emit(UiEvent.ShowToast(changePasscodeResult.message?:"An unexpected error occurred!"))
+                            _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
+                            _uiEventFlow.emit(UiEvent.ShowToast(it.message?:"An unexpectedError Occurred"))
                         }
                         is Result.Exception->{
-                            _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = false)
+                            _changePasswordUiStateFlow.value=_changePasswordUiStateFlow.value.copy(loading = false)
                             _uiEventFlow.emit(UiEvent.ShowToast("Connection error!..check your internet connection"))
-
                         }
                     }
                 }
             }
+            else{
+                val savedPasscode=preferencesRepository.getUserPasscode().first()
+
+                proceedToChangePasscode(
+                    changePasscodeScreenInputFieldsState=changePasscodeScreenInputFieldsState,
+                    savedPasscode = savedPasscode
+                )
+            }
         }
+    }
+
+    private suspend fun proceedToChangePasscode(changePasscodeScreenInputFieldsState: ChangePasscodeInputFieldsState, savedPasscode: String) {
+       // _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = true,success = false)
+        if (changePasscodeScreenInputFieldsState.oldPasscodeValue!=savedPasscode){
+            _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = false)
+            changePasscodeScreenInputFieldsState.updateIsOldPasscodeError(true)
+        }else{
+            val changePasscodeRequest=CreateCodeRequest(
+                passcode = changePasscodeScreenInputFieldsState.newPasscodeValue.toInt(),
+            )
+            createCodeUseCase.invoke(changePasscodeRequest, passcode1 = changePasscodeScreenInputFieldsState.newPasscodeValue.toInt()).collect{changePasscodeResult->
+                when(changePasscodeResult){
+                    is Result.Success->{
+                        preferencesRepository.saveUserPasscode(changePasscodeScreenInputFieldsState.newPasscodeValue)
+                        _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = false,success = true)
+                        delay(3000)
+                        navigator.navigateBack()
+                        //changePasscodeScreenInputFieldsState.clearFields()
+                    }
+                    is Result.Error->{
+                        _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = false)
+                        _uiEventFlow.emit(UiEvent.ShowToast(changePasscodeResult.message?:"An unexpected error occurred!"))
+                    }
+                    is Result.Exception->{
+                        _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(loading = false)
+                        _uiEventFlow.emit(UiEvent.ShowToast("Connection error!..check your internet connection"))
+
+                    }
+                }
+            }
+        }
+
     }
 
     fun resetState() {
@@ -198,8 +274,17 @@ class SettingsViewModel @Inject constructor(
         navigator.navigateBack()
     }
 
+    fun showAppropriateInputFields() {
+        viewModelScope.launch {
+            val savedPasscode=preferencesRepository.getUserPasscode().first()
+            if (savedPasscode.isEmpty()){
+                _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(showOldPasscodeField = false)
+            }else{ _changePasscodeUiStateFlow.value=_changePasscodeUiStateFlow.value.copy(showOldPasscodeField = true) }
+        }
+    }
+
 
 }
 
 data class ChangePasswordScreenUiState(val loading: Boolean =false, val success: Boolean =false)
-data class ChangePasscodeScreenUiState(val loading: Boolean =false, val success: Boolean =false)
+data class ChangePasscodeScreenUiState(val loading: Boolean =false, val success: Boolean =false,val showOldPasscodeField:Boolean=true)

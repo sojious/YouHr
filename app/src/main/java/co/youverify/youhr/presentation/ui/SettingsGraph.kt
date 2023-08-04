@@ -14,6 +14,7 @@ import co.youverify.youhr.presentation.Profile
 import co.youverify.youhr.presentation.Settings
 import co.youverify.youhr.presentation.SettingsGraph
 import co.youverify.youhr.presentation.ui.home.HomeViewModel
+import co.youverify.youhr.presentation.ui.login.InputEmailViewModel
 import co.youverify.youhr.presentation.ui.settings.ChangePasscodeScreen
 import co.youverify.youhr.presentation.ui.settings.ChangePasswordScreen
 import co.youverify.youhr.presentation.ui.settings.SettingsViewModel
@@ -28,7 +29,8 @@ fun NavGraphBuilder.SettingsGraph(
     navHostController: NavHostController,
     settingsViewModel: SettingsViewModel,
     homeViewModel: HomeViewModel,
-    profileViewModel: ProfileViewModel
+    profileViewModel: ProfileViewModel,
+    inputEmailViewModel:InputEmailViewModel
 ){
 
     navigation(startDestination = Settings.route , route =SettingsGraph.route ){
@@ -39,7 +41,7 @@ fun NavGraphBuilder.SettingsGraph(
                 name = settingsViewModel.currentUser?.firstName?:"",
                 email = settingsViewModel.currentUser?.email?:"",
                 onSettingsItemClicked = {index->
-                    settingsViewModel.onSettingsItemClicked(index)
+                    settingsViewModel.onSettingsItemClicked(index, inputEmailViewModel)
                 },
                 onProfilePicClicked = {settingsViewModel.onProfilePicClicked()},
                 settingsViewModel = settingsViewModel,
@@ -55,14 +57,14 @@ fun NavGraphBuilder.SettingsGraph(
             val context= LocalContext.current
             ProfileScreen(
                 user = profileViewModel.currentUser,
-                onBackArrowClicked = {},
+                onBackArrowClicked = {profileViewModel.onBackArrowClicked()},
                 onSaveProfileItemChanges = {fieldType,newValue->
                     profileViewModel.updateProfileField(fieldType,newValue)
                                            },
                 settingsViewModel =settingsViewModel,
                 profileViewModel=profileViewModel,
                 onSaveChangesButtonClicked = { uri->
-                    profileViewModel.updateProfile(uri,homeViewModel,context)
+                    profileViewModel.updateProfile(uri,homeViewModel,profileViewModel,context)
                                              },
                 profileFieldsValue = profileViewModel.profileFieldValues,
                 uiState = uiState

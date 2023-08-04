@@ -31,13 +31,15 @@ fun NavGraphBuilder.HomePageGraph(
 
     navigation(startDestination = Home.route , route =HomePageGraph.route ){
         composable(route= Home.route){
-            val leaveManagementUiState by leaveManagementViewModel.uIStateFlow.collectAsState()
+            val uiState by homePageViewModel.uiStateFlow.collectAsState()
+            val announcementState = homePageViewModel.announcementState
+            val employeesOnLeaveState = homePageViewModel.employeesOnLeaveState
             val coroutineScope = rememberCoroutineScope()
 
             HomePageScreen(
                 //userName =homePageViewModel.userName ,
-                notificationCount ="5" ,
-                profilePhotoBitmap =homePageViewModel.user?.displayPictureBitmap ,
+                notificationCount ="5",
+                profilePhotoBitmap =homePageViewModel.user?.displayPictureBitmap,
                 onNotificationIconClicked = {},
                 onHamburgerClicked = {
                     coroutineScope.launch {
@@ -53,16 +55,25 @@ fun NavGraphBuilder.HomePageGraph(
                 onSideNavItemClicked ={
                     homePageViewModel.updateActiveSideNavItem(it)
 
-                } ,
-                activeSideNavItemIndex =homePageViewModel.activeSideNavItem ,
+                },
+                //onProfilePicClicked = {homePageViewModel.goToProfileScreen()},
+                activeSideNavItemIndex =homePageViewModel.activeSideNavItem,
                 homeDrawerState =drawerState,
                 onQuickAccessItemClicked = {homePageViewModel.onQuickAccessItemClicked(it)},
                 leaveManagementViewModel =leaveManagementViewModel,
                 homeViewModel =homePageViewModel,
                 userName = homePageViewModel.user?.firstName?:"",
-                onProfilePicClicked = {homePageViewModel.goToProfileScreen()},
-                settingsViewModel = settingsViewModel
+                settingsViewModel = settingsViewModel,
+                //uiState = uiState
                 //profileViewModel = profileViewModel
+                announcementState =announcementState,
+                employeesOnLeaveState = employeesOnLeaveState,
+                onAnnouncementItemClicked ={ announcementItem->
+                    homePageViewModel.showAnnouncementDetailDialog(announcementItem)
+                },
+                showAnnouncementDetailDialog = homePageViewModel.showAnnouncementDetailDialog,
+                clickedAnnouncementItem = homePageViewModel.clickedAnnouncement,
+                onAnnouncementDialogCloseButtonClicked = {homePageViewModel.hideAnnouncementDetailDialog()}
             )
         }
     }

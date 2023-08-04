@@ -1,10 +1,15 @@
 package co.youverify.youhr.presentation.ui.settings
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,6 +20,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,18 +30,33 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.youverify.youhr.R
+import co.youverify.youhr.core.util.Result
 import co.youverify.youhr.data.remote.TokenInterceptor
+import co.youverify.youhr.domain.model.Task
+import co.youverify.youhr.domain.repository.TaskRepository
 import co.youverify.youhr.domain.use_case.ChangePasswordUseCase
 import co.youverify.youhr.domain.use_case.CreateCodeUseCase
+import co.youverify.youhr.domain.use_case.GetLeaveRequestsUseCase
+import co.youverify.youhr.domain.use_case.GetTasksUseCase
+import co.youverify.youhr.domain.use_case.LoginWithCodeUseCase
+import co.youverify.youhr.domain.use_case.LoginWithPasswordUseCase
 import co.youverify.youhr.presentation.ui.Navigator
 import co.youverify.youhr.presentation.ui.components.LoadingDialog
 import co.youverify.youhr.presentation.ui.components.YouHrTitleBar
 import co.youverify.youhr.presentation.ui.leave.AuthRepoMock
+import co.youverify.youhr.presentation.ui.leave.LeaveRepoMock
 import co.youverify.youhr.presentation.ui.leave.PreferenceRepoMock
 import co.youverify.youhr.presentation.ui.settings.profile.SuccessPopUpDialog
 import co.youverify.youhr.presentation.ui.theme.YouHrTheme
@@ -44,6 +65,8 @@ import co.youverify.youhr.presentation.ui.theme.deactivatedColorDeep
 import co.youverify.youhr.presentation.ui.theme.errorMessageColor
 import co.youverify.youhr.presentation.ui.theme.inputDeepTextColor
 import co.youverify.youhr.presentation.ui.theme.primaryColor
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 @Composable
@@ -57,63 +80,92 @@ fun ChangePasscodeScreen(
     settingsViewModel: SettingsViewModel
 ){
     Column(
-        modifier= modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+        modifier= modifier.fillMaxSize()
     ) {
 
         LaunchedEffect(key1 = Unit){
             settingsViewModel.resetState()
+            settingsViewModel.showAppropriateInputFields()
         }
 
         val fieldsState = remember{ChangePasscodeInputFieldsState()}
         val cts= rememberCoroutineScope()
-        YouHrTitleBar(title = "Change Passcode", modifier = Modifier.padding(top=36.dp, bottom = 24.dp)){onBackArrowClicked()}
+        val titleBarTitle=if (uiState.showOldPasscodeField) "Change Passcode" else "Create Passcode"
+        YouHrTitleBar(title = titleBarTitle, modifier = Modifier.padding(top=36.dp, bottom = 24.dp)){onBackArrowClicked()}
         Text(
-            text = "Your new passcode must be 6 digits long",
-            fontSize = 12.sp,
-            color = bodyTextLightColor,modifier=Modifier.padding(start = 20.dp,end=20.dp,bottom=36.dp)
-        )
-
-        InputField2(
-            fieldTitle = "Old Passcode", fieldValue = fieldsState.oldPasscodeValue,
-            fieldPlaceHolder ="Enter old passcode" , isErrorValue =fieldsState.isOldPasscodeError ,
-            onFieldValueChanged = {fieldsState.updateOldPasscodeValue(it)}, errorMessage ="Wrong Passcode!",
-            modifier=Modifier.padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
-        )
-
-        InputField2(
-            fieldTitle = "New Passcode", fieldValue = fieldsState.newPasscodeValue,
-            fieldPlaceHolder ="Enter new passcode" , isErrorValue =false ,
-            onFieldValueChanged = {fieldsState.updateNewPasscodeValue(it)}, errorMessage ="",
-            modifier=Modifier.padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
-        )
-
-        InputField2(
-            fieldTitle = "Confirm Passcode", fieldValue = fieldsState.confirmPasscodeValue,
-            fieldPlaceHolder ="Enter new password" , isErrorValue =fieldsState.isConfirmPasscodeError ,
-            onFieldValueChanged = {fieldsState.updateConfirmPasscodeValue(it)}, errorMessage ="Passwords do not match!",
-            modifier=Modifier.padding(start = 20.dp, end = 20.dp, bottom = 38.dp),
-            )
-        Button(
-            onClick = {cts.launch{settingsViewModel.changePasscode(fieldsState)}},
-            shape= RoundedCornerShape(4.dp),
-            modifier = modifier
-                .padding(horizontal = 20.dp)
-                .fillMaxWidth()
-                .height(42.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
-            content = {
-                Text(
-                    text = "Change Passcode",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 18.2.sp
-                )
+            text = buildAnnotatedString {
+                                        append("Your new passcode must be ")
+                withStyle(SpanStyle(color = Color.Black)){
+                    append("6 digits ")
+                }
+                append("long")
             },
-            enabled = fieldsState.oldPasscodeValue.isNotEmpty() && fieldsState.newPasscodeValue.isNotEmpty() && fieldsState.confirmPasscodeValue.isNotEmpty()
+            fontSize = 12.sp,
+            color = bodyTextLightColor,modifier=Modifier.padding(start = 20.dp,end=20.dp)
         )
+
+       Column(
+           modifier= Modifier
+                   .padding(top= 36.dp, start=20.dp,end=20.dp)
+               .verticalScroll(rememberScrollState()),
+           verticalArrangement = Arrangement.spacedBy(24.dp)
+       ) {
+
+
+
+           if (uiState.showOldPasscodeField){
+               InputField2(
+                   fieldTitle = "Old Passcode", fieldValue = fieldsState.oldPasscodeValue,
+                   fieldPlaceHolder ="Enter old passcode" , isErrorValue =fieldsState.isOldPasscodeError ,
+                   onFieldValueChanged = {fieldsState.updateOldPasscodeValue(it)}, errorMessage ="Wrong Passcode!",
+                   //modifier=Modifier.padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
+               )
+           }
+
+
+           InputField2(
+               fieldTitle = "New Passcode", fieldValue = fieldsState.newPasscodeValue,
+               fieldPlaceHolder ="Enter new passcode" , isErrorValue =fieldsState.isNewPasscodeError ,
+               onFieldValueChanged = {fieldsState.updateNewPasscodeValue(it)}, errorMessage ="Passcode does not meet requirement!",
+               //modifier=Modifier.padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
+           )
+
+           InputField2(
+               fieldTitle = "Confirm Passcode", fieldValue = fieldsState.confirmPasscodeValue,
+               fieldPlaceHolder ="Enter new password" , isErrorValue =fieldsState.isConfirmPasscodeError ,
+               onFieldValueChanged = {fieldsState.updateConfirmPasscodeValue(it)}, errorMessage ="Passcodes do not match!",
+               //modifier=Modifier.padding(start = 20.dp, end = 20.dp),
+           )
+
+           val btnEnabled=if (uiState.showOldPasscodeField){
+               fieldsState.oldPasscodeValue.isNotEmpty() && fieldsState.newPasscodeValue.isNotEmpty() &&
+                       fieldsState.confirmPasscodeValue.isNotEmpty() && !fieldsState.isNewPasscodeError && !fieldsState.isConfirmPasscodeError
+           }else{
+               fieldsState.newPasscodeValue.isNotEmpty() &&
+                       fieldsState.confirmPasscodeValue.isNotEmpty() && !fieldsState.isNewPasscodeError && !fieldsState.isConfirmPasscodeError
+           }
+
+           Button(
+               onClick = {cts.launch{settingsViewModel.changePasscode(fieldsState)}},
+               shape= RoundedCornerShape(4.dp),
+               modifier = modifier
+                   .padding(top = 12.dp)
+                   .fillMaxWidth()
+                   .height(42.dp),
+               colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+               content = {
+                   Text(
+                       text = "Change Passcode",
+                       color = Color.White,
+                       fontSize = 14.sp,
+                       fontWeight = FontWeight.SemiBold,
+                       lineHeight = 18.2.sp
+                   )
+               },
+               enabled = btnEnabled
+           )
+       }
+
 
         if (uiState.loading){
             LoadingDialog()
@@ -134,9 +186,12 @@ fun InputField2(
     //hideValue: Boolean,
     //isPasswordField:Boolean=true,
     onFieldValueChanged: (String) -> Unit,
-    //onTrailingIconClicked: () -> Unit={},
+    onTrailingIconClicked: () -> Unit={},
     errorMessage: String
 ){
+
+    var hideValue by remember{ mutableStateOf(true) }
+
     Column(
         modifier= modifier
             //.padding(horizontal = 16.dp)
@@ -150,7 +205,9 @@ fun InputField2(
         )
 
         OutlinedTextField(
-            modifier=Modifier.fillMaxWidth(),
+            modifier= Modifier
+                .fillMaxWidth()
+                .requiredHeight(48.dp),
             value =fieldValue ,
             onValueChange =onFieldValueChanged,
             singleLine = true,
@@ -163,7 +220,7 @@ fun InputField2(
                 )
             },
             isError = isErrorValue,
-            // visualTransformation = if(hideValue) PasswordVisualTransformation() else VisualTransformation.None,
+            visualTransformation = if(hideValue) PasswordVisualTransformation('*') else VisualTransformation.None,
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 placeholderColor = deactivatedColorDeep,
                 focusedBorderColor =  deactivatedColorDeep,
@@ -171,14 +228,14 @@ fun InputField2(
                 textColor = inputDeepTextColor
             ),
             trailingIcon = {
-                /*if (isPasswordField)
+
                     Icon(
                         painter = if (hideValue) painterResource(id = R.drawable.hide) else painterResource(id = R.drawable.show),
                         contentDescription =null,
                         modifier= Modifier
                             .size(18.dp)
-                            .clickable(onClick = onTrailingIconClicked)
-                    )*/
+                            .clickable { hideValue = !hideValue }
+                    )
             },
             shape = RoundedCornerShape(8.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
@@ -208,7 +265,12 @@ fun ChangePasscodeScreenPreview(){
                 settingsViewModel =  SettingsViewModel(
                     Navigator(), ChangePasswordUseCase(AuthRepoMock()),
                     CreateCodeUseCase(AuthRepoMock(), PreferenceRepoMock()),
-                    preferencesRepository = PreferenceRepoMock(), tokenInterceptor = TokenInterceptor()
+                    LoginWithPasswordUseCase(AuthRepoMock(),PreferenceRepoMock()),
+                    //LoginWithCodeUseCase(PreferenceRepoMock(),AuthRepoMock()),
+                    preferencesRepository = PreferenceRepoMock(),
+                    GetLeaveRequestsUseCase(LeaveRepoMock()),
+                    GetTasksUseCase(TasKRepoMock()),
+                    tokenInterceptor = TokenInterceptor(),
                 ),
                 onBackArrowClicked = {}
             )
@@ -228,25 +290,48 @@ class ChangePasscodeInputFieldsState{
 
     var isOldPasscodeError by mutableStateOf(false)
         private set
+    var isNewPasscodeError by mutableStateOf(false)
+        private set
     var isConfirmPasscodeError by mutableStateOf(false)
         private set
 
     fun updateOldPasscodeValue(newValue:String){
         if (isOldPasscodeError){isOldPasscodeError=false}
-        oldPasscodeValue=newValue
+        if (newValue.length<=6){oldPasscodeValue=newValue}
+
     }
-    fun updateNewPasscodeValue(newValue:String){ newPasscodeValue=newValue }
+    fun updateNewPasscodeValue(newValue:String){
+
+        if (newValue.length<=6){ newPasscodeValue=newValue}
+        isNewPasscodeError=newValue.length<6
+        if (newPasscodeValue.isEmpty()){isNewPasscodeError=false}
+
+    }
     fun updateConfirmPasscodeValue(newValue:String){
-        if (isConfirmPasscodeError){isConfirmPasscodeError=false}
-        confirmPasscodeValue=newValue
+        //if (isConfirmPasscodeError){isConfirmPasscodeError=false}
+        if (newValue.length<=6){ confirmPasscodeValue=newValue}
+        isConfirmPasscodeError=newPasscodeValue!=newValue
+        if (confirmPasscodeValue.isEmpty()){isConfirmPasscodeError=false}
+
     }
     fun updateIsOldPasscodeError(newValue:Boolean){ isOldPasscodeError=newValue }
-    fun updateIsConfirmPasscodeError(newValue:Boolean){ isConfirmPasscodeError=newValue }
-    fun clearFields() {
-        oldPasscodeValue=""
-        newPasscodeValue=""
-        confirmPasscodeValue=""
-        isOldPasscodeError=false
-        isConfirmPasscodeError=false
+
+}
+class TasKRepoMock:TaskRepository{
+    override suspend fun getAssignedTaskFirstLoad(): Flow<Result<List<Task>>> {
+        return flow{}
     }
+
+    override suspend fun getAssignedTasksPaginated(page: Int): Flow<Result<List<Task>>> {
+        return flow{}
+    }
+
+    override suspend fun refreshTasks(): Flow<Result<List<Task>>> {
+        return flow{}
+    }
+
+    override suspend fun clearTasks() {
+
+    }
+
 }
