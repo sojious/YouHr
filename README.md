@@ -3,6 +3,10 @@
 ## Overview
 This HR App is an internal tool developed by [Youverify](https://youverify.co/) to efficiently manage and organize employee-related tasks and information. It provides a user-friendly interface and essential features for handling various HR processes seamlessly.
 
+<p align="center">
+<img src="youhr-frame.png" width="700"  title="YouHr Application demo">
+</p>
+
 ## Features
 1. **Authentication:**
    - Employees can log in securely using their passwords and passcodes to access the app. They can also reset their password.
