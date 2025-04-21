@@ -718,7 +718,7 @@ fun LeaveDatePicker(
                         dayContentColor =Color(0xFF181E30)
                     ),
                     modifier = Modifier.height(460.dp),
-                   dateValidator = {dateToValidateInMillis->
+                   /*dateValidator = {dateToValidateInMillis->
                        calendar.timeInMillis=dateToValidateInMillis
                        if (leaveType==LeaveType.ANNUAL || leaveType==LeaveType.PARENTAL){
                            //calendar.add(Calendar.DAY_OF_YEAR, 7)
@@ -730,7 +730,7 @@ fun LeaveDatePicker(
                            dateToValidateInMillis >= Calendar.getInstance(TimeZone.getDefault()).timeInMillis && !calendar.isWeekend
                        }
 
-                    },
+                    }*/
                 )
 
 

@@ -447,7 +447,7 @@ fun TaskMessageBox(
             },
             placeholder = { Text(text = "Ask a question or post an update", fontSize = 12.sp, color = taskMessageBoxPlaceHolderColor)},
             modifier=Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.textFieldColors(containerColor = Color.White, focusedIndicatorColor = Color.White, unfocusedIndicatorColor = Color.White)
+            colors = TextFieldDefaults.colors().copy(focusedIndicatorColor = Color.White, unfocusedIndicatorColor = Color.White)
         )
     }
 }

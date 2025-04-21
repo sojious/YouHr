@@ -18,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -914,7 +916,7 @@ fun PendingTaskItemPreview(){
     YouHrTheme {
         Surface {
             TaskItem(
-                task = co.youverify.youhr.domain.model.Task(
+                task = Task(
                     id="1",
                     "Interview with candidates for product design role",
                     status = "To-do",
@@ -986,7 +988,11 @@ fun DateInputFieldPreview(){
                 index = 1,
                 onClick = {_->},
                 title ="Start Date",
-                sheetState = SheetState(skipPartiallyExpanded = true)
+                sheetState = SheetState(
+
+                    skipPartiallyExpanded = true,
+                    density = Density(context = LocalContext.current)
+                )
             )
         }
 
@@ -1188,7 +1194,8 @@ data class Task(
         assigner = "Seth Samuel", creator = "Timothy John", assigneeEmail = "Edna@youverify.co", project = "Employee Onboarding", description ="Onboarding new employees help them familiarize themselves with the company’s structure as well as help them settle in faster" ),
     )*/
 
-val pendingTasks= listOf(co.youverify.youhr.domain.model.Task(
+val pendingTasks= listOf(
+    Task(
     id="1",
     "Interview with candidates for product design role",
     status = "To-do",
@@ -1200,7 +1207,8 @@ val pendingTasks= listOf(co.youverify.youhr.domain.model.Task(
     attachedDocs = listOf(AttachedDoc("company_policy.pdf",url="")),
     dueDate = "2023-09-20 08:30",
     timeStampCreated = "2023-04-28T06:40:50.808Z"
-))
+)
+)
 
 val completedTasks= listOf(Task(
     id="1",

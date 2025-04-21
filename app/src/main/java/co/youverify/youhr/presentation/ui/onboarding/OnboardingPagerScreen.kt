@@ -32,12 +32,13 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun OnboardingPagerScreen(
+fun OnboardingPagerScreeContent(
     modifier: Modifier=Modifier,
     pagerState: PagerState,
     actionButtonText:String,
     onLoginButtonClicked:()-> Unit,
-    onboardingViewModel:OnboardingViewModel= hiltViewModel()
+    //onboardingViewModel:OnboardingViewModel= hiltViewModel()
+    onBoardingUI: OnBoardingUI
 ){
 
 
@@ -69,7 +70,7 @@ fun OnboardingPagerScreen(
         ) {
             OnboardingPager(pagerState =pagerState,viewModel=onboardingViewModel )
 
-            
+
             WormPageIndicator(
                 modifier = Modifier.padding(top = 31.17.dp),
                 totalPages = pagerState.pageCount,
